@@ -341,6 +341,37 @@ import { apiClient } from "@/lib/api-client";
 - Tests (when added): colocate `*.test.ts(x)` next to hooks/utils — not required for every UI tweak.
 - Public props/interfaces explicit — no implicit `children` abuse for data passing.
 
+### Git commits
+
+Monorepo-wide rules (no co-author, allowed types, lowercase) → [`../agent.md`](../agent.md#git-commits).
+
+**Every frontend commit** must use:
+
+```
+<type>[Frontend]: <message>
+```
+
+| Type | Use for |
+|------|---------|
+| `feat` | New screen, flow, or user-visible behavior |
+| `fix` | UI bug, broken form submit, incorrect client handling |
+| `chore` | Deps, eslint config, tailwind tokens |
+| `refactor` | Component/hook structure without behavior change |
+| `docs` | agent.md, inline README in app |
+| `test` | Component or hook tests |
+| `style` | Visual-only tweaks (spacing, classes) |
+
+**Examples**
+
+```
+feat[Frontend]: add login form validation
+fix[Frontend]: show api field errors on student form
+refactor[Frontend]: split dashboard into feature components
+chore[Frontend]: align student schema with api dto fields
+```
+
+**Forbidden:** `feat: ...` without `[Frontend]` · title case subjects · generic messages · any `Co-authored-by` or AI attribution · committing without user request.
+
 ---
 
 ## 16. Performance Expectations
@@ -404,6 +435,7 @@ features/grades/
 6. Component under **200 lines**; file has **single responsibility**.
 7. Imports use **`@/`** and feature barrels correctly.
 8. Accessible labels and keyboard paths on interactive UI.
+9. Commits use **`type[Frontend]: message`** — no co-author lines ([`../agent.md`](../agent.md#git-commits)).
 
 ---
 

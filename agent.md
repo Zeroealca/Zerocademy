@@ -123,6 +123,75 @@ App-specific naming (DTOs, hooks, Prisma models, Zustand stores) → see the rel
 
 ---
 
+## Development conventions
+
+### Git commits
+
+**Only create commits when the user explicitly asks.** Never commit `.env`, secrets, or `node_modules`.
+
+#### No co-author or AI attribution (strict)
+
+Commits must **never** include co-author or generated-by footers. Forbidden in commit messages and trailers:
+
+- `Co-authored-by:`
+- `Co-Authored-By:`
+- AI / Cursor / agent attribution of any kind
+- `Generated-by:`, `Signed-off-by:` used as automation markers
+- Any automatic author footer appended by tools
+
+Use `git commit -m "message"` with a single `-m` (no editor). If a hook adds attribution, rewrite before push:
+
+```bash
+git commit --amend -m "type[Scope]: message"
+# or strip from history before push (unpushed commits only)
+FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --msg-filter 'grep -v "^Co-authored-by:"' HEAD
+```
+
+Verify with `git log -1 --format=%B` — the body must not contain forbidden lines.
+
+#### Message format
+
+| Scope | Format | Example |
+|-------|--------|---------|
+| Frontend app | `<type>[Frontend]: <message>` | `feat[Frontend]: add login form validation` |
+| Backend app | `<type>[Backend]: <message>` | `fix[Backend]: handle prisma connection timeout` |
+| Repo root only | `<type>: <message>` | `chore: update docker compose healthcheck` |
+
+Use **`[Frontend]`** or **`[Backend]`** when changes are confined to that app (`FrontendZerocademy/`, `BackendZerocademy/`). Use **no scope** only for root-only work (`docker-compose.yml`, root `package.json`, root `agent.md`, `docker/`) that does not belong to one app.
+
+**Allowed types:** `feat` · `fix` · `chore` · `refactor` · `docs` · `test` · `style`
+
+**Rules:**
+
+- Entire subject line **lowercase** (type, scope, and message)
+- **Concise** — describes the real change; no generic subjects (`update code`, `fix stuff`, `wip`)
+- **No trailing period** on the subject; avoid `!` and `?` unless part of a product name
+- One logical change per commit when possible; split frontend vs backend when both changed
+- Layer-specific examples → [`BackendZerocademy/agent.md`](BackendZerocademy/agent.md) · [`FrontendZerocademy/agent.md`](FrontendZerocademy/agent.md)
+
+**Good**
+
+```
+feat[Frontend]: add login form validation
+fix[Backend]: map prisma p2002 to conflict response
+refactor[Frontend]: extract student table filters hook
+docs: document docker prisma scripts in readme
+```
+
+**Bad**
+
+```
+feat: add login form validation
+Fix[Frontend]: Add Login Form Validation.
+update files
+feat[Frontend]: wip
+feat[Frontend]: add login form validation
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+```
+
+---
+
 ## Agent Behavior
 
 1. **Route to the correct guide** — backend work → `BackendZerocademy/agent.md`; frontend work → `FrontendZerocademy/agent.md`.
@@ -132,6 +201,7 @@ App-specific naming (DTOs, hooks, Prisma models, Zustand stores) → see the rel
 5. **Minimal diffs** — no drive-by refactors, formatting sweeps, or dependency upgrades outside scope.
 6. Do not add markdown docs unless requested.
 7. Use `npm` from the repo root (workspaces) or `npm run <script> -w <workspace>` in the app you are changing.
+8. **Commits** — follow [Git commits](#git-commits) above; use `[Frontend]` or `[Backend]` scope; never add co-author lines.
 
 ---
 

@@ -489,6 +489,39 @@ BackendZerocademy/
 - DRY within a module; cross-module duplication signals missing shared kernel — extract deliberately.
 - Unit-test pure domain logic; integration-test critical flows.
 
+### Git commits
+
+Monorepo-wide rules (no co-author, allowed types, lowercase) → [`../agent.md`](../agent.md#git-commits).
+
+**Every backend commit** must use:
+
+```
+<type>[Backend]: <message>
+```
+
+| Type | Use for |
+|------|---------|
+| `feat` | New endpoint, module, or behavior |
+| `fix` | Bug fix, incorrect validation, error mapping |
+| `chore` | Deps, config, scripts, prisma generate tooling |
+| `refactor` | Structure change without behavior change |
+| `docs` | Swagger descriptions, agent.md, README API sections |
+| `test` | Unit, integration, e2e tests |
+| `style` | Formatting-only (no logic change) |
+
+**Examples**
+
+```
+feat[Backend]: add students list endpoint with pagination
+fix[Backend]: scope prisma queries by institution id
+refactor[Backend]: extract grade calculation to domain service
+docs[Backend]: document grades module swagger responses
+```
+
+**Forbidden:** `feat: ...` without `[Backend]` · title case subjects · generic messages · any `Co-authored-by` or AI attribution · committing without user request.
+
+When a PR touches API + OpenAPI, use one commit such as `feat[Backend]: add students create endpoint` — do not split docs from implementation unless the user asks.
+
 ---
 
 ## 20. Scalability Expectations
@@ -551,6 +584,7 @@ POST /v1/grades  →  GradesController.create(dto)
 7. Multi-table writes use **`$transaction`**.
 8. Errors use **Nest HTTP exceptions** + documented `@Api*Response` types.
 9. No secrets, tokens, or passwords in logs.
+10. Commits use **`type[Backend]: message`** — no co-author lines ([`../agent.md`](../agent.md#git-commits)).
 
 ---
 
