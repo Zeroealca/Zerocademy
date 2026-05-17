@@ -1,0 +1,4 @@
+# Copy to pgpass (gitignored) for auto-login in pgAdmin container:
+#   cp docker/pgadmin/pgpass.example docker/pgadmin/pgpass
+# Format: hostname:port:database:username:password
+postgres:5432:notas_db:notas:notas_secret
