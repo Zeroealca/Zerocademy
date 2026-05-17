@@ -11,7 +11,7 @@ export class ApiErrorDetailDto {
 
 /**
  * Standard API error envelope documented on all endpoints.
- * @see BackendNotas/agent.md §12–§14
+ * @see BackendZerocademy/agent.md §12–§14
  */
 export class ApiErrorResponseDto {
   @ApiProperty({ example: 400 })

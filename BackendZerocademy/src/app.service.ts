@@ -6,7 +6,7 @@ export class AppService {
   getHealth(): HealthResponseDto {
     return {
       status: 'ok',
-      service: 'Notas API',
+      service: 'Zerocademy API',
       version: '1.0.0',
     };
   }

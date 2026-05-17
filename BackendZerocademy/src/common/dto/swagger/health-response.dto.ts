@@ -4,7 +4,7 @@ export class HealthResponseDto {
   @ApiProperty({ example: 'ok', description: 'Service health status' })
   status: string;
 
-  @ApiProperty({ example: 'Notas API', description: 'Service name' })
+  @ApiProperty({ example: 'Zerocademy API', description: 'Service name' })
   service: string;
 
   @ApiProperty({

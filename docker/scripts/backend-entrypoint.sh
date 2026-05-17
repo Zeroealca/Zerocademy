@@ -9,17 +9,17 @@ set -e
 
 cd /app
 
-# npm workspaces: Nest core is hoisted to root; platform-express lives in BackendNotas/node_modules
-export NODE_PATH="/app/BackendNotas/node_modules:/app/node_modules${NODE_PATH:+:$NODE_PATH}"
+# npm workspaces: Nest core is hoisted to root; platform-express lives in BackendZerocademy/node_modules
+export NODE_PATH="/app/BackendZerocademy/node_modules:/app/node_modules${NODE_PATH:+:$NODE_PATH}"
 
 export POSTGRES_HOST="${POSTGRES_HOST:-postgres}"
 export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-export POSTGRES_USER="${POSTGRES_USER:-notas}"
-export POSTGRES_DB="${POSTGRES_DB:-notas_db}"
+export POSTGRES_USER="${POSTGRES_USER:-zerocademy}"
+export POSTGRES_DB="${POSTGRES_DB:-zerocademy_db}"
 
 /app/docker/scripts/wait-for-postgres.sh
 
-PRISMA_SCHEMA="BackendNotas/prisma/schema.prisma"
+PRISMA_SCHEMA="BackendZerocademy/prisma/schema.prisma"
 
 echo "Running prisma generate..."
 npx prisma generate --schema="$PRISMA_SCHEMA"
@@ -29,7 +29,7 @@ npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
 
 if [ "$#" -eq 0 ]; then
   echo "Starting NestJS in development mode (watch)..."
-  exec npm run start:dev -w backend-notas
+  exec npm run start:dev -w backend-zerocademy
 else
   echo "Starting NestJS: $*"
   exec "$@"

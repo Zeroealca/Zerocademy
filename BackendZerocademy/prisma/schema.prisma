@@ -1,4 +1,4 @@
-// Prisma schema — persistence layer for BackendNotas.
+// Prisma schema — persistence layer for BackendZerocademy.
 // DATABASE_URL is injected by Docker Compose / .env (see .env.example).
 
 generator client {

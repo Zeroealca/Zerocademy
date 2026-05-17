@@ -3,7 +3,7 @@
 > **Authoritative for:** all UI, Next.js, TanStack Query, Zustand, forms, and client-side patterns.  
 > **Monorepo:** domain registry, FE/BE boundary, shared API contract → [`../agent.md`](../agent.md)
 
-**App:** `FrontendNotas/` · **Package manager:** `pnpm`  
+**App:** `FrontendZerocademy/` · **Package manager:** `pnpm`  
 **Role:** Presentation, UX, client validation, and server-state orchestration. Business rules live in the API.
 
 **Stack:** Next.js App Router · TypeScript · Tailwind CSS · shadcn/ui · TanStack Query · Zustand · react-hook-form · zod
@@ -409,7 +409,7 @@ features/grades/
 
 ## Out of Scope
 
-- Backend rules, Prisma, JWT issuance (→ `BackendNotas/agent.md`)
+- Backend rules, Prisma, JWT issuance (→ `BackendZerocademy/agent.md`)
 - Monorepo Docker, domain registry updates (→ `../agent.md`)
 - Replacing stack libraries without explicit approval
 - Adding global state for API entities

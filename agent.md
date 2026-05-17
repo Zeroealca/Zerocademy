@@ -2,7 +2,7 @@
 
 Scalable academic management platform for schools and educational institutions.
 
-**Apps:** `BackendNotas/` (API) · `FrontendNotas/` (UI)  
+**Apps:** `BackendZerocademy/` (API) · `FrontendZerocademy/` (UI)  
 **Package manager:** `npm` workspaces (root `package.json`). Do not use pnpm or yarn unless the repo is migrated.
 
 ---
@@ -12,8 +12,8 @@ Scalable academic management platform for schools and educational institutions.
 | Task | Read |
 |------|------|
 | Monorepo layout, domains, FE/BE boundary, Docker, agent behavior | **This file** (`agent.md`) |
-| NestJS, Prisma, JWT, RBAC, API, DTOs, transactions | [`BackendNotas/agent.md`](BackendNotas/agent.md) |
-| Next.js, UI, TanStack Query, Zustand, forms, RSC | [`FrontendNotas/agent.md`](FrontendNotas/agent.md) |
+| NestJS, Prisma, JWT, RBAC, API, DTOs, transactions | [`BackendZerocademy/agent.md`](BackendZerocademy/agent.md) |
+| Next.js, UI, TanStack Query, Zustand, forms, RSC | [`FrontendZerocademy/agent.md`](FrontendZerocademy/agent.md) |
 
 **Do not duplicate** stack-specific rules in this file. Child guides are the single source of truth for their layer.
 
@@ -60,16 +60,16 @@ Cross-cutting (not standalone product modules): **RBAC enforcement** (backend `a
 ## Repository Layout
 
 ```
-Notas/
+Zerocademy/   # repository root
 ├── agent.md                 # This file
-├── BackendNotas/
+├── BackendZerocademy/
 │   ├── agent.md             # Backend rules (authoritative for API)
 │   ├── prisma/
 │   └── src/
 │       ├── modules/         # Domain modules
 │       ├── prisma/
-│       └── common/          # Cross-cutting only — see BackendNotas/agent.md
-├── FrontendNotas/
+│       └── common/          # Cross-cutting only — see BackendZerocademy/agent.md
+├── FrontendZerocademy/
 │   ├── agent.md             # Frontend rules (authoritative for UI)
 │   └── src/
 │       ├── app/             # Thin routes
@@ -125,7 +125,7 @@ App-specific naming (DTOs, hooks, Prisma models, Zustand stores) → see the rel
 
 ## Agent Behavior
 
-1. **Route to the correct guide** — backend work → `BackendNotas/agent.md`; frontend work → `FrontendNotas/agent.md`.
+1. **Route to the correct guide** — backend work → `BackendZerocademy/agent.md`; frontend work → `FrontendZerocademy/agent.md`.
 2. **Check the domain registry** before creating folders; update this table if adding a domain.
 3. Implement inside the mapped module/feature — not in global shells without justification.
 4. Add validation and authorization with every new endpoint or sensitive form.
@@ -142,7 +142,7 @@ App-specific naming (DTOs, hooks, Prisma models, Zustand stores) → see the rel
 - **Development:** from repo root, `cp .env.example .env` then `npm run docker:up`.
 - Stack: `postgres`, `pgadmin` (:5050), `backend` (:3001), `frontend` (:3000).
 - See `docker-compose.yml` and root `package.json` `docker:*` scripts.
-- After adding backend npm dependencies, rebuild the backend image (`docker compose build backend`). Frontend: rebuild and optionally remove `notas_frontend_node_modules` — details in `README.md`.
+- After adding backend npm dependencies, rebuild the backend image (`docker compose build backend`). Frontend: rebuild and optionally remove `zerocademy_frontend_node_modules` — details in `README.md`.
 - Run Prisma migrations at container start (`migrate deploy`) — not ad-hoc in production shells.
 
 ---

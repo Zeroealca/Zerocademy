@@ -7,9 +7,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
  */
 export function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
-    .setTitle('Notas API')
+    .setTitle('Zerocademy API')
     .setDescription(
-      'Academic management system API for schools and educational institutions.',
+      'Zerocademy — academic management API for schools and educational institutions.',
     )
     .setVersion('1.0')
     .addBearerAuth(

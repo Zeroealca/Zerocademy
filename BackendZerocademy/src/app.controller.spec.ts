@@ -18,7 +18,7 @@ describe('AppController', () => {
     it('should return health payload', () => {
       expect(appController.getHealth()).toEqual({
         status: 'ok',
-        service: 'Notas API',
+        service: 'Zerocademy API',
         version: '1.0.0',
       });
     });
