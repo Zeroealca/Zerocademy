@@ -8,7 +8,7 @@
     "FrontendZerocademy"
   ],
   "scripts": {
-    "dev:backend": "npm run start:dev -w backend-zerocademy",
+    "dev:backend": "NODE_PATH=./BackendZerocademy/node_modules:./node_modules npm run start:dev -w backend-zerocademy",
     "dev:frontend": "npm run dev -w frontend-zerocademy",
     "build:backend": "npm run build -w backend-zerocademy",
     "build:frontend": "npm run build -w frontend-zerocademy",

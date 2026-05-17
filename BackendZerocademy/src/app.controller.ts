@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { Public } from './common/decorators/public.decorator';
 import {
   ApiOkResponse,
   ApiOperation,
@@ -12,6 +13,7 @@ import { HealthResponseDto } from './common/dto/swagger';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Public()
   @Get(['', 'health'])
   @ApiOperation({
     summary: 'Health check',
