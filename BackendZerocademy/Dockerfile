@@ -1,4 +1,4 @@
-# BackendNotas — NestJS + Prisma (npm workspace: backend-notas)
+# BackendZerocademy — NestJS + Prisma (npm workspace: backend-zerocademy)
 # Build context: monorepo root (see docker-compose.yml)
 #
 # Targets:
@@ -20,8 +20,8 @@ RUN apt-get update \
 # -----------------------------------------------------------------------------
 FROM base AS deps
 COPY package.json package-lock.json ./
-COPY BackendNotas/package.json ./BackendNotas/
-COPY FrontendNotas/package.json ./FrontendNotas/
+COPY BackendZerocademy/package.json ./BackendZerocademy/
+COPY FrontendZerocademy/package.json ./FrontendZerocademy/
 # Install all workspaces so hoisted node_modules resolve correctly
 RUN npm ci
 
@@ -29,10 +29,10 @@ RUN npm ci
 # Development — source mounted at runtime; entrypoint runs migrations + watch
 # -----------------------------------------------------------------------------
 FROM deps AS development
-COPY BackendNotas ./BackendNotas
+COPY BackendZerocademy ./BackendZerocademy
 COPY docker/scripts ./docker/scripts
 RUN chmod +x /app/docker/scripts/*.sh \
-  && npx prisma generate --schema=BackendNotas/prisma/schema.prisma
+  && npx prisma generate --schema=BackendZerocademy/prisma/schema.prisma
 ENV NODE_ENV=development
 EXPOSE 3001
 ENTRYPOINT ["sh", "/app/docker/scripts/backend-entrypoint.sh"]
@@ -42,9 +42,9 @@ CMD []
 # Production builder
 # -----------------------------------------------------------------------------
 FROM deps AS builder
-COPY BackendNotas ./BackendNotas
-RUN npx prisma generate --schema=BackendNotas/prisma/schema.prisma \
-  && npm run build -w backend-notas
+COPY BackendZerocademy ./BackendZerocademy
+RUN npx prisma generate --schema=BackendZerocademy/prisma/schema.prisma \
+  && npm run build -w backend-zerocademy
 
 # -----------------------------------------------------------------------------
 # Production runner — minimal runtime without devDependencies tooling
@@ -52,15 +52,15 @@ RUN npx prisma generate --schema=BackendNotas/prisma/schema.prisma \
 FROM base AS production
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
-COPY BackendNotas/package.json ./BackendNotas/
-RUN npm ci --omit=dev -w backend-notas --ignore-scripts \
-  && npm install prisma @prisma/client --omit=dev -w backend-notas
-COPY --from=builder /app/BackendNotas/dist ./BackendNotas/dist
-COPY --from=builder /app/BackendNotas/prisma ./BackendNotas/prisma
+COPY BackendZerocademy/package.json ./BackendZerocademy/
+RUN npm ci --omit=dev -w backend-zerocademy --ignore-scripts \
+  && npm install prisma @prisma/client --omit=dev -w backend-zerocademy
+COPY --from=builder /app/BackendZerocademy/dist ./BackendZerocademy/dist
+COPY --from=builder /app/BackendZerocademy/prisma ./BackendZerocademy/prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY docker/scripts ./docker/scripts
 RUN chmod +x /app/docker/scripts/*.sh
 EXPOSE 3001
 ENTRYPOINT ["sh", "/app/docker/scripts/backend-entrypoint.sh"]
-CMD ["npm", "run", "start:prod", "-w", "backend-notas"]
+CMD ["npm", "run", "start:prod", "-w", "backend-zerocademy"]

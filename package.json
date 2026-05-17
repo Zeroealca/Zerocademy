@@ -1,17 +1,17 @@
 {
-  "name": "notas-monorepo",
+  "name": "zerocademy-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "Academic management system monorepo",
+  "description": "Zerocademy academic management system monorepo",
   "workspaces": [
-    "BackendNotas",
-    "FrontendNotas"
+    "BackendZerocademy",
+    "FrontendZerocademy"
   ],
   "scripts": {
-    "dev:backend": "npm run start:dev -w backend-notas",
-    "dev:frontend": "npm run dev -w frontend-notas",
-    "build:backend": "npm run build -w backend-notas",
-    "build:frontend": "npm run build -w frontend-notas",
+    "dev:backend": "npm run start:dev -w backend-zerocademy",
+    "dev:frontend": "npm run dev -w frontend-zerocademy",
+    "build:backend": "npm run build -w backend-zerocademy",
+    "build:frontend": "npm run build -w frontend-zerocademy",
     "docker:up": "docker compose up --build",
     "docker:up:detach": "docker compose up --build -d",
     "docker:down": "docker compose down",
@@ -23,9 +23,9 @@
     "docker:logs:postgres": "docker compose logs -f postgres",
     "docker:ps": "docker compose ps",
     "docker:build": "docker compose build",
-    "docker:prisma:generate": "docker compose exec backend npx prisma generate --schema=BackendNotas/prisma/schema.prisma",
-    "docker:prisma:migrate": "docker compose exec backend npx prisma migrate deploy --schema=BackendNotas/prisma/schema.prisma",
-    "docker:prisma:studio": "docker compose exec backend npx prisma studio --schema=BackendNotas/prisma/schema.prisma --port 5555 --browser none",
+    "docker:prisma:generate": "docker compose exec backend npx prisma generate --schema=BackendZerocademy/prisma/schema.prisma",
+    "docker:prisma:migrate": "docker compose exec backend npx prisma migrate deploy --schema=BackendZerocademy/prisma/schema.prisma",
+    "docker:prisma:studio": "docker compose exec backend npx prisma studio --schema=BackendZerocademy/prisma/schema.prisma --port 5555 --browser none",
     "docker:shell:backend": "docker compose exec backend sh",
     "docker:shell:frontend": "docker compose exec frontend sh"
   },

@@ -1,7 +1,7 @@
-# Development stack for the Notas monorepo (npm workspaces).
+# Development stack for the Zerocademy monorepo (npm workspaces).
 # Run from repo root: npm run docker:up
 
-name: notas
+name: zerocademy
 
 services:
   # ---------------------------------------------------------------------------
@@ -10,23 +10,23 @@ services:
   # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
-    container_name: notas-postgres
+    container_name: zerocademy-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-notas}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-notas_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-notas_db}
+      POSTGRES_USER: ${POSTGRES_USER:-zerocademy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zerocademy_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-zerocademy_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     networks:
-      - notas-network
+      - zerocademy-network
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-notas} -d ${POSTGRES_DB:-notas_db}",
+          "pg_isready -U ${POSTGRES_USER:-zerocademy} -d ${POSTGRES_DB:-zerocademy_db}",
         ]
       interval: 5s
       timeout: 5s
@@ -38,7 +38,7 @@ services:
   # ---------------------------------------------------------------------------
   pgadmin:
     image: dpage/pgadmin4:8
-    container_name: notas-pgadmin
+    container_name: zerocademy-pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
@@ -54,7 +54,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - notas-network
+      - zerocademy-network
 
   # ---------------------------------------------------------------------------
   # NestJS API — waits for Postgres, runs migrations, hot reload via volumes
@@ -62,41 +62,39 @@ services:
   backend:
     build:
       context: .
-      dockerfile: BackendNotas/Dockerfile
+      dockerfile: BackendZerocademy/Dockerfile
       target: development
-    container_name: notas-backend
+    container_name: zerocademy-backend
     restart: unless-stopped
     env_file:
       - .env
     environment:
       PORT: ${BACKEND_PORT:-3001}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-notas}:${POSTGRES_PASSWORD:-notas_secret}@postgres:5432/${POSTGRES_DB:-notas_db}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-zerocademy}:${POSTGRES_PASSWORD:-zerocademy_secret}@postgres:5432/${POSTGRES_DB:-zerocademy_db}?schema=public
       NODE_ENV: ${NODE_ENV:-development}
       JWT_SECRET: ${JWT_SECRET:-dev-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
-      # npm workspaces: @nestjs/core is hoisted to /app/node_modules; platform-express stays in BackendNotas/node_modules
-      NODE_PATH: /app/BackendNotas/node_modules:/app/node_modules
+      # npm workspaces: @nestjs/core is hoisted to /app/node_modules; platform-express stays in BackendZerocademy/node_modules
+      NODE_PATH: /app/BackendZerocademy/node_modules:/app/node_modules
       # File watching inside Docker (macOS/Windows bind mounts)
       CHOKIDAR_USEPOLLING: "true"
     ports:
       - "${BACKEND_PORT:-3001}:${BACKEND_PORT:-3001}"
     volumes:
-      # Source mounts for NestJS --watch (node_modules stay in image/volumes)
-      - ./BackendNotas/src:/app/BackendNotas/src:cached
-      - ./BackendNotas/prisma:/app/BackendNotas/prisma:cached
-      - ./BackendNotas/test:/app/BackendNotas/test:cached
-      - ./BackendNotas/tsconfig.json:/app/BackendNotas/tsconfig.json:ro
-      - ./BackendNotas/tsconfig.build.json:/app/BackendNotas/tsconfig.build.json:ro
-      - ./BackendNotas/nest-cli.json:/app/BackendNotas/nest-cli.json:ro
-      # Entrypoint scripts are baked into the image (do not bind-mount — breaks execute bit)
-      # node_modules live in the image only (npm workspaces). After package.json / lock changes:
+      # Source mounts for NestJS --watch (node_modules stay in the image)
+      - ./BackendZerocademy/src:/app/BackendZerocademy/src:cached
+      - ./BackendZerocademy/prisma:/app/BackendZerocademy/prisma:cached
+      - ./BackendZerocademy/test:/app/BackendZerocademy/test:cached
+      - ./BackendZerocademy/tsconfig.json:/app/BackendZerocademy/tsconfig.json:ro
+      - ./BackendZerocademy/tsconfig.build.json:/app/BackendZerocademy/tsconfig.build.json:ro
+      - ./BackendZerocademy/nest-cli.json:/app/BackendZerocademy/nest-cli.json:ro
+      # node_modules live in the image only. After package.json / lock changes:
       #   docker compose build backend && docker compose up -d backend
-      # Do NOT mount a node_modules volume — it desyncs hoisted vs workspace-local deps (node-emoji / nest cli).
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - notas-network
+      - zerocademy-network
 
   # ---------------------------------------------------------------------------
   # Next.js — browser uses localhost:3001 for API; dev server binds 0.0.0.0
@@ -104,9 +102,9 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: FrontendNotas/Dockerfile
+      dockerfile: FrontendZerocademy/Dockerfile
       target: development
-    container_name: notas-frontend
+    container_name: zerocademy-frontend
     restart: unless-stopped
     env_file:
       - .env
@@ -117,23 +115,22 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./FrontendNotas/src:/app/FrontendNotas/src:cached
-      - ./FrontendNotas/public:/app/FrontendNotas/public:cached
-      - ./FrontendNotas/next.config.ts:/app/FrontendNotas/next.config.ts:ro
-      - ./FrontendNotas/postcss.config.mjs:/app/FrontendNotas/postcss.config.mjs:ro
-      - ./FrontendNotas/tsconfig.json:/app/FrontendNotas/tsconfig.json:ro
-      # Hoisted deps from image (Tailwind/lightningcss Linux binaries). After Dockerfile native-dep
-      # changes, run: docker volume rm notas_frontend_node_modules && docker compose up --build frontend
+      - ./FrontendZerocademy/src:/app/FrontendZerocademy/src:cached
+      - ./FrontendZerocademy/public:/app/FrontendZerocademy/public:cached
+      - ./FrontendZerocademy/next.config.ts:/app/FrontendZerocademy/next.config.ts:ro
+      - ./FrontendZerocademy/postcss.config.mjs:/app/FrontendZerocademy/postcss.config.mjs:ro
+      - ./FrontendZerocademy/tsconfig.json:/app/FrontendZerocademy/tsconfig.json:ro
+      # After Dockerfile native-dep changes:
+      #   docker volume rm zerocademy_frontend_node_modules && docker compose up --build frontend
       - frontend_node_modules:/app/node_modules
-      # Next.js cache — speeds up rebuilds between restarts
-      - frontend_next_cache:/app/FrontendNotas/.next
+      - frontend_next_cache:/app/FrontendZerocademy/.next
     depends_on:
       - backend
     networks:
-      - notas-network
+      - zerocademy-network
 
 networks:
-  notas-network:
+  zerocademy-network:
     driver: bridge
 
 volumes:

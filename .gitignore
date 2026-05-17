@@ -22,7 +22,7 @@ coverage/
 .vscode/
 
 # Prisma
-BackendNotas/prisma/*.db
+BackendZerocademy/prisma/*.db
 
 # Docker (optional local overrides)
 docker/pgadmin/pgpass

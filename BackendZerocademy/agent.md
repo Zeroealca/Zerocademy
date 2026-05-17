@@ -3,7 +3,7 @@
 > **Authoritative for:** NestJS, Prisma, JWT, RBAC, DTOs, API responses, and persistence.  
 > **Monorepo:** domain registry, FE/BE boundary, shared API contract → [`../agent.md`](../agent.md)
 
-**App:** `BackendNotas/` · **Package manager:** `npm` workspaces (from repo root)  
+**App:** `BackendZerocademy/` · **Package manager:** `npm` workspaces (from repo root)  
 **Role:** Business rules, authorization, persistence, and API contracts. The frontend never enforces domain logic.
 
 **Stack:** NestJS · Prisma · PostgreSQL · JWT · RBAC · `@nestjs/swagger` · class-validator · class-transformer
@@ -313,7 +313,7 @@ API documentation is **required**, not optional. Every controller route shipped 
 // src/config/swagger.config.ts — pattern
 export function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
-    .setTitle('Notas API')
+    .setTitle('Zerocademy API')
     .setDescription('Academic management system')
     .setVersion('1.0')
     .addBearerAuth(/* ... */, 'access-token')
@@ -418,7 +418,7 @@ Promote reusable decorators to `src/common/decorators/api/` (e.g. `@ApiPaginated
 ## 17. Folder Structure Conventions
 
 ```
-BackendNotas/
+BackendZerocademy/
 ├── prisma/
 │   ├── schema.prisma
 │   └── migrations/
@@ -561,10 +561,10 @@ POST /v1/grades  →  GradesController.create(dto)
 ```bash
 npm install                    # from monorepo root
 npm run dev:backend
-npx prisma migrate dev -w backend-notas
-npx prisma generate -w backend-notas
-npm run test -w backend-notas
-npm run test:e2e -w backend-notas
+npx prisma migrate dev -w backend-zerocademy
+npx prisma generate -w backend-zerocademy
+npm run test -w backend-zerocademy
+npm run test:e2e -w backend-zerocademy
 # Swagger UI (when server is running): http://localhost:3001/api/docs
 ```
 
@@ -572,7 +572,7 @@ npm run test:e2e -w backend-notas
 
 ## Out of Scope
 
-- Frontend/UI implementation (→ `FrontendNotas/agent.md`)
+- Frontend/UI implementation (→ `FrontendZerocademy/agent.md`)
 - Monorepo Docker, domain registry (→ `../agent.md`)
 - Replacing Prisma or auth strategy without explicit approval
 - Disabling validation, guards, or TypeScript strict mode to pass builds

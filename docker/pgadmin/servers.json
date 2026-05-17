@@ -1,12 +1,12 @@
 {
   "Servers": {
     "1": {
-      "Name": "Notas PostgreSQL",
+      "Name": "Zerocademy PostgreSQL",
       "Group": "Servers",
       "Host": "postgres",
       "Port": 5432,
-      "MaintenanceDB": "notas_db",
-      "Username": "notas",
+      "MaintenanceDB": "zerocademy_db",
+      "Username": "zerocademy",
       "SSLMode": "prefer",
       "PassFile": "/pgpass"
     }

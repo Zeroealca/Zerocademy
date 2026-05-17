@@ -1,11 +1,11 @@
-# Notas — Sistema de gestión académica
+# Zerocademy — Sistema de gestión académica
 
 Monorepo con **NestJS** (API), **Next.js** (frontend), **PostgreSQL**, **Prisma** y **Docker** para desarrollo local.
 
 | App | Carpeta | Puerto (host) |
 |-----|---------|---------------|
-| Frontend | `FrontendNotas/` | 3000 |
-| Backend | `BackendNotas/` | 3001 |
+| Frontend | `FrontendZerocademy/` | 3000 |
+| Backend | `BackendZerocademy/` | 3001 |
 | PostgreSQL | contenedor `postgres` | 5432 |
 | pgAdmin | contenedor `pgadmin` | 5050 |
 
@@ -22,15 +22,15 @@ Monorepo con **NestJS** (API), **Next.js** (frontend), **PostgreSQL**, **Prisma*
 ## Estructura del repositorio
 
 ```
-Notas/
+Zerocademy/
 ├── README.md                 # Esta guía (operación del proyecto)
 ├── agent.md                  # Guía del monorepo para agentes IA
 ├── package.json              # npm workspaces + scripts docker:*
 ├── docker-compose.yml
 ├── .env.example              # Plantilla de variables (copiar a .env)
-├── BackendNotas/             # API NestJS + Prisma
+├── BackendZerocademy/             # API NestJS + Prisma
 │   └── agent.md              # Convenciones del backend
-├── FrontendNotas/            # UI Next.js
+├── FrontendZerocademy/            # UI Next.js
 │   └── agent.md              # Convenciones del frontend
 └── docker/                   # Scripts y config de contenedores
 ```
@@ -39,7 +39,7 @@ Notas/
 
 ## Configuración inicial (primera vez)
 
-Desde la **raíz del repositorio**:
+Desde la **raíz del repositorio** (carpeta del proyecto, p. ej. `Zerocademy/`):
 
 ```bash
 # 1. Variables de entorno
@@ -71,7 +71,7 @@ Equivalente: `docker compose up --build`
 
 ### URLs
 
-| Servicio | URL | Notas |
+| Servicio | URL | Detalle |
 |----------|-----|--------|
 | Frontend | http://localhost:3000 | Next.js dev |
 | Backend API | http://localhost:3001 | NestJS |
@@ -80,7 +80,7 @@ Equivalente: `docker compose up --build`
 | OpenAPI JSON | http://localhost:3001/api/docs-json | Contrato de la API |
 | pgAdmin | http://localhost:5050 | `admin@example.com` / `admin` (ver `.env`) |
 
-**pgAdmin:** el servidor PostgreSQL aparece preconfigurado como *Notas PostgreSQL*. Al conectar, usa la contraseña de `POSTGRES_PASSWORD` en tu `.env`.
+**pgAdmin:** el servidor PostgreSQL aparece preconfigurado como *Zerocademy PostgreSQL*. Al conectar, usa la contraseña de `POSTGRES_PASSWORD` en tu `.env`.
 
 ### Detener servicios
 
@@ -141,8 +141,8 @@ npm run docker:shell:frontend
 
 | App | ¿Se recarga solo? | Qué se monta |
 |-----|-------------------|--------------|
-| **Backend** | Sí (`nest start --watch`) | `BackendNotas/src`, `prisma`, configs |
-| **Frontend** | Sí (`next dev`) | `FrontendNotas/src`, `public`, configs |
+| **Backend** | Sí (`nest start --watch`) | `BackendZerocademy/src`, `prisma`, configs |
+| **Frontend** | Sí (`next dev`) | `FrontendZerocademy/src`, `public`, configs |
 
 Al guardar archivos `.ts` / `.tsx` en esas carpetas, los contenedores recompilan sin rebuild de la imagen.
 
@@ -165,9 +165,9 @@ Necesitas PostgreSQL accesible (local o solo el contenedor de DB).
 docker compose up -d postgres pgadmin
 ```
 
-Configura en `BackendNotas/.env` (copia desde `BackendNotas/.env.example`):
+Configura en `BackendZerocademy/.env` (copia desde `BackendZerocademy/.env.example`):
 
-`DATABASE_URL=postgresql://notas:notas_secret@localhost:5432/notas_db?schema=public`
+`DATABASE_URL=postgresql://zerocademy:zerocademy_secret@localhost:5432/zerocademy_db?schema=public`
 
 ### API y frontend en la máquina host
 
@@ -184,7 +184,7 @@ npm run dev:frontend
 ### Prisma (local)
 
 ```bash
-cd BackendNotas
+cd BackendZerocademy
 npx prisma generate
 npx prisma migrate dev
 npx prisma studio
@@ -215,8 +215,8 @@ npx prisma studio
 
 ## Prisma y base de datos
 
-- Esquema: `BackendNotas/prisma/schema.prisma`
-- Migraciones: `BackendNotas/prisma/migrations/`
+- Esquema: `BackendZerocademy/prisma/schema.prisma`
+- Migraciones: `BackendZerocademy/prisma/migrations/`
 
 **Con Docker**, al arrancar el backend se ejecutan automáticamente:
 
@@ -229,7 +229,7 @@ npx prisma studio
 
 ```bash
 # Local
-cd BackendNotas && npx prisma migrate dev --name descripcion_cambio
+cd BackendZerocademy && npx prisma migrate dev --name descripcion_cambio
 
 # O dentro del contenedor
 npm run docker:prisma:migrate
@@ -241,10 +241,10 @@ npm run docker:prisma:migrate
 
 | Volumen | Contenido |
 |---------|-----------|
-| `notas_postgres_data` | Datos persistentes de PostgreSQL |
-| `notas_pgadmin_data` | Configuración de pgAdmin |
-| `notas_frontend_node_modules` | Dependencias npm hoisted del frontend |
-| `notas_frontend_next_cache` | Caché `.next` de Next.js |
+| `zerocademy_postgres_data` | Datos persistentes de PostgreSQL |
+| `zerocademy_pgadmin_data` | Configuración de pgAdmin |
+| `zerocademy_frontend_node_modules` | Dependencias npm hoisted del frontend |
+| `zerocademy_frontend_next_cache` | Caché `.next` de Next.js |
 
 El **backend** no usa volumen de `node_modules`: las dependencias van en la imagen Docker (evita errores `MODULE_NOT_FOUND` con Nest CLI / `node-emoji`).
 
@@ -252,7 +252,7 @@ El **backend** no usa volumen de `node_modules`: las dependencias van en la imag
 
 ```bash
 docker compose down
-docker volume rm notas_postgres_data
+docker volume rm zerocademy_postgres_data
 docker compose up -d
 ```
 
@@ -276,13 +276,13 @@ docker compose build --no-cache backend
 docker compose up -d backend
 ```
 
-Si antes usaste un volumen antiguo `notas_backend_node_modules`, elimínalo una vez:
+Si migraste desde el nombre anterior del proyecto (`notas` o `zerocademy`), elimina volúmenes viejos una vez:
 
 ```bash
-docker volume rm notas_backend_node_modules 2>/dev/null || true
+docker volume rm zerocademy_backend_node_modules zerocademy_postgres_data 2>/dev/null || true
 ```
 
-Errores típicos si el árbol de módulos está roto: `Cannot find module '@nestjs/swagger'`, `MODULE_NOT_FOUND` en `node-emoji`, o `No driver (HTTP) has been selected` → rebuild de la imagen backend (ya no uses el volumen `notas_backend_node_modules`).
+Errores típicos si el árbol de módulos está roto: `Cannot find module '@nestjs/swagger'`, `MODULE_NOT_FOUND` en `node-emoji`, o `No driver (HTTP) has been selected` → rebuild de la imagen backend.
 
 ### Frontend (ej. Tailwind / lightningcss)
 
@@ -290,7 +290,7 @@ Los `node_modules` del frontend sí usan volumen nombrado. Si añades paquetes y
 
 ```bash
 docker compose stop frontend
-docker volume rm notas_frontend_node_modules notas_frontend_next_cache
+docker volume rm zerocademy_frontend_node_modules zerocademy_frontend_next_cache
 docker compose build frontend
 docker compose up -d frontend
 ```
@@ -303,8 +303,8 @@ Tras `npm install` en la raíz, conviene **siempre** `docker compose build` ante
 
 | Problema | Qué hacer |
 |----------|-----------|
-| `Cannot find module` / `node-emoji` / `No driver (HTTP)` | Rebuild backend; borrar volumen viejo `notas_backend_node_modules`. Compose define `NODE_PATH` para workspaces npm. |
-| Frontend 500 / error `lightningcss` u `oxide` | Borrar `notas_frontend_node_modules` + rebuild frontend |
+| `Cannot find module` / `node-emoji` / `No driver (HTTP)` | Rebuild backend. Compose define `NODE_PATH` para workspaces npm. |
+| Frontend 500 / error `lightningcss` u `oxide` | Borrar `zerocademy_frontend_node_modules` + rebuild frontend |
 | Puerto 3000 o 3001 en uso | Cambia `BACKEND_PORT` en `.env` o detén el proceso que usa el puerto |
 | pgAdmin no arranca | Email debe ser válido (ej. `admin@example.com`, no `.local`) |
 | Swagger no aparece | `NODE_ENV=production` lo oculta; usa `SWAGGER_ENABLED=true` en `.env` |
@@ -318,8 +318,8 @@ Tras `npm install` en la raíz, conviene **siempre** `docker compose build` ante
 | Documento | Uso |
 |-----------|-----|
 | [agent.md](./agent.md) | Monorepo, dominios, límites frontend/backend |
-| [BackendNotas/agent.md](./BackendNotas/agent.md) | NestJS, Prisma, Swagger, RBAC |
-| [FrontendNotas/agent.md](./FrontendNotas/agent.md) | Next.js, features, TanStack Query |
+| [BackendZerocademy/agent.md](./BackendZerocademy/agent.md) | NestJS, Prisma, Swagger, RBAC |
+| [FrontendZerocademy/agent.md](./FrontendZerocademy/agent.md) | Next.js, features, TanStack Query |
 
 ---
 
@@ -329,7 +329,7 @@ Usa **un solo repositorio** (monorepo). No subas:
 
 - `.env`
 - `node_modules/`
-- `BackendNotas/node_modules/`, `FrontendNotas/node_modules/`
-- `FrontendNotas/.next/`, `BackendNotas/dist/`
+- `BackendZerocademy/node_modules/`, `FrontendZerocademy/node_modules/`
+- `FrontendZerocademy/.next/`, `BackendZerocademy/dist/`
 
 Sí incluye: `package-lock.json`, `.env.example`, migraciones Prisma.
