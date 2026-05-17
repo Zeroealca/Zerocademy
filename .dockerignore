@@ -1,0 +1,18 @@
+# Monorepo build context — keeps images small and cache-friendly
+
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/*.md
+!docker/**
+**/.DS_Store
+**/npm-debug.log*
+**/.turbo
+**/.cache
+**/agent.md
+**/AGENTS.md

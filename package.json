@@ -1,0 +1,35 @@
+{
+  "name": "notas-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Academic management system monorepo",
+  "workspaces": [
+    "BackendNotas",
+    "FrontendNotas"
+  ],
+  "scripts": {
+    "dev:backend": "npm run start:dev -w backend-notas",
+    "dev:frontend": "npm run dev -w frontend-notas",
+    "build:backend": "npm run build -w backend-notas",
+    "build:frontend": "npm run build -w frontend-notas",
+    "docker:up": "docker compose up --build",
+    "docker:up:detach": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:down:volumes": "docker compose down -v",
+    "docker:restart": "docker compose restart",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:backend": "docker compose logs -f backend",
+    "docker:logs:frontend": "docker compose logs -f frontend",
+    "docker:logs:postgres": "docker compose logs -f postgres",
+    "docker:ps": "docker compose ps",
+    "docker:build": "docker compose build",
+    "docker:prisma:generate": "docker compose exec backend npx prisma generate --schema=BackendNotas/prisma/schema.prisma",
+    "docker:prisma:migrate": "docker compose exec backend npx prisma migrate deploy --schema=BackendNotas/prisma/schema.prisma",
+    "docker:prisma:studio": "docker compose exec backend npx prisma studio --schema=BackendNotas/prisma/schema.prisma --port 5555 --browser none",
+    "docker:shell:backend": "docker compose exec backend sh",
+    "docker:shell:frontend": "docker compose exec frontend sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment (keep .env.example)
+.env
+.env.local
+.env.*.local
+!.env.example
+!**/.env.example
+
+# Build outputs
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# OS / IDE
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Prisma
+BackendNotas/prisma/*.db
+
+# Docker (optional local overrides)
+docker/pgadmin/pgpass
