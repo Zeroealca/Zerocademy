@@ -1,16 +1,41 @@
 "use client";
 
-import { GraduationCap, LayoutDashboard } from "lucide-react";
+import { CalendarDays, GraduationCap, LayoutDashboard, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { canManageUsers, canViewAcademicPeriods } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/use-auth-store";
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+const baseNavItems = [
+  { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
 ];
+
+const adminNavItem = {
+  href: "/users",
+  label: "Usuarios",
+  icon: Users,
+};
+
+const academicPeriodsNavItem = {
+  href: "/academic-periods",
+  label: "Períodos académicos",
+  icon: CalendarDays,
+};
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const currentUser = useAuthStore((state) => state.user);
+
+  const navItems = [...baseNavItems];
+
+  if (canViewAcademicPeriods(currentUser?.role)) {
+    navItems.push(academicPeriodsNavItem);
+  }
+
+  if (canManageUsers(currentUser?.role)) {
+    navItems.push(adminNavItem);
+  }
 
   return (
     <aside className="hidden w-64 flex-col border-r border-border bg-card md:flex">
@@ -18,9 +43,10 @@ export function DashboardSidebar() {
         <GraduationCap className="h-5 w-5 text-primary" aria-hidden />
         <span className="font-semibold tracking-tight">Zerocademy</span>
       </div>
-      <nav className="flex flex-1 flex-col gap-1 p-4" aria-label="Main navigation">
+      <nav className="flex flex-1 flex-col gap-1 p-4" aria-label="Navegación principal">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href;
+          const isActive =
+            pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <Link

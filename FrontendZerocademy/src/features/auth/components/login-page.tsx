@@ -28,7 +28,7 @@ export function LoginPage() {
             Zerocademy
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-            Academic Management
+            Gestión académica
           </h1>
         </div>
         <LoginForm onSuccess={() => router.replace("/dashboard")} />

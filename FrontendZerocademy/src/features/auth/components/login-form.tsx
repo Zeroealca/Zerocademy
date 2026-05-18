@@ -47,7 +47,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       const message =
         error instanceof ApiError
           ? error.message
-          : "Unable to sign in. Please try again.";
+          : "No se pudo iniciar sesión. Inténtalo de nuevo.";
 
       setError("root", { message });
     }
@@ -56,20 +56,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <Card className="w-full max-w-md border-border/60 shadow-lg">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-xl">Sign in</CardTitle>
+        <CardTitle className="text-xl">Iniciar sesión</CardTitle>
         <CardDescription>
-          Access your Zerocademy academic workspace
+          Accede a tu espacio académico de Zerocademy
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Correo electrónico</Label>
             <Input
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="you@school.edu"
+              placeholder="tu@colegio.edu"
               aria-invalid={Boolean(errors.email)}
               {...register("email")}
             />
@@ -81,7 +81,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
               type="password"
@@ -98,13 +98,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </div>
 
           {errors.root ? (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              role="alert"
+            >
               {errors.root.message}
             </p>
           ) : null}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in…" : "Sign in"}
+            {isSubmitting ? "Iniciando sesión…" : "Iniciar sesión"}
           </Button>
         </form>
       </CardContent>
