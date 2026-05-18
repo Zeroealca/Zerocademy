@@ -7,44 +7,50 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ROLE_LABELS } from "@/features/users/constants";
 import { useAuthStore } from "@/stores/use-auth-store";
+import type { UserRole } from "@/stores/use-auth-store";
 
 export function DashboardHome() {
   const user = useAuthStore((state) => state.user);
 
+  const roleLabel =
+    user?.role && user.role in ROLE_LABELS
+      ? ROLE_LABELS[user.role as UserRole]
+      : user?.role;
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Panel principal</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Academic management foundation — modules will appear here as they are
-          built.
+          Base de gestión académica — los módulos aparecerán aquí a medida que
+          se implementen.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Signed in as</CardTitle>
-            <CardDescription>Current session</CardDescription>
+            <CardTitle className="text-base">Sesión activa</CardTitle>
+            <CardDescription>Usuario conectado</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="font-medium">{user?.email}</p>
-            <p className="mt-1 text-sm capitalize text-muted-foreground">
-              {user?.role.toLowerCase().replace("_", " ")}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{roleLabel}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Platform status</CardTitle>
-            <CardDescription>Foundation release</CardDescription>
+            <CardTitle className="text-base">Estado de la plataforma</CardTitle>
+            <CardDescription>Versión fundacional</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Authentication, users, and role-based access are active. Academic
-              domains (students, grades, attendance) are not yet implemented.
+              Autenticación, usuarios y control de acceso por roles están
+              activos. Los dominios académicos (estudiantes, notas, asistencia)
+              aún no están implementados.
             </p>
           </CardContent>
         </Card>

@@ -31,7 +31,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   if (!hasHydrated || !isAuthenticated || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Loading workspace…</p>
+        <p className="text-sm text-muted-foreground">Cargando espacio de trabajo…</p>
       </div>
     );
   }
