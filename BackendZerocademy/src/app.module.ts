@@ -11,7 +11,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RbacModule as RbacKernelModule } from './common/rbac/rbac.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RbacModule } from './modules/rbac/rbac.module';
+import { AcademicLevelsModule } from './modules/academic-levels/academic-levels.module';
 import { AcademicPeriodsModule } from './modules/academic-periods/academic-periods.module';
+import { CoursesModule } from './modules/courses/courses.module';
+import { GradeLevelsModule } from './modules/grade-levels/grade-levels.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -23,7 +26,10 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
     RbacModule,
     UsersModule,
+    AcademicLevelsModule,
     AcademicPeriodsModule,
+    CoursesModule,
+    GradeLevelsModule,
   ],
   controllers: [AppController],
   providers: [
