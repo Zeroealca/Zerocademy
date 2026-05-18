@@ -19,6 +19,8 @@ FrontendZerocademy/src/
 │   └── (dashboard)/dashboard/
 ├── features/               # Domain slices
 │   ├── auth/
+│   ├── users/
+│   ├── academic-periods/
 │   └── dashboard/
 ├── components/
 │   ├── ui/                 # Shared primitives
@@ -70,6 +72,9 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/` | Redirects to `/dashboard` |
 | `/login` | Public |
 | `/dashboard` | Protected (`AuthGuard`) |
+| `/users` | Protected — ADMIN, SUPER_ADMIN |
+| `/academic-periods` | Protected — view: ADMIN, SUPER_ADMIN, TEACHER |
+| `/academic-periods/new`, `…/edit` | Protected — ADMIN, SUPER_ADMIN |
 
 ## Environment
 
@@ -79,3 +84,5 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 
 - Monorepo boundary: root `agent.md`
 - Backend auth: [auth.md](./auth.md)
+- Academic periods UI: [academic-periods-frontend.md](./academic-periods-frontend.md)
+- UI guidelines: [ui-guidelines.md](./ui-guidelines.md)

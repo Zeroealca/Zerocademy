@@ -16,10 +16,11 @@ Canonical domains (from root `agent.md`):
 | Domain | Backend module | Frontend feature |
 |--------|----------------|------------------|
 | Auth | `auth` | `auth` |
-| Users | `users` | `users` *(API ready; UI admin screens later)* |
+| Users | `users` | `users` |
+| Academic periods | `academic-periods` | `academic-periods` |
 | Students, Teachers, Grades, … | Planned | Planned |
 
-**Implemented in this foundation:** Auth, Users (backend), Auth + Dashboard shell (frontend).
+**Implemented:** Auth, Users, RBAC, Academic periods (backend + frontend), Dashboard shell.
 
 ## Boundaries
 
@@ -50,18 +51,34 @@ npm run docker:up
 
 ## Documentation index
 
+- [ai-workflow.md](./ai-workflow.md)
+- [cursor-skills.md](./cursor-skills.md)
+- [development-workflow.md](./development-workflow.md)
 - [backend-architecture.md](./backend-architecture.md)
 - [frontend-architecture.md](./frontend-architecture.md)
 - [auth.md](./auth.md)
 - [users.md](./users.md)
 - [database.md](./database.md)
 - [api-flow.md](./api-flow.md)
+- [academic-periods.md](./academic-periods.md)
+- [academic-periods-frontend.md](./academic-periods-frontend.md)
+- [ui-guidelines.md](./ui-guidelines.md)
 - [backend-conventions.md](./backend-conventions.md)
 - [frontend-conventions.md](./frontend-conventions.md)
 
+## AI guidance
+
+| Layer | Location |
+|-------|----------|
+| Architecture & global rules | `agent.md`, `BackendZerocademy/agent.md`, `FrontendZerocademy/agent.md` |
+| Implementation workflows | `.cursor/skills/*/SKILL.md` |
+| Workflow docs | [ai-workflow.md](./ai-workflow.md), [cursor-skills.md](./cursor-skills.md), [development-workflow.md](./development-workflow.md) |
+
+Agents read **agent files** for principles and **skills** for scaffolding, CRUD, RBAC, docs sync, and reviews.
+
 ## Agent guides
 
-Authoritative layer rules:
+Authoritative layer rules (concise — no duplicated workflows):
 
 - Root: `agent.md`
 - Backend: `BackendZerocademy/agent.md`

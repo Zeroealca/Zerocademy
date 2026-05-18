@@ -15,10 +15,16 @@ BackendZerocademy/src/
 ├── app.module.ts           # Root module, global guards/filters
 ├── config/                 # Env validation (Joi), typed configuration
 ├── prisma/                 # PrismaModule (global)
-├── common/                 # Cross-cutting: guards, filters, logger, shared DTOs
+├── common/
+│   ├── guards/             # JwtAuthGuard, RolesGuard
+│   ├── decorators/         # @Public, @Roles, @CurrentUser, @ApiRequireRoles
+│   ├── rbac/               # Role constants, utils, profile provisioning
+│   └── ...                 # filters, logger, shared DTOs
 └── modules/
     ├── auth/
-    └── users/
+    ├── users/
+    ├── rbac/
+    └── academic-periods/
 ```
 
 ## Dependency rules
@@ -33,21 +39,31 @@ BackendZerocademy/src/
 |-----------|----------------|
 | `AppConfigModule` | Validated environment via Joi |
 | `PrismaModule` | Database access |
+| `RbacModule` (kernel) | Profile provisioning service (global) |
 | `LoggerModule` | JSON structured logging (`AppLoggerService`) |
 | `HttpExceptionFilter` | Consistent `{ statusCode, message, error, details? }` |
 | `ValidationPipe` | DTO whitelist, transform |
 | `JwtAuthGuard` | JWT validation (global) |
-| `RolesGuard` | Role metadata enforcement (global) |
+| `RolesGuard` | Role metadata enforcement via `RoleUtils` (global) |
 
 ## Request lifecycle
 
 1. HTTP request hits Nest adapter.
 2. Global `ValidationPipe` validates DTOs.
-3. `JwtAuthGuard` — skip if `@Public()`, else Passport JWT strategy loads user from DB.
-4. `RolesGuard` — if `@Roles()` set, compare with `request.user.role`.
+3. `JwtAuthGuard` — skip if `@Public()`, else Passport JWT strategy loads user and profiles from DB.
+4. `RolesGuard` — if `@Roles()` / `@ApiRequireRoles()` set, evaluate via `RoleUtils.hasRole()` (`SUPER_ADMIN` bypass).
 5. Controller delegates to service.
 6. Service applies business rules, Prisma queries, maps to response DTOs.
 7. `HttpExceptionFilter` formats errors; 5xx logged as structured JSON.
+
+## RBAC integration
+
+- Roles defined as Prisma `Role` enum — single role per user.
+- `@ApiRequireRoles()` on controllers documents required roles in Swagger.
+- Academic profiles provisioned on user create for `STUDENT`, `TEACHER`, `REPRESENTATIVE`.
+- JWT embeds `profileId`, `profileType`, `institutionId` for ownership-ready domain modules.
+
+See [rbac.md](./rbac.md) for role responsibilities and future permission expansion.
 
 ## API versioning
 
@@ -60,9 +76,12 @@ BackendZerocademy/src/
 - Paginated list endpoints (`PaginationQueryDto`, `buildPaginationMeta`).
 - Explicit Prisma `select` on reads.
 - Soft-delete ready via `deletedAt`.
+- Ownership query types prepared in `common/rbac/ownership.types.ts`.
 
 ## Related docs
 
+- [academic-periods.md](./academic-periods.md) — Ecuadorian calendar foundation
+- [rbac.md](./rbac.md) — roles, guards, profiles
 - [auth.md](./auth.md) — JWT and session flows
 - [database.md](./database.md) — Prisma schema
 - [api-flow.md](./api-flow.md) — End-to-end sequences
