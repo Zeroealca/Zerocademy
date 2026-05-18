@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -39,4 +40,12 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Institution scope for academic profiles (optional)',
+  })
+  @IsOptional()
+  @IsUUID()
+  institutionId?: string;
 }

@@ -14,14 +14,17 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
-  ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { ApiStandardErrorResponses } from '../../common/decorators/api';
+import { ApiErrorResponseDto } from '../../common/dto/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -31,70 +34,57 @@ import { UsersService } from './users.service';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
+@ApiUnauthorizedResponse({ type: ApiErrorResponseDto })
+@ApiForbiddenResponse({ type: ApiErrorResponseDto })
 @Controller('users')
-// @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+@Roles(Role.SUPER_ADMIN, Role.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({
-    summary: 'List users',
-    description: 'Requires role: SUPER_ADMIN or ADMIN. Paginated list.',
-  })
   @ApiOkResponse({ type: UserListResponseDto })
-  @ApiStandardErrorResponses()
-  findAll(@Query() query: ListUsersQueryDto): Promise<UserListResponseDto> {
-    return this.usersService.findAll(query);
+  findAll(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Query() query: ListUsersQueryDto,
+  ): Promise<UserListResponseDto> {
+    return this.usersService.findAll(actor, query);
   }
 
   @Get(':id')
-  @ApiOperation({
-    summary: 'Get user by ID',
-    description: 'Requires role: SUPER_ADMIN or ADMIN.',
-  })
   @ApiOkResponse({ type: UserResponseDto })
-  @ApiStandardErrorResponses()
   findOne(
+    @CurrentUser() actor: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<UserResponseDto> {
-    return this.usersService.findOne(id);
+    return this.usersService.findOne(actor, id);
   }
 
   @Post()
-  @ApiOperation({
-    summary: 'Create user',
-    description: 'Requires role: SUPER_ADMIN or ADMIN.',
-  })
   @ApiCreatedResponse({ type: UserResponseDto })
-  @ApiStandardErrorResponses()
-  create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    return this.usersService.create(dto);
+  create(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body() dto: CreateUserDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.create(actor, dto);
   }
 
   @Patch(':id')
-  @ApiOperation({
-    summary: 'Update user',
-    description: 'Requires role: SUPER_ADMIN or ADMIN.',
-  })
   @ApiOkResponse({ type: UserResponseDto })
-  @ApiStandardErrorResponses()
   update(
+    @CurrentUser() actor: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    return this.usersService.update(id, dto);
+    return this.usersService.update(actor, id, dto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: 'Soft-delete user',
-    description:
-      'Requires role: SUPER_ADMIN or ADMIN. Sets deletedAt and revokes refresh tokens.',
-  })
   @ApiNoContentResponse({ description: 'User soft-deleted' })
-  @ApiStandardErrorResponses()
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.usersService.softDelete(id);
+  remove(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    return this.usersService.softDelete(actor, id);
   }
 }

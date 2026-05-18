@@ -8,11 +8,16 @@ import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
 import { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { AuthenticatedUser } from '../../modules/auth/types/authenticated-user.type';
+import { AppLoggerService } from '../logger/app-logger.service';
+import { RoleUtils } from '../rbac/role.utils';
+import type { AuthenticatedUser } from '../../modules/auth/types/authenticated-user.type';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly logger: AppLoggerService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
@@ -31,10 +36,18 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('Access denied');
     }
 
-    if (!requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('Insufficient role permissions');
+    if (RoleUtils.hasRole(user.role, requiredRoles)) {
+      return true;
     }
 
-    return true;
+    this.logger.warn({
+      context: 'RolesGuard',
+      event: 'ROLE_DENIED',
+      userId: user.id,
+      email: user.email,
+      message: `Role ${user.role} denied for endpoint requiring ${requiredRoles.join(', ')}`,
+    });
+
+    throw new ForbiddenException('Insufficient role permissions');
   }
 }

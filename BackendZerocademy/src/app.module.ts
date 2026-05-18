@@ -8,7 +8,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { LoggerModule } from './common/logger/logger.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RbacModule as RbacKernelModule } from './common/rbac/rbac.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { RbacModule } from './modules/rbac/rbac.module';
+import { AcademicPeriodsModule } from './modules/academic-periods/academic-periods.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -16,8 +19,11 @@ import { UsersModule } from './modules/users/users.module';
     AppConfigModule,
     LoggerModule,
     PrismaModule,
+    RbacKernelModule,
     AuthModule,
+    RbacModule,
     UsersModule,
+    AcademicPeriodsModule,
   ],
   controllers: [AppController],
   providers: [
