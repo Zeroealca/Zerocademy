@@ -70,6 +70,22 @@ sequenceDiagram
   API-->>Admin: 201
 ```
 
+## Academic structure hierarchy
+
+```mermaid
+sequenceDiagram
+  participant UI as Frontend
+  participant API as AcademicLevelsController
+  participant DB as PostgreSQL
+
+  UI->>API: GET /v1/academic-levels/hierarchy/tree?academicPeriodId=
+  API->>DB: levels + grades + courses (filtered)
+  DB-->>API: nested tree
+  API-->>UI: AcademicHierarchyResponseDto
+```
+
+Classroom courses are created via `POST /v1/courses` with `academicPeriodId` + `gradeLevelId` + `section`.
+
 ## Error envelope
 
 All HTTP errors use:

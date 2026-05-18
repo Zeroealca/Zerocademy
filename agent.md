@@ -51,6 +51,10 @@ One bounded context per row. Implement in the mapped folders only.
 | Reports | Exports, period summaries | `reports` | `reports` |
 | Notifications | In-app and async delivery | `notifications` | `notifications` |
 | Academic periods | Terms, calendars, active period | `academic-periods` | `academic-periods` |
+| Academic levels | Reusable education stages (EGB, Bachillerato, custom) | `academic-levels` | `academic-levels` |
+| Grade levels | Reusable grades within a level | `grade-levels` | `grade-levels` |
+| Courses | Classroom / parallel groups per period | `courses` | `courses` |
+| Academic structure | Hierarchy visualization (reads levels API) | `academic-levels` *(hierarchy)* | `academic-structure` |
 | Dashboard | Aggregated KPIs and analytics UI | — *(reads other modules)* | `dashboard` |
 
 Cross-cutting: **RBAC** (`auth` + `users` + `common/rbac`), **audit logging**, **institution scope**.

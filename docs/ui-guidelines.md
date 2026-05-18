@@ -28,6 +28,7 @@
 | Data table | Bordered table inside `Card`, loading/error states |
 | Forms | `Card` wrapper, 2-column grid on `sm+`, inline field errors |
 | Status badges | `Badge` with variant by state (`success`, `secondary`, `muted`) |
+| Hierarchy tree | Nested bordered lists in `academic-structure` (levels → grades → courses) |
 | Empty states | Centered muted text in table body |
 | Access denied | Centered message + link back |
 
