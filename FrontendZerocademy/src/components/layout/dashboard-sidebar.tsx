@@ -1,10 +1,23 @@
 "use client";
 
-import { CalendarDays, GraduationCap, LayoutDashboard, Users } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  GitBranch,
+  GraduationCap,
+  Layers,
+  School,
+  LayoutDashboard,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { canManageUsers, canViewAcademicPeriods } from "@/lib/permissions";
+import {
+  canManageUsers,
+  canViewAcademicPeriods,
+  canViewAcademicStructure,
+} from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
 const baseNavItems = [
@@ -23,6 +36,30 @@ const academicPeriodsNavItem = {
   icon: CalendarDays,
 };
 
+const academicLevelsNavItem = {
+  href: "/academic-levels",
+  label: "Niveles académicos",
+  icon: Layers,
+};
+
+const gradeLevelsNavItem = {
+  href: "/grade-levels",
+  label: "Grados",
+  icon: BookOpen,
+};
+
+const coursesNavItem = {
+  href: "/courses",
+  label: "Cursos / Paralelos",
+  icon: School,
+};
+
+const academicStructureNavItem = {
+  href: "/academic-structure",
+  label: "Estructura (árbol)",
+  icon: GitBranch,
+};
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const currentUser = useAuthStore((state) => state.user);
@@ -31,6 +68,15 @@ export function DashboardSidebar() {
 
   if (canViewAcademicPeriods(currentUser?.role)) {
     navItems.push(academicPeriodsNavItem);
+  }
+
+  if (canViewAcademicStructure(currentUser?.role)) {
+    navItems.push(
+      academicLevelsNavItem,
+      gradeLevelsNavItem,
+      coursesNavItem,
+      academicStructureNavItem,
+    );
   }
 
   if (canManageUsers(currentUser?.role)) {
