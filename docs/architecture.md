@@ -60,6 +60,7 @@ npm run docker:up
 - [users.md](./users.md)
 - [database.md](./database.md)
 - [api-flow.md](./api-flow.md)
+- [academic-structure.md](./academic-structure.md)
 - [academic-periods.md](./academic-periods.md)
 - [academic-periods-frontend.md](./academic-periods-frontend.md)
 - [ui-guidelines.md](./ui-guidelines.md)

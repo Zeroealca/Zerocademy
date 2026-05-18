@@ -82,6 +82,16 @@ Relations: one-to-many `AcademicTerm`.
 | startDate, endDate | Date | Within parent period |
 | academicPeriodId | UUID | FK → AcademicPeriod (CASCADE) |
 
+### AcademicLevel / GradeLevel / Course
+
+Reusable structure catalog plus period-scoped classroom groups. See [academic-structure.md](./academic-structure.md).
+
+| Model | Reused across periods | Key relations |
+|-------|----------------------|---------------|
+| `AcademicLevel` | Yes | optional `institutionId` |
+| `GradeLevel` | Yes | `academicLevelId` |
+| `Course` | No (per period) | `academicPeriodId`, `gradeLevelId` |
+
 ### HealthCheck
 
 Bootstrap table for infrastructure health probes.
@@ -104,6 +114,7 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20250517120000_auth_users` | Users, refresh tokens, initial roles |
 | `20250517140000_rbac_profiles` | `REPRESENTATIVE` role, institutions, academic profiles |
 | `20250517160000_academic_periods` | Academic periods and terms (Ecuador regimes) |
+| `20250518120000_academic_structure` | Academic levels, grade levels, classroom courses |
 
 Never edit applied migration SQL retroactively.
 
@@ -113,7 +124,7 @@ Never edit applied migration SQL retroactively.
 npm run prisma:seed -w backend-zerocademy
 ```
 
-Creates a `SUPER_ADMIN` if none exists (see `prisma/seed.ts`). Super admins do not require an academic profile.
+Creates a `SUPER_ADMIN` if none exists and upserts **example** system academic levels/grades (Inicial, EGB, Bachillerato). Super admins do not require an academic profile.
 
 ## Design decisions
 
@@ -129,6 +140,7 @@ Creates a `SUPER_ADMIN` if none exists (see `prisma/seed.ts`). Super admins do n
 
 ## Related documentation
 
+- [academic-structure.md](./academic-structure.md) — levels, grades, courses
 - [academic-periods.md](./academic-periods.md) — calendar module
 - [rbac.md](./rbac.md) — authorization and profile strategy
 - [auth.md](./auth.md) — JWT flows

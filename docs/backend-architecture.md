@@ -24,7 +24,10 @@ BackendZerocademy/src/
     ├── auth/
     ├── users/
     ├── rbac/
-    └── academic-periods/
+    ├── academic-periods/
+    ├── academic-levels/
+    ├── grade-levels/
+    └── courses/
 ```
 
 ## Dependency rules

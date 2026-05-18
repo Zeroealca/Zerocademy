@@ -21,6 +21,10 @@ FrontendZerocademy/src/
 │   ├── auth/
 │   ├── users/
 │   ├── academic-periods/
+│   ├── academic-levels/
+│   ├── grade-levels/
+│   ├── courses/
+│   ├── academic-structure/
 │   └── dashboard/
 ├── components/
 │   ├── ui/                 # Shared primitives
