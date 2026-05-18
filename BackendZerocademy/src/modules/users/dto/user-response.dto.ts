@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 export class UserResponseDto {
@@ -19,6 +19,17 @@ export class UserResponseDto {
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  profileId?: string;
+
+  @ApiPropertyOptional({
+    enum: ['student', 'teacher', 'representative'],
+  })
+  profileType?: 'student' | 'teacher' | 'representative';
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  institutionId?: string;
 
   @ApiProperty()
   createdAt: string;

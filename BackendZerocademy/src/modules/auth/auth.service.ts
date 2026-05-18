@@ -7,14 +7,20 @@ import * as bcrypt from 'bcrypt';
 import { AppConfig } from '../../config/configuration';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { toAuthUserResponseDto } from '../users/mappers/user.mapper';
+import {
+  toAuthUserResponseDto,
+  userWithProfilesSelect,
+} from './mappers/auth-user.mapper';
 import { AUTH_CONTEXT } from './constants';
 import { AuthTokensResponseDto } from './dto/auth-tokens-response.dto';
 import { AuthUserResponseDto } from './dto/auth-user-response.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenService } from './token.service';
-import { AuthenticatedUser } from './types/authenticated-user.type';
+import {
+  AuthenticatedUser,
+  JwtAccessPayload,
+} from './types/authenticated-user.type';
 
 @Injectable()
 export class AuthService {
@@ -41,6 +47,10 @@ export class AuthService {
       where: {
         email: dto.email.toLowerCase(),
         deletedAt: null,
+      },
+      select: {
+        ...userWithProfilesSelect,
+        passwordHash: true,
       },
     });
 
@@ -72,7 +82,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.role);
+    const tokens = await this.issueTokensForUser(user);
 
     this.logger.log({
       context: AUTH_CONTEXT,
@@ -117,7 +127,7 @@ export class AuthService {
         expiresAt: { gt: new Date() },
       },
       include: {
-        user: true,
+        user: { select: userWithProfilesSelect },
       },
     });
 
@@ -137,11 +147,7 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    const tokens = await this.issueTokens(
-      storedToken.user.id,
-      storedToken.user.email,
-      storedToken.user.role,
-    );
+    const tokens = await this.issueTokensForUser(storedToken.user);
 
     this.logger.log({
       context: AUTH_CONTEXT,
@@ -184,16 +190,7 @@ export class AuthService {
         deletedAt: null,
         isActive: true,
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userWithProfilesSelect,
     });
 
     if (!record) {
@@ -203,23 +200,32 @@ export class AuthService {
     return toAuthUserResponseDto(record);
   }
 
-  private async issueTokens(
-    userId: string,
-    email: string,
-    role: AuthenticatedUser['role'],
+  private async issueTokensForUser(
+    user: Parameters<typeof toAuthUserResponseDto>[0] & { passwordHash?: string },
   ): Promise<Omit<AuthTokensResponseDto, 'user'>> {
+    const authUser = toAuthUserResponseDto(user);
+
+    const accessPayload: JwtAccessPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      profileId: authUser.profileId,
+      profileType: authUser.profileType,
+      institutionId: authUser.institutionId,
+    };
+
     const refreshTokenRecord = await this.prisma.refreshToken.create({
       data: {
-        userId,
+        userId: user.id,
         tokenHash: 'pending',
         expiresAt: this.getRefreshExpiryDate(),
       },
     });
 
-    const tokens = this.tokenService.buildAuthTokens(
-      { sub: userId, email, role },
-      { sub: userId, tokenId: refreshTokenRecord.id },
-    );
+    const tokens = this.tokenService.buildAuthTokens(accessPayload, {
+      sub: user.id,
+      tokenId: refreshTokenRecord.id,
+    });
 
     const tokenHash = this.tokenService.hashToken(tokens.refreshToken);
 

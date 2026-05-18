@@ -10,25 +10,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------------------------------------------------------------------
+// RBAC — system roles (single role per user; permissions layer is future work)
+// ---------------------------------------------------------------------------
 enum Role {
   SUPER_ADMIN
   ADMIN
   TEACHER
   STUDENT
+  REPRESENTATIVE
 }
 
+// ---------------------------------------------------------------------------
+// Authentication account — credentials and RBAC role only (no academic fields)
+// ---------------------------------------------------------------------------
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         Role           @default(STUDENT)
-  isActive     Boolean        @default(true)
-  deletedAt    DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  refreshTokens RefreshToken[]
+  id                    String                 @id @default(uuid())
+  email                 String                 @unique
+  passwordHash          String
+  firstName             String
+  lastName              String
+  role                  Role                   @default(STUDENT)
+  isActive              Boolean                @default(true)
+  deletedAt             DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  refreshTokens         RefreshToken[]
+  studentProfile        StudentProfile?
+  teacherProfile        TeacherProfile?
+  representativeProfile RepresentativeProfile?
 
   @@index([role])
   @@index([isActive])
@@ -48,6 +58,113 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Academic profiles — separated from User for scalable domain modeling
+// ---------------------------------------------------------------------------
+model Institution {
+  id                      String                  @id @default(uuid())
+  name                    String
+  slug                    String                  @unique
+  isActive                Boolean                 @default(true)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  studentProfiles         StudentProfile[]
+  teacherProfiles         TeacherProfile[]
+  representativeProfiles  RepresentativeProfile[]
+
+  @@map("institutions")
+}
+
+model StudentProfile {
+  id            String       @id @default(uuid())
+  userId        String       @unique
+  institutionId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@index([institutionId])
+  @@map("student_profiles")
+}
+
+model TeacherProfile {
+  id            String       @id @default(uuid())
+  userId        String       @unique
+  institutionId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@index([institutionId])
+  @@map("teacher_profiles")
+}
+
+model RepresentativeProfile {
+  id            String       @id @default(uuid())
+  userId        String       @unique
+  institutionId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@index([institutionId])
+  @@map("representative_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// Academic calendar — Ecuadorian regimes (Costa/Galápagos vs Sierra/Amazonía)
+// ---------------------------------------------------------------------------
+enum AcademicRegime {
+  COSTA_GALAPAGOS
+  SIERRA_AMAZONIA
+}
+
+enum AcademicPeriodStatus {
+  PLANNED
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+model AcademicPeriod {
+  id        String               @id @default(uuid())
+  name      String
+  regime    AcademicRegime
+  startDate DateTime             @db.Date
+  endDate   DateTime             @db.Date
+  isActive  Boolean              @default(false)
+  status    AcademicPeriodStatus @default(PLANNED)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  terms     AcademicTerm[]
+
+  @@index([regime])
+  @@index([status])
+  @@index([isActive])
+  @@index([regime, status])
+  @@index([startDate, endDate])
+  @@map("academic_periods")
+}
+
+model AcademicTerm {
+  id               String         @id @default(uuid())
+  name             String
+  order            Int
+  startDate        DateTime       @db.Date
+  endDate          DateTime       @db.Date
+  academicPeriodId String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+
+  @@unique([academicPeriodId, order])
+  @@index([academicPeriodId])
+  @@map("academic_terms")
 }
 
 // Bootstrap health probe — kept for infrastructure checks.

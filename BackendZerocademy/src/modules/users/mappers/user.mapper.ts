@@ -1,20 +1,18 @@
-import { User } from '@prisma/client';
+import {
+  mapProfileFromUser,
+  toAuthUserResponseDto as mapToAuthUser,
+  userWithProfilesSelect,
+} from '../../auth/mappers/auth-user.mapper';
 import { AuthUserResponseDto } from '../../auth/dto/auth-user-response.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 
-type UserRecord = Pick<
-  User,
-  | 'id'
-  | 'email'
-  | 'firstName'
-  | 'lastName'
-  | 'role'
-  | 'isActive'
-  | 'createdAt'
-  | 'updatedAt'
->;
+type UserWithProfiles = Parameters<typeof mapToAuthUser>[0];
 
-export function toUserResponseDto(user: UserRecord): UserResponseDto {
+export { userWithProfilesSelect };
+
+export function toUserResponseDto(user: UserWithProfiles): UserResponseDto {
+  const profile = mapProfileFromUser(user);
+
   return {
     id: user.id,
     email: user.email,
@@ -24,9 +22,12 @@ export function toUserResponseDto(user: UserRecord): UserResponseDto {
     isActive: user.isActive,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
+    profileId: profile.profileId,
+    profileType: profile.profileType,
+    institutionId: profile.institutionId,
   };
 }
 
-export function toAuthUserResponseDto(user: UserRecord): AuthUserResponseDto {
-  return toUserResponseDto(user);
+export function toAuthUserResponseDto(user: UserWithProfiles): AuthUserResponseDto {
+  return mapToAuthUser(user);
 }

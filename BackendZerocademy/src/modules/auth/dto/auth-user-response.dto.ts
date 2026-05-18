@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 export class AuthUserResponseDto {
@@ -19,6 +19,24 @@ export class AuthUserResponseDto {
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Academic profile id for STUDENT, TEACHER, or REPRESENTATIVE roles',
+  })
+  profileId?: string;
+
+  @ApiPropertyOptional({
+    enum: ['student', 'teacher', 'representative'],
+    description: 'Academic profile discriminator',
+  })
+  profileType?: 'student' | 'teacher' | 'representative';
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Institution scope when assigned',
+  })
+  institutionId?: string;
 
   @ApiProperty({ example: '2025-05-16T12:00:00.000Z' })
   createdAt: string;

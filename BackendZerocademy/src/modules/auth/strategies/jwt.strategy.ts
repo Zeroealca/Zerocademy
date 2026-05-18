@@ -5,6 +5,10 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AppConfig } from '../../../config/configuration';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
+  toAuthenticatedUser,
+  userWithProfilesSelect,
+} from '../mappers/auth-user.mapper';
+import {
   AuthenticatedUser,
   JwtAccessPayload,
 } from '../types/authenticated-user.type';
@@ -31,19 +35,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         deletedAt: null,
         isActive: true,
       },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        firstName: true,
-        lastName: true,
-      },
+      select: userWithProfilesSelect,
     });
 
     if (!user) {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    return user;
+    return toAuthenticatedUser(user);
   }
 }

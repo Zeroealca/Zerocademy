@@ -76,7 +76,8 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Get current authenticated user',
-    description: 'Requires a valid JWT access token.',
+    description:
+      'Requires a valid JWT access token. Returns role, profile linkage, and institution scope when applicable.',
   })
   @ApiOkResponse({ type: AuthUserResponseDto })
   @ApiUnauthorizedResponse({ type: ApiErrorResponseDto })
