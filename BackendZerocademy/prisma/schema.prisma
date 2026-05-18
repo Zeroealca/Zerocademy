@@ -73,6 +73,8 @@ model Institution {
   studentProfiles         StudentProfile[]
   teacherProfiles         TeacherProfile[]
   representativeProfiles  RepresentativeProfile[]
+  academicLevels          AcademicLevel[]
+  gradeLevels             GradeLevel[]
 
   @@map("institutions")
 }
@@ -142,6 +144,7 @@ model AcademicPeriod {
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
   terms     AcademicTerm[]
+  courses   Course[]
 
   @@index([regime])
   @@index([status])
@@ -165,6 +168,75 @@ model AcademicTerm {
   @@unique([academicPeriodId, order])
   @@index([academicPeriodId])
   @@map("academic_terms")
+}
+
+// ---------------------------------------------------------------------------
+// Academic structure — reusable levels/grades; period-scoped classroom courses
+// ---------------------------------------------------------------------------
+model AcademicLevel {
+  id             String        @id @default(uuid())
+  name           String
+  code           String
+  order          Int
+  description    String?
+  institutionId  String?
+  isSystem       Boolean       @default(false)
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  institution    Institution?  @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  gradeLevels    GradeLevel[]
+
+  @@index([institutionId])
+  @@index([isActive])
+  @@index([order])
+  @@index([isSystem])
+  @@map("academic_levels")
+}
+
+model GradeLevel {
+  id              String        @id @default(uuid())
+  name            String
+  code            String
+  order           Int
+  description     String?
+  academicLevelId String
+  institutionId   String?
+  isSystem        Boolean       @default(false)
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  academicLevel   AcademicLevel @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
+  institution     Institution?  @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  courses         Course[]
+
+  @@unique([academicLevelId, code])
+  @@index([academicLevelId])
+  @@index([institutionId])
+  @@index([isActive])
+  @@index([order])
+  @@map("grade_levels")
+}
+
+/// Classroom / parallel group offering for a grade within an academic period.
+model Course {
+  id               String         @id @default(uuid())
+  name             String
+  section          String
+  capacity         Int?
+  academicPeriodId String
+  gradeLevelId     String
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+  gradeLevel       GradeLevel     @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
+
+  @@unique([academicPeriodId, gradeLevelId, section])
+  @@index([academicPeriodId])
+  @@index([gradeLevelId])
+  @@index([isActive])
+  @@map("courses")
 }
 
 // Bootstrap health probe — kept for infrastructure checks.
