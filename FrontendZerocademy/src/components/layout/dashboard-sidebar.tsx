@@ -3,9 +3,11 @@
 import {
   BookOpen,
   CalendarDays,
+  ClipboardList,
   GitBranch,
   GraduationCap,
   Layers,
+  Library,
   School,
   LayoutDashboard,
   Users,
@@ -54,6 +56,18 @@ const coursesNavItem = {
   icon: School,
 };
 
+const subjectsNavItem = {
+  href: "/subjects",
+  label: "Materias",
+  icon: Library,
+};
+
+const teacherAssignmentsNavItem = {
+  href: "/teacher-assignments",
+  label: "Asignaciones docentes",
+  icon: ClipboardList,
+};
+
 const academicStructureNavItem = {
   href: "/academic-structure",
   label: "Estructura (árbol)",
@@ -75,6 +89,8 @@ export function DashboardSidebar() {
       academicLevelsNavItem,
       gradeLevelsNavItem,
       coursesNavItem,
+      subjectsNavItem,
+      teacherAssignmentsNavItem,
       academicStructureNavItem,
     );
   }
