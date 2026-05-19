@@ -18,9 +18,11 @@ Canonical domains (from root `agent.md`):
 | Auth | `auth` | `auth` |
 | Users | `users` | `users` |
 | Academic periods | `academic-periods` | `academic-periods` |
+| Subjects | `subjects` | `subjects` |
+| Teacher assignments | `teacher-assignments` | `teacher-assignments` |
 | Students, Teachers, Grades, … | Planned | Planned |
 
-**Implemented:** Auth, Users, RBAC, Academic periods (backend + frontend), Dashboard shell.
+**Implemented:** Auth, Users, RBAC, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Dashboard shell.
 
 ## Boundaries
 
@@ -63,6 +65,10 @@ npm run docker:up
 - [academic-structure.md](./academic-structure.md)
 - [academic-periods.md](./academic-periods.md)
 - [academic-periods-frontend.md](./academic-periods-frontend.md)
+- [subjects.md](./subjects.md)
+- [teacher-assignments.md](./teacher-assignments.md)
+- [curriculum.md](./curriculum.md)
+- [seeds.md](./seeds.md)
 - [ui-guidelines.md](./ui-guidelines.md)
 - [backend-conventions.md](./backend-conventions.md)
 - [frontend-conventions.md](./frontend-conventions.md)

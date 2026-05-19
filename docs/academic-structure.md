@@ -101,7 +101,13 @@ All three resources support:
 
 ## Ecuador reference (seed only)
 
-`prisma/seed.ts` seeds **example** catalog entries (Inicial, EGB, Bachillerato) for development. Institutions may add custom structures; no Ecuador enum is enforced in code.
+The Ecuador national reference catalog is seeded via modular files under `prisma/seeds/curriculum/` (see [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md)):
+
+- **Educación Inicial**, **Educación General Básica**, **Bachillerato General Unificado**
+- Grades such as *Primero de EGB*, *Décimo de EGB*, *Primero de BGU* (Spanish names)
+- Common subjects and `SubjectGradeLevel` links
+
+Institutions may add custom structures through the API; no Ecuador enum is enforced in application code.
 
 ## Frontend
 
@@ -111,6 +117,8 @@ All three resources support:
 | Grade levels | `/grade-levels` |
 | Courses | `/courses` |
 | Hierarchy tree | `/academic-structure` |
+| Subjects | `/subjects` |
+| Teacher assignments | `/teacher-assignments` |
 
 UI copy is Spanish; see `FrontendZerocademy/agent.md`.
 
@@ -124,11 +132,23 @@ Structured events (examples):
 
 Context: `AcademicLevelsService`, `GradeLevelsService`, `CoursesService`.
 
+## Subjects and teacher assignments
+
+Staffing sits on top of this hierarchy:
+
+```
+GradeLevel → Course (per period) → TeacherAssignment ← Subject
+                                      ↑
+                               TeacherProfile
+```
+
+See [subjects.md](./subjects.md) and [teacher-assignments.md](./teacher-assignments.md).
+
 ## Extensibility
 
 - New levels/grades via API (no schema change)
 - Institution-specific rows via `institutionId`
-- Future: link courses to subjects, teachers, or enrollments without renaming this `Course` model (classroom offering)
+- Subjects and teacher assignments use the same `Course` model (classroom offering) without renaming it
 
 ## Related
 
