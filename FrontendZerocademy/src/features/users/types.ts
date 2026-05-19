@@ -7,6 +7,9 @@ export interface User {
   lastName: string;
   role: UserRole;
   isActive: boolean;
+  profileId?: string;
+  profileType?: "student" | "teacher" | "representative";
+  institutionId?: string;
   createdAt: string;
   updatedAt: string;
 }
