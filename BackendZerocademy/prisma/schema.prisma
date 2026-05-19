@@ -93,13 +93,14 @@ model StudentProfile {
 }
 
 model TeacherProfile {
-  id            String       @id @default(uuid())
-  userId        String       @unique
-  institutionId String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  id                 String              @id @default(uuid())
+  userId             String              @unique
+  institutionId      String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution        Institution?        @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  teacherAssignments TeacherAssignment[]
 
   @@index([institutionId])
   @@map("teacher_profiles")
@@ -143,8 +144,9 @@ model AcademicPeriod {
   status    AcademicPeriodStatus @default(PLANNED)
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
-  terms     AcademicTerm[]
-  courses   Course[]
+  terms              AcademicTerm[]
+  courses            Course[]
+  teacherAssignments TeacherAssignment[]
 
   @@index([regime])
   @@index([status])
@@ -207,8 +209,9 @@ model GradeLevel {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   academicLevel   AcademicLevel @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
-  institution     Institution?  @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  courses         Course[]
+  institution        Institution?         @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  courses            Course[]
+  subjectGradeLevels SubjectGradeLevel[]
 
   @@unique([academicLevelId, code])
   @@index([academicLevelId])
@@ -229,14 +232,73 @@ model Course {
   isActive         Boolean        @default(true)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
-  gradeLevel       GradeLevel     @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
+  academicPeriod     AcademicPeriod      @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+  gradeLevel         GradeLevel          @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
+  teacherAssignments TeacherAssignment[]
 
   @@unique([academicPeriodId, gradeLevelId, section])
   @@index([academicPeriodId])
   @@index([gradeLevelId])
   @@index([isActive])
   @@map("courses")
+}
+
+// ---------------------------------------------------------------------------
+// Academic catalog — reusable subjects and teacher assignments
+// ---------------------------------------------------------------------------
+model Subject {
+  id                 String              @id @default(uuid())
+  name               String
+  code               String              @unique
+  description        String?
+  isSystem           Boolean             @default(false)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  gradeLevelLinks    SubjectGradeLevel[]
+  teacherAssignments TeacherAssignment[]
+
+  @@index([isActive])
+  @@index([isSystem])
+  @@map("subjects")
+}
+
+/// Links reusable subjects to grade levels (curriculum scope).
+model SubjectGradeLevel {
+  id           String     @id @default(uuid())
+  subjectId    String
+  gradeLevelId String
+  createdAt    DateTime   @default(now())
+  subject      Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  gradeLevel   GradeLevel @relation(fields: [gradeLevelId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, gradeLevelId])
+  @@index([subjectId])
+  @@index([gradeLevelId])
+  @@map("subject_grade_levels")
+}
+
+/// Assigns a teacher to teach a subject in a classroom course for an academic period.
+model TeacherAssignment {
+  id               String         @id @default(uuid())
+  teacherId        String
+  subjectId        String
+  courseId         String
+  academicPeriodId String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  teacher          TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, subjectId, courseId, academicPeriodId])
+  @@index([teacherId])
+  @@index([subjectId])
+  @@index([courseId])
+  @@index([academicPeriodId])
+  @@index([academicPeriodId, teacherId])
+  @@map("teacher_assignments")
 }
 
 // Bootstrap health probe — kept for infrastructure checks.
