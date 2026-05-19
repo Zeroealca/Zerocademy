@@ -92,6 +92,18 @@ Reusable structure catalog plus period-scoped classroom groups. See [academic-st
 | `GradeLevel` | Yes | `academicLevelId` |
 | `Course` | No (per period) | `academicPeriodId`, `gradeLevelId` |
 
+### Subject / TeacherAssignment
+
+Reusable subject catalog and period-scoped teacher staffing. See [subjects.md](./subjects.md) and [teacher-assignments.md](./teacher-assignments.md).
+
+| Model | Scope | Key relations |
+|-------|-------|---------------|
+| `Subject` | Global catalog | `SubjectGradeLevel`, `TeacherAssignment` |
+| `SubjectGradeLevel` | Curriculum link | `Subject`, `GradeLevel` |
+| `TeacherAssignment` | Per period + course | `TeacherProfile`, `Subject`, `Course`, `AcademicPeriod` |
+
+Unique: `Subject.code`; `TeacherAssignment(teacherId, subjectId, courseId, academicPeriodId)`.
+
 ### HealthCheck
 
 Bootstrap table for infrastructure health probes.
@@ -99,8 +111,11 @@ Bootstrap table for infrastructure health probes.
 ## Migrations
 
 ```bash
-# Development
-npx prisma migrate dev -w backend-zerocademy
+# Development (from repo root)
+npm run prisma:migrate:dev -w backend-zerocademy
+
+# Or from BackendZerocademy/
+cd BackendZerocademy && npx prisma migrate dev
 
 # Docker / production-style
 npm run docker:prisma:migrate
@@ -115,6 +130,7 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20250517140000_rbac_profiles` | `REPRESENTATIVE` role, institutions, academic profiles |
 | `20250517160000_academic_periods` | Academic periods and terms (Ecuador regimes) |
 | `20250518120000_academic_structure` | Academic levels, grade levels, classroom courses |
+| `20250519120000_subjects_teacher_assignments` | Subjects, subject–grade links, teacher assignments |
 
 Never edit applied migration SQL retroactively.
 
@@ -122,9 +138,13 @@ Never edit applied migration SQL retroactively.
 
 ```bash
 npm run prisma:seed -w backend-zerocademy
+npm run prisma:seed:curriculum -w backend-zerocademy   # catalog only
+npm run prisma:seed:dry-run -w backend-zerocademy    # no writes
 ```
 
-Creates a `SUPER_ADMIN` if none exists and upserts **example** system academic levels/grades (Inicial, EGB, Bachillerato). Super admins do not require an academic profile.
+Creates a `SUPER_ADMIN` if none exists and upserts the **Ecuador reference catalog** (levels, grades, subjects, subject–grade links). See [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md).
+
+Super admins do not require an academic profile.
 
 ## Design decisions
 
@@ -141,6 +161,10 @@ Creates a `SUPER_ADMIN` if none exists and upserts **example** system academic l
 ## Related documentation
 
 - [academic-structure.md](./academic-structure.md) — levels, grades, courses
+- [subjects.md](./subjects.md) — subject catalog
+- [teacher-assignments.md](./teacher-assignments.md) — teacher staffing
+- [curriculum.md](./curriculum.md) — curriculum design
+- [seeds.md](./seeds.md) — seed execution
 - [academic-periods.md](./academic-periods.md) — calendar module
 - [rbac.md](./rbac.md) — authorization and profile strategy
 - [auth.md](./auth.md) — JWT flows

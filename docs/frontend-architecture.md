@@ -24,6 +24,8 @@ FrontendZerocademy/src/
 │   ├── academic-levels/
 │   ├── grade-levels/
 │   ├── courses/
+│   ├── subjects/
+│   ├── teacher-assignments/
 │   ├── academic-structure/
 │   └── dashboard/
 ├── components/

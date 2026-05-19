@@ -42,9 +42,10 @@ One bounded context per row. Implement in the mapped folders only.
 | Auth | Login, JWT, session context | `auth` | `auth` |
 | Users | Accounts, profiles, role assignment | `users` | `users` |
 | Students | Enrollment, profiles, guardians, class assignment | `students` | `students` |
-| Teachers | Profiles, assignments, qualifications | `teachers` | `teachers` |
-| Courses | Course offerings, groups, assignments | `courses` | `courses` *(when built)* |
-| Subjects | Subject catalog, curricula links | `subjects` | `subjects` *(when built)* |
+| Teachers | Profiles, qualifications | `teachers` | `teachers` |
+| Courses | Classroom / parallel groups per period | `courses` | `courses` |
+| Subjects | Subject catalog, curricula links | `subjects` | `subjects` |
+| Teacher assignments | Staffing: teacher + subject + course + period | `teacher-assignments` | `teacher-assignments` |
 | Planning | Schedules, class groups, academic structure | `planning` | `planning` |
 | Grades | Assessments, entry, transcripts | `grades` | `grades` |
 | Attendance | Records, absences, justifications | `attendance` | `attendance` |
@@ -53,7 +54,6 @@ One bounded context per row. Implement in the mapped folders only.
 | Academic periods | Terms, calendars, active period | `academic-periods` | `academic-periods` |
 | Academic levels | Reusable education stages (EGB, Bachillerato, custom) | `academic-levels` | `academic-levels` |
 | Grade levels | Reusable grades within a level | `grade-levels` | `grade-levels` |
-| Courses | Classroom / parallel groups per period | `courses` | `courses` |
 | Academic structure | Hierarchy visualization (reads levels API) | `academic-levels` *(hierarchy)* | `academic-structure` |
 | Dashboard | Aggregated KPIs and analytics UI | — *(reads other modules)* | `dashboard` |
 

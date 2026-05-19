@@ -27,7 +27,9 @@ BackendZerocademy/src/
     ├── academic-periods/
     ├── academic-levels/
     ├── grade-levels/
-    └── courses/
+    ├── courses/
+    ├── subjects/
+    └── teacher-assignments/
 ```
 
 ## Dependency rules
