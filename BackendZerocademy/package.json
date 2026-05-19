@@ -12,6 +12,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
+    "prisma:seed:curriculum": "ts-node --transpile-only prisma/seeds/run-curriculum.ts",
+    "prisma:seed:dry-run": "SEED_DRY_RUN=true ts-node --transpile-only prisma/seed.ts",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
