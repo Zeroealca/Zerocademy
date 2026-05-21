@@ -19,7 +19,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { ApiRequireRoles } from '../../common/decorators/api';
+import {
+  ApiRequireRoles,
+  ApiRequireRolesStrict,
+} from '../../common/decorators/api';
+import {
+  INSTITUTION_OPS_READ_ROLES,
+  INSTITUTION_OPS_WRITE_ROLES,
+} from '../../common/rbac/rbac-role-sets';
 import { AssignmentHierarchyQueryDto } from './dto/assignment-hierarchy-query.dto';
 import { AssignmentHierarchyResponseDto } from './dto/assignment-hierarchy-response.dto';
 import { CreateTeacherAssignmentDto } from './dto/create-teacher-assignment.dto';
@@ -29,9 +36,6 @@ import { TeacherAssignmentResponseDto } from './dto/teacher-assignment-response.
 import { UpdateTeacherAssignmentDto } from './dto/update-teacher-assignment.dto';
 import { TeacherAssignmentsService } from './teacher-assignments.service';
 
-const READ_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER] as const;
-const WRITE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
-
 @ApiTags('teacher-assignments')
 @Controller('teacher-assignments')
 export class TeacherAssignmentsController {
@@ -40,7 +44,7 @@ export class TeacherAssignmentsController {
   ) {}
 
   @Get()
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...INSTITUTION_OPS_READ_ROLES)
   @ApiOperation({ summary: 'List teacher assignments (paginated)' })
   @ApiOkResponse({ type: TeacherAssignmentListResponseDto })
   findAll(
@@ -50,7 +54,7 @@ export class TeacherAssignmentsController {
   }
 
   @Get('hierarchy/by-period')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...INSTITUTION_OPS_READ_ROLES)
   @ApiOperation({
     summary: 'Get assignments for an academic period',
     description:
@@ -64,7 +68,7 @@ export class TeacherAssignmentsController {
   }
 
   @Get(':id')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...INSTITUTION_OPS_READ_ROLES)
   @ApiOperation({ summary: 'Get teacher assignment by id' })
   @ApiOkResponse({ type: TeacherAssignmentResponseDto })
   findOne(
@@ -74,7 +78,7 @@ export class TeacherAssignmentsController {
   }
 
   @Post()
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Create teacher assignment' })
   @ApiCreatedResponse({ type: TeacherAssignmentResponseDto })
   create(
@@ -84,7 +88,7 @@ export class TeacherAssignmentsController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Update teacher assignment' })
   @ApiOkResponse({ type: TeacherAssignmentResponseDto })
   update(
@@ -96,7 +100,7 @@ export class TeacherAssignmentsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Remove teacher assignment' })
   @ApiNoContentResponse()
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

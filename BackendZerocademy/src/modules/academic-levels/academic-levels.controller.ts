@@ -20,6 +20,10 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import {
+  PLATFORM_CATALOG_WRITE_ROLES,
+  PLATFORM_READ_ROLES,
+} from '../../common/rbac/rbac-role-sets';
 import { AcademicLevelsService } from './academic-levels.service';
 import { AcademicHierarchyResponseDto } from './dto/academic-hierarchy-response.dto';
 import { AcademicLevelListResponseDto } from './dto/academic-level-list-response.dto';
@@ -29,16 +33,13 @@ import { AcademicHierarchyQueryDto } from './dto/hierarchy-query.dto';
 import { ListAcademicLevelsQueryDto } from './dto/list-academic-levels-query.dto';
 import { UpdateAcademicLevelDto } from './dto/update-academic-level.dto';
 
-const READ_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER] as const;
-const WRITE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
-
 @ApiTags('academic-levels')
 @Controller('academic-levels')
 export class AcademicLevelsController {
   constructor(private readonly academicLevelsService: AcademicLevelsService) {}
 
   @Get()
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'List academic levels (paginated)' })
   @ApiOkResponse({ type: AcademicLevelListResponseDto })
   findAll(
@@ -48,7 +49,7 @@ export class AcademicLevelsController {
   }
 
   @Get('hierarchy/tree')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({
     summary: 'Get academic structure hierarchy',
     description:
@@ -62,7 +63,7 @@ export class AcademicLevelsController {
   }
 
   @Get(':id')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'Get academic level by id' })
   @ApiOkResponse({ type: AcademicLevelResponseDto })
   findOne(
@@ -72,7 +73,7 @@ export class AcademicLevelsController {
   }
 
   @Post()
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Create academic level' })
   @ApiCreatedResponse({ type: AcademicLevelResponseDto })
   create(@Body() dto: CreateAcademicLevelDto): Promise<AcademicLevelResponseDto> {
@@ -80,7 +81,7 @@ export class AcademicLevelsController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Update academic level' })
   @ApiOkResponse({ type: AcademicLevelResponseDto })
   update(
@@ -91,7 +92,7 @@ export class AcademicLevelsController {
   }
 
   @Post(':id/activate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Activate academic level' })
   @ApiOkResponse({ type: AcademicLevelResponseDto })
   activate(
@@ -101,7 +102,7 @@ export class AcademicLevelsController {
   }
 
   @Post(':id/deactivate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Deactivate academic level' })
   @ApiOkResponse({ type: AcademicLevelResponseDto })
   deactivate(
@@ -112,7 +113,7 @@ export class AcademicLevelsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete academic level (no grade levels)' })
   @ApiNoContentResponse()
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

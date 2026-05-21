@@ -9,6 +9,7 @@ interface UserWithProfiles {
   lastName: string;
   role: Role;
   isActive: boolean;
+  selectedAcademicPeriodId: string | null;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +65,7 @@ export function toAuthUserResponseDto(user: UserWithProfiles): AuthUserResponseD
     profileId: profile.profileId,
     profileType: profile.profileType,
     institutionId: profile.institutionId,
+    selectedAcademicPeriodId: user.selectedAcademicPeriodId ?? undefined,
   };
 }
 
@@ -89,6 +91,7 @@ export const userWithProfilesSelect = {
   lastName: true,
   role: true,
   isActive: true,
+  selectedAcademicPeriodId: true,
   deletedAt: true,
   createdAt: true,
   updatedAt: true,

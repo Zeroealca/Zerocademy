@@ -20,6 +20,10 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import {
+  PLATFORM_CATALOG_WRITE_ROLES,
+  PLATFORM_READ_ROLES,
+} from '../../common/rbac/rbac-role-sets';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { ListSubjectsQueryDto } from './dto/list-subjects-query.dto';
 import { SubjectHierarchyQueryDto } from './dto/subject-hierarchy-query.dto';
@@ -29,16 +33,13 @@ import { SubjectResponseDto } from './dto/subject-response.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
 import { SubjectsService } from './subjects.service';
 
-const READ_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER] as const;
-const WRITE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
-
 @ApiTags('subjects')
 @Controller('subjects')
 export class SubjectsController {
   constructor(private readonly subjectsService: SubjectsService) {}
 
   @Get()
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'List subjects (paginated)' })
   @ApiOkResponse({ type: SubjectListResponseDto })
   findAll(
@@ -48,7 +49,7 @@ export class SubjectsController {
   }
 
   @Get('hierarchy/catalog')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({
     summary: 'Get subject catalog hierarchy',
     description:
@@ -62,7 +63,7 @@ export class SubjectsController {
   }
 
   @Get(':id')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'Get subject by id' })
   @ApiOkResponse({ type: SubjectResponseDto })
   findOne(
@@ -72,7 +73,7 @@ export class SubjectsController {
   }
 
   @Post()
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Create subject' })
   @ApiCreatedResponse({ type: SubjectResponseDto })
   create(@Body() dto: CreateSubjectDto): Promise<SubjectResponseDto> {
@@ -80,7 +81,7 @@ export class SubjectsController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Update subject' })
   @ApiOkResponse({ type: SubjectResponseDto })
   update(
@@ -91,7 +92,7 @@ export class SubjectsController {
   }
 
   @Post(':id/activate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Activate subject' })
   @ApiOkResponse({ type: SubjectResponseDto })
   activate(
@@ -101,7 +102,7 @@ export class SubjectsController {
   }
 
   @Post(':id/deactivate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Deactivate subject' })
   @ApiOkResponse({ type: SubjectResponseDto })
   deactivate(
@@ -112,7 +113,7 @@ export class SubjectsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete subject (no assignments)' })
   @ApiNoContentResponse()
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

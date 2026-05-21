@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -20,8 +21,16 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import {
+  PLATFORM_CALENDAR_WRITE_ROLES,
+  PLATFORM_READ_ROLES,
+} from '../../common/rbac/rbac-role-sets';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AcademicPeriodsService } from './academic-periods.service';
+import { AcademicPeriodContextResponseDto } from './dto/academic-period-context-response.dto';
+import { SetSelectedAcademicPeriodDto } from './dto/set-selected-academic-period.dto';
 import { ActivePeriodQueryDto } from './dto/active-period-query.dto';
 import { CreateAcademicPeriodDto } from './dto/create-academic-period.dto';
 import { ListAcademicPeriodsQueryDto } from './dto/list-academic-periods-query.dto';
@@ -29,16 +38,38 @@ import { UpdateAcademicPeriodDto } from './dto/update-academic-period.dto';
 import { AcademicPeriodListResponseDto } from './dto/academic-period-list-response.dto';
 import { AcademicPeriodResponseDto } from './dto/academic-period-response.dto';
 
-const READ_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER] as const;
-const WRITE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
-
 @ApiTags('academic-periods')
 @Controller('academic-periods')
 export class AcademicPeriodsController {
   constructor(private readonly academicPeriodsService: AcademicPeriodsService) {}
 
+  @Get('context')
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
+  @ApiOperation({
+    summary: 'Get academic period context',
+    description:
+      'Returns selected period, effective period for queries, and active period per regime.',
+  })
+  @ApiOkResponse({ type: AcademicPeriodContextResponseDto })
+  getContext(
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<AcademicPeriodContextResponseDto> {
+    return this.academicPeriodsService.getContext(actor);
+  }
+
+  @Put('context/selection')
+  @ApiRequireRoles(Role.ADMIN, Role.TEACHER, Role.STUDENT)
+  @ApiOperation({ summary: 'Set selected academic period for current user' })
+  @ApiOkResponse({ type: AcademicPeriodContextResponseDto })
+  setSelectedPeriod(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body() dto: SetSelectedAcademicPeriodDto,
+  ): Promise<AcademicPeriodContextResponseDto> {
+    return this.academicPeriodsService.setSelectedPeriod(actor, dto);
+  }
+
   @Get()
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'List academic periods (paginated)' })
   @ApiOkResponse({ type: AcademicPeriodListResponseDto })
   findAll(
@@ -48,7 +79,7 @@ export class AcademicPeriodsController {
   }
 
   @Get('active')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({
     summary: 'Get current active period for a regime',
     description:
@@ -63,7 +94,7 @@ export class AcademicPeriodsController {
   }
 
   @Get(':id')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'Get academic period by id (includes terms)' })
   @ApiOkResponse({ type: AcademicPeriodResponseDto })
   findOne(
@@ -73,7 +104,7 @@ export class AcademicPeriodsController {
   }
 
   @Post()
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({ summary: 'Create academic period' })
   @ApiCreatedResponse({ type: AcademicPeriodResponseDto })
   create(@Body() dto: CreateAcademicPeriodDto): Promise<AcademicPeriodResponseDto> {
@@ -81,7 +112,7 @@ export class AcademicPeriodsController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({ summary: 'Update academic period' })
   @ApiOkResponse({ type: AcademicPeriodResponseDto })
   update(
@@ -93,7 +124,7 @@ export class AcademicPeriodsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete academic period (non-active only)' })
   @ApiNoContentResponse()
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
@@ -101,11 +132,11 @@ export class AcademicPeriodsController {
   }
 
   @Post(':id/activate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({
     summary: 'Activate academic period',
     description:
-      'Sets period as active for its regime and closes any other active period in the same regime.',
+      'Sets period as ACTIVE for its regime. Closes every other ACTIVE period in the same regime globally.',
   })
   @ApiOkResponse({ type: AcademicPeriodResponseDto })
   activate(
@@ -115,7 +146,7 @@ export class AcademicPeriodsController {
   }
 
   @Post(':id/deactivate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({ summary: 'Deactivate academic period' })
   @ApiOkResponse({ type: AcademicPeriodResponseDto })
   deactivate(
@@ -125,7 +156,7 @@ export class AcademicPeriodsController {
   }
 
   @Post(':id/archive')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({ summary: 'Archive academic period' })
   @ApiOkResponse({ type: AcademicPeriodResponseDto })
   archive(

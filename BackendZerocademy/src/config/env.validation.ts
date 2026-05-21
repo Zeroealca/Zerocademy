@@ -14,4 +14,5 @@ export const envValidationSchema = Joi.object({
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
   SWAGGER_ENABLED: Joi.string().valid('true', 'false', '').optional(),
   PRISMA_LOG_QUERIES: Joi.string().valid('true', 'false', '').optional(),
+  UPLOADS_DIR: Joi.string().default('uploads'),
 });

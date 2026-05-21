@@ -38,6 +38,12 @@ export class AuthUserResponseDto {
   })
   institutionId?: string;
 
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'User-selected academic period for UI context',
+  })
+  selectedAcademicPeriodId?: string;
+
   @ApiProperty({ example: '2025-05-16T12:00:00.000Z' })
   createdAt: string;
 

@@ -57,7 +57,10 @@ export class CoursesService {
   }
 
   async create(dto: CreateCourseDto): Promise<CourseResponseDto> {
-    await assertAcademicPeriodExists(this.prisma, dto.academicPeriodId);
+    const period = await assertAcademicPeriodExists(
+      this.prisma,
+      dto.academicPeriodId,
+    );
     await assertGradeLevelExistsAndActive(this.prisma, dto.gradeLevelId);
 
     const section = normalizeCourseSection(dto.section);
@@ -72,6 +75,7 @@ export class CoursesService {
         name: dto.name.trim(),
         section,
         capacity: dto.capacity,
+        institutionId: period.institutionId,
         academicPeriodId: dto.academicPeriodId,
         gradeLevelId: dto.gradeLevelId,
         isActive: true,
@@ -102,8 +106,13 @@ export class CoursesService {
       ? normalizeCourseSection(dto.section)
       : existing.section;
 
+    let institutionId = existing.institutionId;
     if (dto.academicPeriodId) {
-      await assertAcademicPeriodExists(this.prisma, dto.academicPeriodId);
+      const period = await assertAcademicPeriodExists(
+        this.prisma,
+        dto.academicPeriodId,
+      );
+      institutionId = period.institutionId;
     }
 
     if (dto.gradeLevelId) {
@@ -131,6 +140,7 @@ export class CoursesService {
         ...(dto.capacity !== undefined ? { capacity: dto.capacity } : {}),
         ...(dto.academicPeriodId !== undefined ? { academicPeriodId } : {}),
         ...(dto.gradeLevelId !== undefined ? { gradeLevelId } : {}),
+        ...(dto.academicPeriodId !== undefined ? { institutionId } : {}),
       },
     });
 
@@ -209,6 +219,10 @@ export class CoursesService {
 
   private buildListWhere(query: ListCoursesQueryDto): Prisma.CourseWhereInput {
     const where: Prisma.CourseWhereInput = {};
+
+    if (query.institutionId) {
+      where.institutionId = query.institutionId;
+    }
 
     if (query.academicPeriodId) {
       where.academicPeriodId = query.academicPeriodId;

@@ -17,6 +17,9 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { GradeLevelsModule } from './modules/grade-levels/grade-levels.module';
 import { SubjectsModule } from './modules/subjects/subjects.module';
 import { TeacherAssignmentsModule } from './modules/teacher-assignments/teacher-assignments.module';
+import { InstitutionsModule } from './modules/institutions/institutions.module';
+import { InstitutionMembershipsModule } from './modules/institution-memberships/institution-memberships.module';
+import { AcademicPeriodTransitionsModule } from './modules/academic-period-transitions/academic-period-transitions.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -34,6 +37,9 @@ import { UsersModule } from './modules/users/users.module';
     GradeLevelsModule,
     SubjectsModule,
     TeacherAssignmentsModule,
+    InstitutionsModule,
+    InstitutionMembershipsModule,
+    AcademicPeriodTransitionsModule,
   ],
   controllers: [AppController],
   providers: [

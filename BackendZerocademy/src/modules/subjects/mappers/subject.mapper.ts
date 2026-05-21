@@ -11,6 +11,7 @@ export function toSubjectResponseDto(subject: SubjectWithGradeLinks): SubjectRes
     name: subject.name,
     code: subject.code,
     description: subject.description,
+    institutionId: subject.institutionId,
     isSystem: subject.isSystem,
     isActive: subject.isActive,
     gradeLevels: subject.gradeLevelLinks?.map((link) => ({

@@ -24,8 +24,12 @@ export class RoleUtils {
     return ROLES_REQUIRING_PROFILE.includes(role);
   }
 
-  static hasRole(userRole: Role, allowedRoles: readonly Role[]): boolean {
-    if (RoleUtils.isSuperAdmin(userRole)) {
+  static hasRole(
+    userRole: Role,
+    allowedRoles: readonly Role[],
+    options?: { strict?: boolean },
+  ): boolean {
+    if (!options?.strict && RoleUtils.isSuperAdmin(userRole)) {
       return true;
     }
 
@@ -76,10 +80,28 @@ export class RoleUtils {
     }
 
     if (actorRole === Role.ADMIN) {
-      return SYSTEM_ROLES.filter((role) => role !== Role.SUPER_ADMIN);
+      return [Role.STUDENT];
     }
 
     return [];
+  }
+
+  /** Platform catalog and calendar configuration (not institution day-to-day ops). */
+  static canManagePlatformCatalog(role: Role): boolean {
+    return role === Role.SUPER_ADMIN;
+  }
+
+  /** Institution operational data: courses, assignments, student enrollment context. */
+  static canManageInstitutionOperations(role: Role): boolean {
+    return role === Role.ADMIN;
+  }
+
+  static canSelectAcademicPeriod(role: Role): boolean {
+    return (
+      role === Role.ADMIN ||
+      role === Role.TEACHER ||
+      role === Role.STUDENT
+    );
   }
 
   static canAssignRole(actorRole: Role, targetRole: Role): boolean {

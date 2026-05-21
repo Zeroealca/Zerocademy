@@ -11,6 +11,7 @@ export interface AppConfig {
   };
   bcryptSaltRounds: number;
   corsOrigin: string;
+  uploadsDir: string;
 }
 
 export default (): AppConfig => {
@@ -33,5 +34,6 @@ export default (): AppConfig => {
     },
     bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS ?? '12', 10),
     corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    uploadsDir: process.env.UPLOADS_DIR ?? 'uploads',
   };
 };

@@ -1,9 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AcademicRegime } from '@prisma/client';
 import {
   IsDateString,
   IsEnum,
+  IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -14,6 +16,14 @@ export class CreateAcademicPeriodDto {
   @MinLength(2)
   @MaxLength(100)
   name: string;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Owning educational institution',
+  })
+  @IsOptional()
+  @IsUUID()
+  institutionId?: string;
 
   @ApiProperty({ enum: AcademicRegime, example: AcademicRegime.COSTA_GALAPAGOS })
   @IsEnum(AcademicRegime)

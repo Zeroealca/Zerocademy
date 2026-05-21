@@ -19,7 +19,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { ApiRequireRoles } from '../../common/decorators/api';
+import {
+  ApiRequireRoles,
+  ApiRequireRolesStrict,
+} from '../../common/decorators/api';
+import {
+  INSTITUTION_OPS_READ_ROLES,
+  INSTITUTION_OPS_WRITE_ROLES,
+} from '../../common/rbac/rbac-role-sets';
 import { CoursesService } from './courses.service';
 import { CourseListResponseDto } from './dto/course-list-response.dto';
 import { CourseResponseDto } from './dto/course-response.dto';
@@ -27,16 +34,13 @@ import { CreateCourseDto } from './dto/create-course.dto';
 import { ListCoursesQueryDto } from './dto/list-courses-query.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 
-const READ_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER] as const;
-const WRITE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
-
 @ApiTags('courses')
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @Get()
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...INSTITUTION_OPS_READ_ROLES)
   @ApiOperation({ summary: 'List classroom courses (paginated)' })
   @ApiOkResponse({ type: CourseListResponseDto })
   findAll(@Query() query: ListCoursesQueryDto): Promise<CourseListResponseDto> {
@@ -44,7 +48,7 @@ export class CoursesController {
   }
 
   @Get(':id')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...INSTITUTION_OPS_READ_ROLES)
   @ApiOperation({ summary: 'Get classroom course by id' })
   @ApiOkResponse({ type: CourseResponseDto })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<CourseResponseDto> {
@@ -52,7 +56,7 @@ export class CoursesController {
   }
 
   @Post()
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Create classroom course' })
   @ApiCreatedResponse({ type: CourseResponseDto })
   create(@Body() dto: CreateCourseDto): Promise<CourseResponseDto> {
@@ -60,7 +64,7 @@ export class CoursesController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Update classroom course' })
   @ApiOkResponse({ type: CourseResponseDto })
   update(
@@ -71,7 +75,7 @@ export class CoursesController {
   }
 
   @Post(':id/activate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Activate classroom course' })
   @ApiOkResponse({ type: CourseResponseDto })
   activate(@Param('id', ParseUUIDPipe) id: string): Promise<CourseResponseDto> {
@@ -79,7 +83,7 @@ export class CoursesController {
   }
 
   @Post(':id/deactivate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Deactivate classroom course' })
   @ApiOkResponse({ type: CourseResponseDto })
   deactivate(
@@ -90,7 +94,7 @@ export class CoursesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete classroom course (inactive only)' })
   @ApiNoContentResponse()
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
 import { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { STRICT_ROLES_KEY } from '../decorators/strict-roles.decorator';
 import { AppLoggerService } from '../logger/app-logger.service';
 import { RoleUtils } from '../rbac/role.utils';
 import type { AuthenticatedUser } from '../../modules/auth/types/authenticated-user.type';
@@ -29,6 +30,11 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
+    const strictRoles = this.reflector.getAllAndOverride<boolean>(
+      STRICT_ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
     const request = context.switchToHttp().getRequest<Request>();
     const user = request.user as AuthenticatedUser | undefined;
 
@@ -36,13 +42,13 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('Access denied');
     }
 
-    if (RoleUtils.hasRole(user.role, requiredRoles)) {
+    if (RoleUtils.hasRole(user.role, requiredRoles, { strict: strictRoles })) {
       return true;
     }
 
     this.logger.warn({
       context: 'RolesGuard',
-      event: 'ROLE_DENIED',
+      event: strictRoles ? 'RBAC_STRICT_DENIED' : 'RBAC_DENIED',
       userId: user.id,
       email: user.email,
       message: `Role ${user.role} denied for endpoint requiring ${requiredRoles.join(', ')}`,

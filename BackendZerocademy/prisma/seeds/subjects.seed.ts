@@ -16,8 +16,8 @@ export async function seedSubjects(
 
   for (const row of rows) {
     const code = normalizeSubjectCode(row.code);
-    const existing = await ctx.prisma.subject.findUnique({
-      where: { code },
+    const existing = await ctx.prisma.subject.findFirst({
+      where: { code, institutionId: null },
     });
 
     if (ctx.dryRun) {
