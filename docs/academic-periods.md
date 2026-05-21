@@ -50,25 +50,35 @@ School years span **two calendar years** (e.g. 2025-2026). Institutions in diffe
 ## Business rules
 
 1. **Multiple periods** may exist at once (different regimes or years).
-2. **One active period per regime** — activating a period closes other `ACTIVE` periods in the same regime.
+2. **One active period per regime (global)** — activating a period closes every other `ACTIVE` period in the same regime, regardless of `institutionId`.
 3. **No overlapping active periods** — activation fails if date ranges overlap another active period in the same regime.
 4. **Date consistency** — `startDate < endDate`; terms must lie within their parent period; terms must not overlap each other.
 5. **Active period edits** — core calendar fields cannot be edited while `status = ACTIVE` (deactivate first).
 6. **Deletion** — only non-active periods (`PLANNED`, `CLOSED`, `ARCHIVED`) may be deleted.
+7. **Institution active period** — when `institutionId` is set, `Institution.activeAcademicPeriodId` tracks the school's current operational year (see [academic-transitions.md](./academic-transitions.md)). Regime-level `isActive` and institution-level active period can be aligned via transition or explicit `PUT .../active-period`.
+
+## Selected period context
+
+Users (`ADMIN`, `TEACHER`, `STUDENT`) persist `User.selectedAcademicPeriodId`. The API resolves an **effective** period for queries when no selection exists (institution active period or global active by regime).
+
+| Method | Path | Roles | Description |
+|--------|------|-------|-------------|
+| GET | `/context` | SUPER_ADMIN, ADMIN, TEACHER, STUDENT | Selected, effective, and active-by-regime |
+| PUT | `/context/selection` | ADMIN, TEACHER, STUDENT | Set selected period |
 
 ## API (`/v1/academic-periods`)
 
 | Method | Path | Roles | Description |
 |--------|------|-------|-------------|
-| GET | `/` | SUPER_ADMIN, ADMIN, TEACHER | Paginated list (filter: regime, status, search) |
+| GET | `/` | SUPER_ADMIN, ADMIN, TEACHER, STUDENT | Paginated list (filter: regime, status, search) |
 | GET | `/active?regime=` | SUPER_ADMIN, ADMIN, TEACHER | Current active period for regime |
 | GET | `/:id` | SUPER_ADMIN, ADMIN, TEACHER | Detail with terms |
-| POST | `/` | SUPER_ADMIN, ADMIN | Create period (`PLANNED`) |
-| PATCH | `/:id` | SUPER_ADMIN, ADMIN | Update period |
-| DELETE | `/:id` | SUPER_ADMIN, ADMIN | Delete non-active period |
-| POST | `/:id/activate` | SUPER_ADMIN, ADMIN | Activate (closes siblings) |
-| POST | `/:id/deactivate` | SUPER_ADMIN, ADMIN | Set `CLOSED` |
-| POST | `/:id/archive` | SUPER_ADMIN, ADMIN | Set `ARCHIVED` |
+| POST | `/` | SUPER_ADMIN | Create period (`PLANNED`) |
+| PATCH | `/:id` | SUPER_ADMIN | Update period |
+| DELETE | `/:id` | SUPER_ADMIN | Delete non-active period |
+| POST | `/:id/activate` | SUPER_ADMIN | Activate (closes all other ACTIVE in same regime) |
+| POST | `/:id/deactivate` | SUPER_ADMIN | Set `CLOSED` |
+| POST | `/:id/archive` | SUPER_ADMIN | Set `ARCHIVED` |
 
 ### Terms (`/v1/academic-periods/:periodId/terms`)
 

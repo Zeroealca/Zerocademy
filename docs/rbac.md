@@ -2,116 +2,105 @@
 
 ## Overview
 
-Zerocademy uses a **foundational RBAC** model: each user has exactly one **system role** stored on the `User` record. Authorization is enforced globally via NestJS guards and route metadata. Academic identity is separated into **profile tables** linked 1:1 to `User`.
+Each user has one **system role** on `User.role`. NestJS `JwtAuthGuard` and `RolesGuard` enforce route access. Institution memberships add institution-scoped roles for admins and teachers.
 
-This layer is intentionally simple. Granular permissions, ACLs, and ABAC are **out of scope** for the initial implementation.
+Granular permissions and ABAC remain future work.
 
-## System roles
+## System roles (updated)
 
-| Role | Purpose |
-|------|---------|
-| `SUPER_ADMIN` | Full platform access, global configuration, all institutions (future), admin management, audit logs |
-| `ADMIN` | Institutional operations: students, teachers, academic structure, periods, reports |
-| `TEACHER` | Own courses, grades, attendance — only assigned academic data |
-| `STUDENT` | Read-only personal academic data |
-| `REPRESENTATIVE` | Read-only access to linked students (grades, attendance, reports) |
+### SUPER_ADMIN
 
-Role metadata (capabilities and limitations) is exposed at `GET /v1/rbac/roles` for `SUPER_ADMIN` and `ADMIN`.
+| Can | Cannot |
+|-----|--------|
+| Create institutions | Manage institution operational data (courses, assignments) via strict routes |
+| Create academic levels, grades, subjects, periods | |
+| Activate/deactivate periods (one active per regime globally) | |
+| Create all user types | |
+| Assign institution memberships | |
+
+### ADMIN
+
+| Can | Cannot |
+|-----|--------|
+| Create students | Create global catalog or calendar periods |
+| Manage courses/parallels and teacher assignments | Assign institution memberships |
+| Run institution academic transitions | Manage super admins |
+| Select academic period context | |
+| View academic structures | |
+
+### TEACHER
+
+| Can | Cannot |
+|-----|--------|
+| Access assigned courses/subjects for selected period | Institution or platform configuration |
+| Select academic period context | Unassigned data |
+
+### STUDENT
+
+| Can | Cannot |
+|-----|--------|
+| View own academic data for selected period | Other students or configuration |
+
+### REPRESENTATIVE
+
+Read-only linked students (unchanged foundation).
 
 ## Architecture
 
 ```
 HTTP Request
-    → JwtAuthGuard (validates JWT, loads user + profiles)
-    → RolesGuard (checks @Roles / @ApiRequireRoles metadata)
-    → Controller → Service
-    → Prisma (ownership filters applied in domain modules — future)
+  → JwtAuthGuard
+  → RolesGuard (optional StrictRoles — no SUPER_ADMIN bypass)
+  → Controller → Service
+  → assertActorCanAccessPeriod / institution filters
 ```
 
-### Code layout
+### Strict routes
 
-| Path | Responsibility |
-|------|----------------|
-| `src/common/rbac/` | Role constants, utilities, profile provisioning, global `RbacModule` |
-| `src/common/guards/roles.guard.ts` | Centralized role enforcement |
-| `src/common/decorators/roles.decorator.ts` | `@Roles(...)` metadata |
-| `src/common/decorators/api/api-require-roles.decorator.ts` | `@ApiRequireRoles` — Swagger + roles |
-| `src/modules/rbac/` | Role definitions API |
-| `prisma/schema.prisma` | `Role` enum, profile models |
+`@ApiRequireRolesStrict(...)` + `StrictRoles` metadata blocks implicit `SUPER_ADMIN` access. Used for:
 
-## JWT role flow
+- Courses, teacher assignments
+- Institution academic transitions (execute, preview, set active period)
 
-1. User authenticates via `/v1/auth/login`.
-2. Service resolves **profile linkage** (`profileId`, `profileType`, `institutionId`) from academic profile tables when applicable.
-3. Access token payload includes: `sub`, `email`, `role`, `profileId`, `profileType`, `institutionId`.
-4. `JwtStrategy` reloads the user from the database on each request (role changes take effect on next request after DB update).
-5. `RolesGuard` compares `request.user.role` against required roles via `RoleUtils.hasRole()`.
+### Role sets (`common/rbac/rbac-role-sets.ts`)
 
-**SUPER_ADMIN bypass:** `RoleUtils.hasRole()` grants access when the user role is `SUPER_ADMIN`, regardless of required roles on the route.
+| Constant | Roles |
+|----------|-------|
+| `PLATFORM_READ_ROLES` | SUPER_ADMIN, ADMIN, TEACHER, STUDENT |
+| `PLATFORM_CALENDAR_WRITE_ROLES` | SUPER_ADMIN |
+| `PLATFORM_CATALOG_WRITE_ROLES` | SUPER_ADMIN |
+| `INSTITUTION_OPS_WRITE_ROLES` | ADMIN (strict) |
+| `INSTITUTION_OPS_READ_ROLES` | SUPER_ADMIN, ADMIN, TEACHER |
 
-## Authorization decorators
+## Academic period context API
 
-```typescript
-// Runtime enforcement + Swagger documentation
-@ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN)
-@Get('users')
-findAll() { ... }
+| Method | Path | Roles |
+|--------|------|-------|
+| GET | `/v1/academic-periods/context` | Platform read roles |
+| PUT | `/v1/academic-periods/context/selection` | ADMIN, TEACHER, STUDENT |
 
-// Runtime only (no Swagger role hint)
-@Roles(Role.TEACHER)
-@Get('my-classes')
-findMyClasses() { ... }
-```
+Returns `selectedPeriod`, `effectivePeriod`, and `activeByRegime`.
 
-Public routes use `@Public()` to skip JWT validation.
+## User provisioning
 
-## Profile separation strategy
+- `ADMIN` may assign only `STUDENT` (`RoleUtils.getAssignableRoles`)
+- `SUPER_ADMIN` may assign any role
+- Admins receive `404` for super-admin user IDs in list/detail
 
-Authentication data lives on `User`. Academic domain data will live on profile models:
+## Frontend gating
 
-```
-User (credentials + role)
- ├── StudentProfile
- ├── TeacherProfile
- └── RepresentativeProfile
-```
+`FrontendZerocademy/src/lib/permissions.ts` mirrors backend intent (cosmetic; API enforces).
 
-- **ADMIN** and **SUPER_ADMIN** do not receive academic profiles.
-- **STUDENT**, **TEACHER**, and **REPRESENTATIVE** profiles are provisioned automatically on user creation.
-- Optional `institutionId` scopes profiles to an `Institution` (multi-tenant ready).
+- Period selector in dashboard header for ADMIN / TEACHER / STUDENT
+- Academic periods admin UI: SUPER_ADMIN only
+- Catalog nav (levels, grades, subjects): SUPER_ADMIN write; ADMIN/TEACHER view operations via courses
 
-## Ownership strategy (prepared, not fully enforced)
+## JWT payload
 
-Domain modules (grades, attendance, courses) will apply **query-level filtering** using:
+`sub`, `email`, `role`, `profileId`, `profileType`, `institutionId` — reload user from DB each request.
 
-- `AuthenticatedUser.profileId` — academic entity owner
-- `AuthenticatedUser.institutionId` — tenant scope
-- `RoleUtils.shouldEnforceOwnership(role)` — `true` for `TEACHER`, `STUDENT`, `REPRESENTATIVE`
+## Related
 
-Types in `src/common/rbac/ownership.types.ts` define `ResourceOwnershipContext` and `OwnershipQueryScope` for future services.
-
-## Security decisions
-
-- Single role per user — no implicit role escalation in JWT.
-- Roles validated from database on each authenticated request (not only JWT claims).
-- Generic login errors — no user enumeration.
-- Administrative endpoints require explicit `@ApiRequireRoles`.
-- **Super admin visibility** — only `SUPER_ADMIN` users appear in list/detail APIs for other super admins. Admins receive `404` for super admin IDs (no enumeration).
-- **Role assignment** — `ADMIN` may create/update users with any role except `SUPER_ADMIN`. `SUPER_ADMIN` may assign any role.
-- **Role changes** — admins may change roles via `PATCH /v1/users/:id`; profiles are re-provisioned and refresh tokens revoked on role change.
-
-## Future scalability
-
-| Extension | Approach |
-|-----------|----------|
-| Granular permissions | `PERMISSIONS_METADATA_KEY` + permission guard (not implemented) |
-| Multi-role users | Join table `UserRole`; migrate enum column |
-| Institution scoping | Filter queries by `institutionId` from JWT |
-| Representative ↔ Student links | Join table on `RepresentativeProfile` |
-| ABAC / ACL | Out of scope — evaluate when requirements mature |
-
-## Related documentation
-
-- [auth.md](./auth.md) — JWT flows and guards
-- [database.md](./database.md) — Prisma models
-- [backend-architecture.md](./backend-architecture.md) — NestJS module layout
+- [ownership-strategy.md](./ownership-strategy.md)
+- [academic-periods.md](./academic-periods.md)
+- [auth.md](./auth.md)

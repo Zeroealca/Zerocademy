@@ -9,6 +9,7 @@ Institutions can:
 - Reuse **system catalog** entries (`isSystem: true`, global scope)
 - Create **custom** levels and grades (`institutionId` set)
 - Open **courses** (classroom groups) per academic period and grade
+- Scope **academic periods**, **courses**, **subjects**, and **assignments** via `institutionId` (see [institutions.md](./institutions.md))
 
 ## Hierarchy
 
@@ -144,14 +145,29 @@ GradeLevel → Course (per period) → TeacherAssignment ← Subject
 
 See [subjects.md](./subjects.md) and [teacher-assignments.md](./teacher-assignments.md).
 
+## Institution ownership
+
+| Model | `institutionId` | Notes |
+|-------|-----------------|-------|
+| `AcademicLevel`, `GradeLevel` | Optional | Global catalog when null |
+| `AcademicPeriod` | Optional | Institution-specific school years |
+| `Course` | Set from period on create | Denormalized for filtering |
+| `Subject` | Optional | Global seed catalog when null |
+| `TeacherAssignment` | Set from course on create | Denormalized for filtering |
+
+Only **active** institutions should receive new academic data (validated in services).
+
 ## Extensibility
 
 - New levels/grades via API (no schema change)
 - Institution-specific rows via `institutionId`
 - Subjects and teacher assignments use the same `Course` model (classroom offering) without renaming it
+- Multi-institution JWT scoping — see [tenancy-strategy.md](./tenancy-strategy.md)
 
 ## Related
 
+- [institutions.md](./institutions.md)
+- [tenancy-strategy.md](./tenancy-strategy.md)
 - [database.md](./database.md)
 - [academic-periods.md](./academic-periods.md)
 - [api-flow.md](./api-flow.md)

@@ -55,9 +55,14 @@ One bounded context per row. Implement in the mapped folders only.
 | Academic levels | Reusable education stages (EGB, Bachillerato, custom) | `academic-levels` | `academic-levels` |
 | Grade levels | Reusable grades within a level | `grade-levels` | `grade-levels` |
 | Academic structure | Hierarchy visualization (reads levels API) | `academic-levels` *(hierarchy)* | `academic-structure` |
+| Institutions | Educational institutions, settings, branding | `institutions` | `institutions`, `institution-settings` |
+| Institution memberships | Admins/teachers assigned to institutions | `institution-memberships` | `institution-memberships` |
+| Academic period transitions | School-year transitions, active period per institution | `academic-period-transitions` | `academic-period-transitions` |
 | Dashboard | Aggregated KPIs and analytics UI | — *(reads other modules)* | `dashboard` |
 
-Cross-cutting: **RBAC** (`auth` + `users` + `common/rbac`), **audit logging**, **institution scope**.
+Cross-cutting: **RBAC** (`auth` + `users` + `common/rbac`), **audit logging**, **institution scope**, **academic period context** (`selectedAcademicPeriodId`).
+
+**RBAC (2025):** Platform config = `SUPER_ADMIN`; institution ops = `ADMIN` (strict routes); period activation = one ACTIVE per regime globally. See [`docs/rbac.md`](docs/rbac.md) and [`docs/ownership-strategy.md`](docs/ownership-strategy.md).
 
 **Naming rule:** Use the **Canonical domain** column for new folders. Update this table when adding a domain.
 
