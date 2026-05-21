@@ -1,5 +1,15 @@
 # API flows
 
+## Academic period context
+
+After login, period-aware clients call:
+
+1. `GET /v1/academic-periods/context` — `selectedPeriod`, `effectivePeriod`, `activeByRegime`
+2. `PUT /v1/academic-periods/context/selection` — header selector changes
+3. Operational lists pass `academicPeriodId` from the effective period
+
+`POST /v1/academic-periods/:id/activate` is **SUPER_ADMIN** only and auto-closes other ACTIVE periods in the same regime.
+
 ## Authenticated request
 
 ```mermaid

@@ -17,6 +17,7 @@
 | firstName, lastName | String | Display name |
 | role | Enum | `SUPER_ADMIN`, `ADMIN`, `TEACHER`, `STUDENT`, `REPRESENTATIVE` |
 | isActive | Boolean | Login gate |
+| selectedAcademicPeriodId | UUID? | UI/query context (ADMIN, TEACHER, STUDENT) |
 | deletedAt | DateTime? | Soft delete |
 | createdAt, updatedAt | DateTime | Timestamps |
 
@@ -38,14 +39,36 @@ Profiles are auto-provisioned when an admin creates a user with an academic role
 
 ### Institution
 
+Root owner of the academic domain. See [institutions.md](./institutions.md) and [tenancy-strategy.md](./tenancy-strategy.md).
+
 | Column | Type | Notes |
 |--------|------|-------|
 | id | UUID | Primary key |
 | name | String | Display name |
-| slug | String | Unique identifier |
-| isActive | Boolean | Tenant gate (future) |
+| code | String | Unique identifier (formerly `slug`) |
+| email, phone, address | String? | Contact |
+| region | Enum? | `COSTA`, `SIERRA`, `AMAZONIA`, `GALAPAGOS` |
+| regime | Enum? | `COSTA_GALAPAGOS`, `SIERRA_AMAZONIA` |
+| logoUrl | String? | Branding |
+| primaryColor, secondaryColor | String? | Hex theme colors |
+| isActive | Boolean | Academic operations gate |
+| activeAcademicPeriodId | UUID? | FK → current operational `AcademicPeriod` |
 
-Future multi-tenant modules will scope queries by `institutionId` on profiles.
+Relations: profiles, academic levels/grades, academic periods, courses, subjects, teacher assignments, **memberships**, **period transitions**.
+
+### InstitutionMembership
+
+| Column | Type | Notes |
+|--------|------|-------|
+| institutionId, userId | UUID | FKs; `@@unique([institutionId, userId])` |
+| role | Enum | `ADMIN`, `TEACHER` |
+| isActive | Boolean | Membership gate |
+
+See [memberships.md](./memberships.md).
+
+### AcademicPeriodTransition
+
+Audit row per executed school-year transition. See [academic-transitions.md](./academic-transitions.md).
 
 ### RefreshToken
 
@@ -64,6 +87,7 @@ Future multi-tenant modules will scope queries by `institutionId` on profiles.
 |--------|------|-------|
 | id | UUID | Primary key |
 | name | String | e.g. `2025-2026` |
+| institutionId | UUID? | FK → Institution |
 | regime | Enum | `COSTA_GALAPAGOS`, `SIERRA_AMAZONIA` |
 | startDate, endDate | Date | Inclusive school-year range |
 | isActive | Boolean | Operational flag per regime |
@@ -90,7 +114,7 @@ Reusable structure catalog plus period-scoped classroom groups. See [academic-st
 |-------|----------------------|---------------|
 | `AcademicLevel` | Yes | optional `institutionId` |
 | `GradeLevel` | Yes | `academicLevelId` |
-| `Course` | No (per period) | `academicPeriodId`, `gradeLevelId` |
+| `Course` | No (per period) | `institutionId`, `academicPeriodId`, `gradeLevelId` |
 
 ### Subject / TeacherAssignment
 
@@ -98,11 +122,11 @@ Reusable subject catalog and period-scoped teacher staffing. See [subjects.md](.
 
 | Model | Scope | Key relations |
 |-------|-------|---------------|
-| `Subject` | Global catalog | `SubjectGradeLevel`, `TeacherAssignment` |
+| `Subject` | Global or institution catalog | `institutionId`, `SubjectGradeLevel`, `TeacherAssignment` |
 | `SubjectGradeLevel` | Curriculum link | `Subject`, `GradeLevel` |
-| `TeacherAssignment` | Per period + course | `TeacherProfile`, `Subject`, `Course`, `AcademicPeriod` |
+| `TeacherAssignment` | Per period + course | `institutionId`, `TeacherProfile`, `Subject`, `Course`, `AcademicPeriod` |
 
-Unique: `Subject.code`; `TeacherAssignment(teacherId, subjectId, courseId, academicPeriodId)`.
+Unique: `Subject.code` (global partial index); `Subject(institutionId, code)` when scoped; `TeacherAssignment(teacherId, subjectId, courseId, academicPeriodId)`.
 
 ### HealthCheck
 
@@ -131,6 +155,9 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20250517160000_academic_periods` | Academic periods and terms (Ecuador regimes) |
 | `20250518120000_academic_structure` | Academic levels, grade levels, classroom courses |
 | `20250519120000_subjects_teacher_assignments` | Subjects, subject–grade links, teacher assignments |
+| `20250520120000_institutions_foundation` | Institution fields, ownership FKs on academic domain |
+| `20250521120000_memberships_transitions` | Memberships, transition audit, `activeAcademicPeriodId` |
+| `20250521140000_user_selected_academic_period` | `User.selectedAcademicPeriodId` |
 
 Never edit applied migration SQL retroactively.
 
@@ -152,7 +179,7 @@ Super admins do not require an academic profile.
 - **Profile separation** — academic data never mixed into `User` columns.
 - **Soft delete** — `deletedAt` on users; queries filter `deletedAt: null`.
 - **Refresh token persistence** — enables logout and rotation without server sessions.
-- **Institution-ready** — optional FK on profiles for future multi-tenant filtering.
+- **Institution-aware** — `Institution` as domain root; optional `institutionId` on periods, courses, subjects, assignments, and profiles. See [tenancy-strategy.md](./tenancy-strategy.md).
 
 ## Connection
 
@@ -160,6 +187,10 @@ Super admins do not require an academic profile.
 
 ## Related documentation
 
+- [institutions.md](./institutions.md) — institutions module
+- [memberships.md](./memberships.md) — institution memberships
+- [academic-transitions.md](./academic-transitions.md) — period transitions
+- [tenancy-strategy.md](./tenancy-strategy.md) — multi-institution roadmap
 - [academic-structure.md](./academic-structure.md) — levels, grades, courses
 - [subjects.md](./subjects.md) — subject catalog
 - [teacher-assignments.md](./teacher-assignments.md) — teacher staffing
@@ -167,4 +198,5 @@ Super admins do not require an academic profile.
 - [seeds.md](./seeds.md) — seed execution
 - [academic-periods.md](./academic-periods.md) — calendar module
 - [rbac.md](./rbac.md) — authorization and profile strategy
+- [ownership-strategy.md](./ownership-strategy.md) — scope and period context
 - [auth.md](./auth.md) — JWT flows

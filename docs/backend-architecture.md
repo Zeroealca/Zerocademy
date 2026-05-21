@@ -29,7 +29,10 @@ BackendZerocademy/src/
     ├── grade-levels/
     ├── courses/
     ├── subjects/
-    └── teacher-assignments/
+    ├── teacher-assignments/
+    ├── institutions/
+    ├── institution-memberships/
+    └── academic-period-transitions/
 ```
 
 ## Dependency rules
@@ -85,7 +88,11 @@ See [rbac.md](./rbac.md) for role responsibilities and future permission expansi
 
 ## Related docs
 
-- [academic-periods.md](./academic-periods.md) — Ecuadorian calendar foundation
+- [institutions.md](./institutions.md) — educational institutions foundation
+- [memberships.md](./memberships.md) — institution memberships
+- [academic-transitions.md](./academic-transitions.md) — period transitions
+- [tenancy-strategy.md](./tenancy-strategy.md) — multi-institution roadmap
+- [academic-periods.md](./academic-periods.md) — calendar foundation
 - [rbac.md](./rbac.md) — roles, guards, profiles
 - [auth.md](./auth.md) — JWT and session flows
 - [database.md](./database.md) — Prisma schema

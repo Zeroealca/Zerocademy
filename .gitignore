@@ -24,5 +24,9 @@ coverage/
 # Prisma
 BackendZerocademy/prisma/*.db
 
+# Uploaded assets
+BackendZerocademy/uploads/
+uploads/
+
 # Docker (optional local overrides)
 docker/pgadmin/pgpass
