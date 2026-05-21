@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
+import type { AcademicPeriod } from "@/features/academic-periods/types";
+import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
 import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
 import { TeacherAssignmentsTable } from "@/features/teacher-assignments/components/teacher-assignments-table";
 import { useDeleteTeacherAssignment } from "@/features/teacher-assignments/hooks/use-teacher-assignment-mutations";
@@ -27,8 +30,19 @@ const DEFAULT_FILTERS: TeacherAssignmentsFilters = {
 
 export function TeacherAssignmentsListPage() {
   const currentUser = useAuthStore((state) => state.user);
+  const effectivePeriodId = useEffectiveAcademicPeriodId();
   const [filters, setFilters] = useState<TeacherAssignmentsFilters>(DEFAULT_FILTERS);
   const { data, isLoading, isError, refetch } = useTeacherAssignments(filters);
+
+  useEffect(() => {
+    if (effectivePeriodId && filters.academicPeriodId !== effectivePeriodId) {
+      setFilters((prev) => ({
+        ...prev,
+        academicPeriodId: effectivePeriodId,
+        page: 1,
+      }));
+    }
+  }, [effectivePeriodId, filters.academicPeriodId]);
   const { data: periodsData } = useAcademicPeriods({ page: 1, limit: 100 });
   const removeAssignment = useDeleteTeacherAssignment();
 
@@ -101,7 +115,7 @@ function FiltersBar({
   onChange,
 }: {
   filters: TeacherAssignmentsFilters;
-  periods: { id: string; name: string }[];
+  periods: AcademicPeriod[];
   onChange: (filters: TeacherAssignmentsFilters) => void;
 }) {
   return (
@@ -133,7 +147,7 @@ function FiltersBar({
           <option value="">Todos los períodos</option>
           {periods.map((period) => (
             <option key={period.id} value={period.id}>
-              {period.name}
+              {formatAcademicPeriodOptionLabel(period)}
             </option>
           ))}
         </Select>

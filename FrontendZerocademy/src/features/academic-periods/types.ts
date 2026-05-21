@@ -45,6 +45,7 @@ export interface AcademicPeriodsListResponse {
 export interface AcademicPeriodsFilters {
   page: number;
   limit: number;
+  institutionId?: string;
   regime?: AcademicRegime;
   status?: AcademicPeriodStatus;
   search?: string;

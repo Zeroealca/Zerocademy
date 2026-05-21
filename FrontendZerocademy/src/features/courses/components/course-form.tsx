@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
 import { useGradeLevels } from "@/features/grade-levels/hooks/use-grade-levels";
 import {
@@ -76,7 +77,7 @@ export function CourseForm({
         section: values.section,
         academicPeriodId: values.academicPeriodId,
         gradeLevelId: values.gradeLevelId,
-        ...(values.capacity ? { capacity: values.capacity } : {}),
+        ...(values.capacity !== undefined ? { capacity: values.capacity } : {}),
       };
       await onSubmit(payload);
     } catch (error) {
@@ -122,7 +123,7 @@ export function CourseForm({
                   </option>
                   {periods.map((period) => (
                     <option key={period.id} value={period.id}>
-                      {period.name}
+                      {formatAcademicPeriodOptionLabel(period)}
                     </option>
                   ))}
                 </Select>
@@ -199,7 +200,15 @@ export function CourseForm({
               type="number"
               min={1}
               disabled={disabled}
-              {...register("capacity", { valueAsNumber: true })}
+              {...register("capacity", {
+                setValueAs: (value) => {
+                  if (value === "" || value === null || value === undefined) {
+                    return undefined;
+                  }
+                  const parsed = Number(value);
+                  return Number.isNaN(parsed) ? undefined : parsed;
+                },
+              })}
             />
             {errors.capacity ? (
               <p className="text-sm text-destructive">

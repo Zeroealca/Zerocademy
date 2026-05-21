@@ -32,8 +32,8 @@ export function CreateCoursePage() {
   }
 
   const handleSubmit = async (values: CreateCourseInput) => {
-    const course = await createCourse.mutateAsync(values);
-    router.push(`/courses/${course.id}/edit`);
+    await createCourse.mutateAsync(values);
+    router.push("/courses");
   };
 
   return (

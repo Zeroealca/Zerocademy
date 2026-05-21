@@ -22,6 +22,7 @@ import type {
   GradeLevelNode,
 } from "@/features/academic-structure/types";
 import { ACTIVE_STATUS_LABELS } from "@/features/academic-levels/constants";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
 import { canViewAcademicStructure } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
@@ -83,7 +84,7 @@ export function AcademicHierarchyPage() {
               <option value="">Sin cursos en el árbol</option>
               {(periodsData?.data ?? []).map((period) => (
                 <option key={period.id} value={period.id}>
-                  {period.name}
+                  {formatAcademicPeriodOptionLabel(period)}
                 </option>
               ))}
             </Select>

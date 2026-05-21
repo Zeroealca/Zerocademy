@@ -156,7 +156,9 @@ Import via feature `index.ts` barrels — no deep cross-feature paths. Named exp
 
 - `strict` TypeScript; no `any`.
 - ESLint clean; minimal diffs.
-- Permission UI gating is cosmetic — API enforces.
+- Permission UI gating is cosmetic — API enforces. Use `lib/permissions.ts` (mirrors backend role sets).
+- **Academic period context:** header selector for ADMIN/TEACHER/STUDENT; defaults to effective period; courses/assignments lists filter by `useEffectiveAcademicPeriodId()`.
+- **Period activation:** SUPER_ADMIN only on `/academic-periods` table toggles with confirm + optimistic UI.
 
 **Commits:** [`commit-message-skill`](../.cursor/skills/commit-message-skill/SKILL.md) — use `type[Frontend]: message`.
 

@@ -16,6 +16,10 @@ function buildListQuery(filters: AcademicPeriodsFilters): string {
   params.set("page", String(filters.page));
   params.set("limit", String(filters.limit));
 
+  if (filters.institutionId) {
+    params.set("institutionId", filters.institutionId);
+  }
+
   if (filters.regime) {
     params.set("regime", filters.regime);
   }

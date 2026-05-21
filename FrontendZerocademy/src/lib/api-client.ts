@@ -75,6 +75,48 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 }
 
+export async function apiUploadClient<T>(
+  path: string,
+  formData: FormData,
+  options: Omit<RequestOptions, "body"> = {},
+): Promise<T> {
+  const { skipAuth, headers, ...rest } = options;
+  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+
+  const requestHeaders = new Headers(headers);
+
+  if (!skipAuth) {
+    const accessToken = useAuthStore.getState().accessToken;
+    if (accessToken) {
+      requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+    }
+  }
+
+  const execute = () =>
+    fetch(url, {
+      ...rest,
+      method: rest.method ?? "POST",
+      headers: requestHeaders,
+      body: formData,
+    });
+
+  let response = await execute();
+
+  if (response.status === 401 && !skipAuth) {
+    const refreshed = await refreshAccessToken();
+
+    if (refreshed) {
+      const accessToken = useAuthStore.getState().accessToken;
+      if (accessToken) {
+        requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+      }
+      response = await execute();
+    }
+  }
+
+  return parseResponse<T>(response);
+}
+
 export async function apiClient<T>(
   path: string,
   options: RequestOptions = {},

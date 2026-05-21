@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  Building2,
   CalendarDays,
   ClipboardList,
   GitBranch,
@@ -16,15 +17,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  canManageAcademicPeriods,
+  canManagePlatformCatalog,
   canManageUsers,
-  canViewAcademicPeriods,
   canViewAcademicStructure,
+  canViewInstitutions,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
 const baseNavItems = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
 ];
+
+const institutionsNavItem = {
+  href: "/institutions",
+  label: "Instituciones",
+  icon: Building2,
+};
 
 const adminNavItem = {
   href: "/users",
@@ -80,19 +89,23 @@ export function DashboardSidebar() {
 
   const navItems = [...baseNavItems];
 
-  if (canViewAcademicPeriods(currentUser?.role)) {
+  if (canManageAcademicPeriods(currentUser?.role)) {
     navItems.push(academicPeriodsNavItem);
   }
 
   if (canViewAcademicStructure(currentUser?.role)) {
+    if (canManagePlatformCatalog(currentUser?.role)) {
+      navItems.push(academicLevelsNavItem, gradeLevelsNavItem, subjectsNavItem);
+    }
     navItems.push(
-      academicLevelsNavItem,
-      gradeLevelsNavItem,
       coursesNavItem,
-      subjectsNavItem,
       teacherAssignmentsNavItem,
       academicStructureNavItem,
     );
+  }
+
+  if (canViewInstitutions(currentUser?.role)) {
+    navItems.push(institutionsNavItem);
   }
 
   if (canManageUsers(currentUser?.role)) {
