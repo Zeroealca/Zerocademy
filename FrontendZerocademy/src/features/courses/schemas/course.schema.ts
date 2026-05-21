@@ -9,7 +9,11 @@ export const createCourseSchema = z.object({
     .string()
     .min(1, "El paralelo es obligatorio")
     .max(16, "El paralelo no puede superar 16 caracteres"),
-  capacity: z.number().int().min(1, "La capacidad debe ser al menos 1").optional(),
+  capacity: z
+    .number()
+    .int("La capacidad debe ser un número entero")
+    .min(1, "La capacidad debe ser al menos 1")
+    .optional(),
   academicPeriodId: z
     .string()
     .uuid("Selecciona un período académico válido"),

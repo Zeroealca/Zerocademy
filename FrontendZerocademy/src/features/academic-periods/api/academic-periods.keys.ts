@@ -2,6 +2,7 @@ import type { AcademicPeriodsFilters } from "@/features/academic-periods/types";
 
 export const academicPeriodsKeys = {
   all: ["academic-periods"] as const,
+  context: () => [...academicPeriodsKeys.all, "context"] as const,
   lists: () => [...academicPeriodsKeys.all, "list"] as const,
   list: (filters: AcademicPeriodsFilters) =>
     [...academicPeriodsKeys.lists(), filters] as const,

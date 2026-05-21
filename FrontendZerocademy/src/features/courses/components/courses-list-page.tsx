@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
+import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
 import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
+import type { AcademicPeriod } from "@/features/academic-periods/types";
 import { CoursesTable } from "@/features/courses/components/courses-table";
 import {
   useActivateCourse,
@@ -28,8 +31,19 @@ const DEFAULT_FILTERS: CoursesFilters = {
 
 export function CoursesListPage() {
   const currentUser = useAuthStore((state) => state.user);
+  const effectivePeriodId = useEffectiveAcademicPeriodId();
   const [filters, setFilters] = useState<CoursesFilters>(DEFAULT_FILTERS);
   const { data, isLoading, isError, refetch } = useCourses(filters);
+
+  useEffect(() => {
+    if (effectivePeriodId && filters.academicPeriodId !== effectivePeriodId) {
+      setFilters((prev) => ({
+        ...prev,
+        academicPeriodId: effectivePeriodId,
+        page: 1,
+      }));
+    }
+  }, [effectivePeriodId, filters.academicPeriodId]);
   const { data: periodsData } = useAcademicPeriods({ page: 1, limit: 100 });
   const { data: gradesData } = useGradeLevels({ page: 1, limit: 100 });
   const activate = useActivateCourse();
@@ -112,7 +126,7 @@ function FiltersBar({
   onChange,
 }: {
   filters: CoursesFilters;
-  periods: { id: string; name: string }[];
+  periods: AcademicPeriod[];
   grades: { id: string; name: string; code: string }[];
   onChange: (filters: CoursesFilters) => void;
 }) {
@@ -145,7 +159,7 @@ function FiltersBar({
           <option value="">Todos los períodos</option>
           {periods.map((period) => (
             <option key={period.id} value={period.id}>
-              {period.name}
+              {formatAcademicPeriodOptionLabel(period)}
             </option>
           ))}
         </Select>

@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { AcademicPeriodSelector } from "@/components/layout/academic-period-selector";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { ROLE_LABELS } from "@/features/users/constants";
@@ -28,6 +29,7 @@ export function DashboardHeader() {
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <AcademicPeriodSelector />
         <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground sm:inline">
           {roleLabel}
         </span>

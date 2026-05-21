@@ -15,10 +15,7 @@ import {
 } from "@/features/academic-periods/constants";
 import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
 import type { AcademicPeriodsFilters } from "@/features/academic-periods/types";
-import {
-  canManageAcademicPeriods,
-  canViewAcademicPeriods,
-} from "@/lib/permissions";
+import { canManageAcademicPeriods } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
 const DEFAULT_FILTERS: AcademicPeriodsFilters = {
@@ -31,7 +28,7 @@ export function AcademicPeriodsListPage() {
   const [filters, setFilters] = useState<AcademicPeriodsFilters>(DEFAULT_FILTERS);
   const { data, isLoading, isError, refetch } = useAcademicPeriods(filters);
 
-  if (!canViewAcademicPeriods(currentUser?.role)) {
+  if (!canManageAcademicPeriods(currentUser?.role)) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1>
@@ -68,6 +65,7 @@ export function AcademicPeriodsListPage() {
         }
         isLoading={isLoading}
         isError={isError}
+        canManage={canManage}
         onRetry={() => refetch()}
         onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
       />

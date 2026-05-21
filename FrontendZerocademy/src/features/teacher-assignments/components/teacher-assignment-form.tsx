@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
 import { useCourses } from "@/features/courses/hooks/use-courses";
 import { useSubjects } from "@/features/subjects/hooks/use-subjects";
@@ -147,7 +148,7 @@ export function TeacherAssignmentForm({
                   <option value="">Seleccionar período</option>
                   {periods.map((period) => (
                     <option key={period.id} value={period.id}>
-                      {period.name}
+                      {formatAcademicPeriodOptionLabel(period)}
                     </option>
                   ))}
                 </Select>
