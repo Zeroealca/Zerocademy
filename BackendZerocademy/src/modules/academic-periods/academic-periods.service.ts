@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,7 +22,16 @@ import {
   assertValidPeriodDates,
   parseDateOnly,
 } from './academic-period.validation';
+import { findActiveInstitutionOrThrow } from '../institutions/institution.validation';
+import {
+  assertActorCanAccessPeriod,
+  resolveActorInstitutionId,
+} from '../../common/rbac/academic-scope.util';
+import { RoleUtils } from '../../common/rbac/role.utils';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { ACADEMIC_PERIODS_CONTEXT } from './constants';
+import { AcademicPeriodContextResponseDto } from './dto/academic-period-context-response.dto';
+import { SetSelectedAcademicPeriodDto } from './dto/set-selected-academic-period.dto';
 import { CreateAcademicPeriodDto } from './dto/create-academic-period.dto';
 import { ListAcademicPeriodsQueryDto } from './dto/list-academic-periods-query.dto';
 import { UpdateAcademicPeriodDto } from './dto/update-academic-period.dto';
@@ -86,9 +96,14 @@ export class AcademicPeriodsService {
     const endDate = parseDateOnly(dto.endDate);
     assertValidPeriodDates({ startDate, endDate });
 
+    if (dto.institutionId) {
+      await findActiveInstitutionOrThrow(this.prisma, dto.institutionId);
+    }
+
     const period = await this.prisma.academicPeriod.create({
       data: {
         name: dto.name.trim(),
+        institutionId: dto.institutionId ?? null,
         regime: dto.regime,
         startDate,
         endDate,
@@ -175,7 +190,7 @@ export class AcademicPeriodsService {
         isActive: true,
         id: { not: id },
       },
-      select: { startDate: true, endDate: true },
+      select: { id: true, name: true, startDate: true, endDate: true },
     });
 
     assertNoOverlappingActivePeriod(
@@ -184,10 +199,11 @@ export class AcademicPeriodsService {
     );
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.academicPeriod.updateMany({
+      const deactivated = await tx.academicPeriod.updateMany({
         where: {
           regime: period.regime,
           status: AcademicPeriodStatus.ACTIVE,
+          isActive: true,
           id: { not: id },
         },
         data: {
@@ -195,6 +211,19 @@ export class AcademicPeriodsService {
           isActive: false,
         },
       });
+
+      if (deactivated.count > 0) {
+        this.logger.log({
+          context: ACADEMIC_PERIODS_CONTEXT,
+          event: 'PERIOD_AUTO_DEACTIVATED',
+          message: 'Other active periods in the same regime were closed',
+          metadata: {
+            regime: period.regime,
+            deactivatedCount: deactivated.count,
+            activatedPeriodId: id,
+          },
+        });
+      }
 
       return tx.academicPeriod.update({
         where: { id },
@@ -268,10 +297,125 @@ export class AcademicPeriodsService {
     return toAcademicPeriodResponseDto(updated, true);
   }
 
+  async getContext(
+    actor: AuthenticatedUser,
+  ): Promise<AcademicPeriodContextResponseDto> {
+    const institutionId = await resolveActorInstitutionId(this.prisma, actor);
+
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: actor.id },
+      select: { selectedAcademicPeriodId: true },
+    });
+
+    const activeByRegime = await Promise.all(
+      ([AcademicRegime.COSTA_GALAPAGOS, AcademicRegime.SIERRA_AMAZONIA] as const).map(
+        async (regime) => {
+          const period = await this.findActiveByRegime(regime);
+          return { regime, period };
+        },
+      ),
+    );
+
+    let selectedPeriod: AcademicPeriodResponseDto | null = null;
+
+    if (user.selectedAcademicPeriodId) {
+      const period = await this.prisma.academicPeriod.findUnique({
+        where: { id: user.selectedAcademicPeriodId },
+        include: academicPeriodWithTermsInclude,
+      });
+
+      if (period) {
+        try {
+          await assertActorCanAccessPeriod(this.prisma, actor, period);
+          selectedPeriod = toAcademicPeriodResponseDto(period, true);
+        } catch {
+          selectedPeriod = null;
+        }
+      }
+    }
+
+    const effectivePeriod =
+      selectedPeriod ??
+      (await this.resolveDefaultPeriod(actor, institutionId, activeByRegime));
+
+    return {
+      selectedPeriod,
+      effectivePeriod,
+      activeByRegime,
+      institutionId,
+    };
+  }
+
+  async setSelectedPeriod(
+    actor: AuthenticatedUser,
+    dto: SetSelectedAcademicPeriodDto,
+  ): Promise<AcademicPeriodContextResponseDto> {
+    if (!RoleUtils.canSelectAcademicPeriod(actor.role)) {
+      throw new ForbiddenException(
+        'Your role cannot select an academic period context',
+      );
+    }
+
+    const period = await this.findPeriodOrThrow(dto.academicPeriodId, true);
+    await assertActorCanAccessPeriod(this.prisma, actor, period);
+
+    await this.prisma.user.update({
+      where: { id: actor.id },
+      data: { selectedAcademicPeriodId: period.id },
+    });
+
+    this.logger.log({
+      context: ACADEMIC_PERIODS_CONTEXT,
+      event: 'ACADEMIC_PERIOD_SELECTED',
+      message: 'User selected academic period context',
+      metadata: {
+        userId: actor.id,
+        periodId: period.id,
+        regime: period.regime,
+      },
+    });
+
+    return this.getContext(actor);
+  }
+
+  private async resolveDefaultPeriod(
+    actor: AuthenticatedUser,
+    institutionId: string | undefined,
+    activeByRegime: AcademicPeriodContextResponseDto['activeByRegime'],
+  ): Promise<AcademicPeriodResponseDto | null> {
+    if (institutionId) {
+      const institution = await this.prisma.institution.findUnique({
+        where: { id: institutionId },
+        select: { activeAcademicPeriodId: true, regime: true },
+      });
+
+      if (institution?.activeAcademicPeriodId) {
+        const period = await this.prisma.academicPeriod.findUnique({
+          where: { id: institution.activeAcademicPeriodId },
+          include: academicPeriodWithTermsInclude,
+        });
+        if (period) {
+          return toAcademicPeriodResponseDto(period, true);
+        }
+      }
+
+      if (institution?.regime) {
+        const match = activeByRegime.find((r) => r.regime === institution.regime);
+        return match?.period ?? null;
+      }
+    }
+
+    return activeByRegime.find((r) => r.period)?.period ?? null;
+  }
+
   private buildListWhere(
     query: ListAcademicPeriodsQueryDto,
   ): Prisma.AcademicPeriodWhereInput {
     const where: Prisma.AcademicPeriodWhereInput = {};
+
+    if (query.institutionId) {
+      where.institutionId = query.institutionId;
+    }
 
     if (query.regime) {
       where.regime = query.regime;

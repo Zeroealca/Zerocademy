@@ -10,6 +10,7 @@ import {
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { findActiveInstitutionOrThrow } from '../institutions/institution.validation';
 import { SUBJECTS_CONTEXT } from './constants';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { ListSubjectsQueryDto } from './dto/list-subjects-query.dto';
@@ -88,11 +89,16 @@ export class SubjectsService {
 
   async create(dto: CreateSubjectDto): Promise<SubjectResponseDto> {
     const isSystem = dto.isSystem ?? false;
+    const institutionId = dto.institutionId ?? null;
     const gradeLevelIds = dto.gradeLevelIds ?? [];
-    assertSystemSubjectRules(isSystem, gradeLevelIds);
+    assertSystemSubjectRules(isSystem, institutionId, gradeLevelIds);
+
+    if (institutionId) {
+      await findActiveInstitutionOrThrow(this.prisma, institutionId);
+    }
 
     const code = normalizeSubjectCode(dto.code);
-    await assertUniqueSubjectCode(this.prisma, code);
+    await assertUniqueSubjectCode(this.prisma, code, institutionId);
     await assertGradeLevelsExist(this.prisma, gradeLevelIds);
 
     const subject = await this.prisma.$transaction(async (tx) => {
@@ -101,6 +107,7 @@ export class SubjectsService {
           name: dto.name.trim(),
           code,
           description: dto.description?.trim(),
+          institutionId,
           isSystem,
           isActive: true,
         },
@@ -137,11 +144,16 @@ export class SubjectsService {
     const gradeLevelIds = dto.gradeLevelIds;
 
     if (dto.isSystem === true && gradeLevelIds && gradeLevelIds.length > 0) {
-      assertSystemSubjectRules(true, gradeLevelIds);
+      assertSystemSubjectRules(true, existing.institutionId, gradeLevelIds);
     }
 
     if (dto.code) {
-      await assertUniqueSubjectCode(this.prisma, dto.code, id);
+      await assertUniqueSubjectCode(
+        this.prisma,
+        dto.code,
+        existing.institutionId,
+        id,
+      );
     }
 
     if (gradeLevelIds) {
@@ -261,6 +273,10 @@ export class SubjectsService {
 
   private buildListWhere(query: ListSubjectsQueryDto): Prisma.SubjectWhereInput {
     const where: Prisma.SubjectWhereInput = {};
+
+    if (query.institutionId) {
+      where.institutionId = query.institutionId;
+    }
 
     if (query.isActive !== undefined) {
       where.isActive = query.isActive;

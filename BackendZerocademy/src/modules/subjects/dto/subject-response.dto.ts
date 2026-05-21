@@ -24,6 +24,12 @@ export class SubjectResponseDto {
   @ApiPropertyOptional({ example: 'Core mathematics curriculum' })
   description?: string | null;
 
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Owning institution (null = global catalog)',
+  })
+  institutionId?: string | null;
+
   @ApiProperty({ example: false })
   isSystem: boolean;
 

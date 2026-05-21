@@ -7,6 +7,7 @@ export function toCourseResponseDto(course: Course): CourseResponseDto {
     name: course.name,
     section: course.section,
     capacity: course.capacity,
+    institutionId: course.institutionId,
     academicPeriodId: course.academicPeriodId,
     gradeLevelId: course.gradeLevelId,
     isActive: course.isActive,

@@ -32,6 +32,7 @@ export function toAcademicPeriodResponseDto(
   const response: AcademicPeriodResponseDto = {
     id: period.id,
     name: period.name,
+    institutionId: period.institutionId,
     regime: period.regime,
     startDate: formatDateOnly(period.startDate),
     endDate: formatDateOnly(period.endDate),

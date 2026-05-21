@@ -75,8 +75,11 @@ Folder names must match the domain registry in [`../agent.md`](../agent.md).
 
 - `JwtAuthGuard` + `RolesGuard` on protected routes.
 - **Services must re-check** scope before mutations (guards alone are insufficient).
-- `RoleUtils.hasRole()` — `SUPER_ADMIN` bypasses role lists where applicable.
-- Scope by `institutionId` / active period when multi-tenant.
+- `RoleUtils.hasRole()` — `SUPER_ADMIN` bypasses role lists unless `@ApiRequireRolesStrict` / `StrictRoles` is set.
+- Platform routes: periods, catalog — `SUPER_ADMIN` write. Institution ops: courses, assignments — `ADMIN` strict only.
+- Academic period context: `User.selectedAcademicPeriodId`; `GET/PUT /v1/academic-periods/context`.
+- One **ACTIVE** period per `AcademicRegime` globally on activation.
+- Scope by `institutionId` / effective period; see [`docs/ownership-strategy.md`](../docs/ownership-strategy.md).
 - Use `404` instead of `403` when hiding resource existence is required (e.g. super-admin visibility for admins).
 
 ### `@ApiRequireRoles` — critical

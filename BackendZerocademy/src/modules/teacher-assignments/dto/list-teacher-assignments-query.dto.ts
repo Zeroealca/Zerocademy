@@ -6,6 +6,11 @@ export class ListTeacherAssignmentsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
+  institutionId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
   teacherId?: string;
 
   @ApiPropertyOptional({ format: 'uuid' })

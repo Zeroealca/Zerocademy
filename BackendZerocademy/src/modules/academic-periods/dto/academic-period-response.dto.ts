@@ -12,6 +12,12 @@ export class AcademicPeriodResponseDto {
   @ApiProperty({ example: '2025-2026' })
   name: string;
 
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Owning educational institution',
+  })
+  institutionId?: string | null;
+
   @ApiProperty({ enum: AcademicRegime })
   regime: AcademicRegime;
 

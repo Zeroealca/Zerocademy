@@ -30,6 +30,14 @@ export class CreateSubjectDto {
   description?: string;
 
   @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Owning institution (omit for global catalog)',
+  })
+  @IsOptional()
+  @IsUUID()
+  institutionId?: string;
+
+  @ApiPropertyOptional({
     default: false,
     description: 'Platform-managed catalog entry',
   })

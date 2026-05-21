@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { AcademicPeriod, GradeLevel } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { findActiveInstitutionOrThrow } from '../institutions/institution.validation';
 
 export function normalizeCourseSection(section: string): string {
   return section.trim().toUpperCase();
@@ -16,6 +17,10 @@ export async function assertAcademicPeriodExists(
 
   if (!period) {
     throw new NotFoundException('Academic period not found');
+  }
+
+  if (period.institutionId) {
+    await findActiveInstitutionOrThrow(prisma, period.institutionId);
   }
 
   return period;

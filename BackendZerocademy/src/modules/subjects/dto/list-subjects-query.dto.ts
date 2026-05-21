@@ -4,6 +4,11 @@ import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class ListSubjectsQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  institutionId?: string;
+
   @ApiPropertyOptional({ format: 'uuid', description: 'Filter by linked grade level' })
   @IsOptional()
   @IsUUID()

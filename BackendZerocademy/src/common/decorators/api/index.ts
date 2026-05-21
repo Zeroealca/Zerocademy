@@ -1,2 +1,5 @@
 export { ApiStandardErrorResponses } from './api-standard-errors.decorator';
-export { ApiRequireRoles } from './api-require-roles.decorator';
+export {
+  ApiRequireRoles,
+  ApiRequireRolesStrict,
+} from './api-require-roles.decorator';

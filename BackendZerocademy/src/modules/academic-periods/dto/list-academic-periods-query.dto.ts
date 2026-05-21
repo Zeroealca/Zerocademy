@@ -3,10 +3,15 @@ import {
   AcademicPeriodStatus,
   AcademicRegime,
 } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class ListAcademicPeriodsQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  institutionId?: string;
+
   @ApiPropertyOptional({ enum: AcademicRegime })
   @IsOptional()
   @IsEnum(AcademicRegime)

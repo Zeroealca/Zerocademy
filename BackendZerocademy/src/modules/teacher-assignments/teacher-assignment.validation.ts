@@ -59,7 +59,7 @@ export async function assertCourseAndPeriodIntegrity(
   prisma: PrismaService,
   courseId: string,
   academicPeriodId: string,
-): Promise<{ gradeLevelId: string }> {
+): Promise<{ gradeLevelId: string; institutionId: string | null }> {
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     select: {
@@ -67,6 +67,7 @@ export async function assertCourseAndPeriodIntegrity(
       isActive: true,
       academicPeriodId: true,
       gradeLevelId: true,
+      institutionId: true,
     },
   });
 
@@ -93,7 +94,10 @@ export async function assertCourseAndPeriodIntegrity(
     throw new NotFoundException('Academic period not found');
   }
 
-  return { gradeLevelId: course.gradeLevelId };
+  return {
+    gradeLevelId: course.gradeLevelId,
+    institutionId: course.institutionId,
+  };
 }
 
 export async function assertSubjectAppliesToGrade(

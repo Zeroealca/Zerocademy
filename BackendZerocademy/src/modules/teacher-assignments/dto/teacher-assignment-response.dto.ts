@@ -1,8 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TeacherAssignmentResponseDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
+
+  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  institutionId?: string | null;
 
   @ApiProperty({ format: 'uuid' })
   teacherId: string;

@@ -7,6 +7,11 @@ export class ListCoursesQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
+  institutionId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
   academicPeriodId?: string;
 
   @ApiPropertyOptional({ format: 'uuid' })

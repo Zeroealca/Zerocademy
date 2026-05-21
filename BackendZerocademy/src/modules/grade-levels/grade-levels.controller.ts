@@ -20,6 +20,10 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import {
+  PLATFORM_CATALOG_WRITE_ROLES,
+  PLATFORM_READ_ROLES,
+} from '../../common/rbac/rbac-role-sets';
 import { CreateGradeLevelDto } from './dto/create-grade-level.dto';
 import { GradeLevelListResponseDto } from './dto/grade-level-list-response.dto';
 import { GradeLevelResponseDto } from './dto/grade-level-response.dto';
@@ -27,16 +31,13 @@ import { ListGradeLevelsQueryDto } from './dto/list-grade-levels-query.dto';
 import { UpdateGradeLevelDto } from './dto/update-grade-level.dto';
 import { GradeLevelsService } from './grade-levels.service';
 
-const READ_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER] as const;
-const WRITE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
-
 @ApiTags('grade-levels')
 @Controller('grade-levels')
 export class GradeLevelsController {
   constructor(private readonly gradeLevelsService: GradeLevelsService) {}
 
   @Get()
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'List grade levels (paginated)' })
   @ApiOkResponse({ type: GradeLevelListResponseDto })
   findAll(
@@ -46,7 +47,7 @@ export class GradeLevelsController {
   }
 
   @Get(':id')
-  @ApiRequireRoles(...READ_ROLES)
+  @ApiRequireRoles(...PLATFORM_READ_ROLES)
   @ApiOperation({ summary: 'Get grade level by id' })
   @ApiOkResponse({ type: GradeLevelResponseDto })
   findOne(
@@ -56,7 +57,7 @@ export class GradeLevelsController {
   }
 
   @Post()
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Create grade level' })
   @ApiCreatedResponse({ type: GradeLevelResponseDto })
   create(@Body() dto: CreateGradeLevelDto): Promise<GradeLevelResponseDto> {
@@ -64,7 +65,7 @@ export class GradeLevelsController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Update grade level' })
   @ApiOkResponse({ type: GradeLevelResponseDto })
   update(
@@ -75,7 +76,7 @@ export class GradeLevelsController {
   }
 
   @Post(':id/activate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Activate grade level' })
   @ApiOkResponse({ type: GradeLevelResponseDto })
   activate(
@@ -85,7 +86,7 @@ export class GradeLevelsController {
   }
 
   @Post(':id/deactivate')
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Deactivate grade level' })
   @ApiOkResponse({ type: GradeLevelResponseDto })
   deactivate(
@@ -96,7 +97,7 @@ export class GradeLevelsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiRequireRoles(...WRITE_ROLES)
+  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete grade level (no courses)' })
   @ApiNoContentResponse()
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

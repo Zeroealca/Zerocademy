@@ -8,6 +8,7 @@ export function normalizeSubjectCode(code: string): string {
 export async function assertUniqueSubjectCode(
   prisma: PrismaService,
   code: string,
+  institutionId?: string | null,
   excludeId?: string,
 ): Promise<void> {
   const normalizedCode = normalizeSubjectCode(code);
@@ -15,6 +16,7 @@ export async function assertUniqueSubjectCode(
   const existing = await prisma.subject.findFirst({
     where: {
       code: normalizedCode,
+      institutionId: institutionId ?? null,
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
     },
     select: { id: true },
@@ -27,8 +29,13 @@ export async function assertUniqueSubjectCode(
 
 export function assertSystemSubjectRules(
   isSystem: boolean,
+  institutionId?: string | null,
   gradeLevelIds?: string[],
 ): void {
+  if (isSystem && institutionId) {
+    throw new BadRequestException('System subjects cannot belong to an institution');
+  }
+
   if (isSystem && gradeLevelIds && gradeLevelIds.length > 0) {
     throw new BadRequestException(
       'System subjects cannot be restricted to specific grade levels at creation',

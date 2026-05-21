@@ -90,11 +90,12 @@ export class TeacherAssignmentsService {
   async create(
     dto: CreateTeacherAssignmentDto,
   ): Promise<TeacherAssignmentResponseDto> {
-    await this.validateAssignmentKeys(dto);
+    const { institutionId } = await this.validateAssignmentKeys(dto);
 
     try {
       const assignment = await this.prisma.teacherAssignment.create({
         data: {
+          institutionId,
           teacherId: dto.teacherId,
           subjectId: dto.subjectId,
           courseId: dto.courseId,
@@ -136,12 +137,12 @@ export class TeacherAssignmentsService {
       academicPeriodId: dto.academicPeriodId ?? existing.academicPeriodId,
     };
 
-    await this.validateAssignmentKeys(keys, id);
+    const { institutionId } = await this.validateAssignmentKeys(keys, id);
 
     try {
       const assignment = await this.prisma.teacherAssignment.update({
         where: { id },
-        data: keys,
+        data: { ...keys, institutionId },
         include: teacherAssignmentInclude,
       });
 
@@ -174,11 +175,11 @@ export class TeacherAssignmentsService {
   private async validateAssignmentKeys(
     keys: CreateTeacherAssignmentDto,
     excludeId?: string,
-  ): Promise<void> {
+  ): Promise<{ institutionId: string | null }> {
     await assertTeacherExistsAndActive(this.prisma, keys.teacherId);
     await assertSubjectExistsAndActive(this.prisma, keys.subjectId);
 
-    const { gradeLevelId } = await assertCourseAndPeriodIntegrity(
+    const { gradeLevelId, institutionId } = await assertCourseAndPeriodIntegrity(
       this.prisma,
       keys.courseId,
       keys.academicPeriodId,
@@ -190,12 +191,18 @@ export class TeacherAssignmentsService {
       gradeLevelId,
     );
     await assertUniqueAssignment(this.prisma, keys, excludeId);
+
+    return { institutionId };
   }
 
   private buildListWhere(
     query: ListTeacherAssignmentsQueryDto,
   ): Prisma.TeacherAssignmentWhereInput {
     const where: Prisma.TeacherAssignmentWhereInput = {};
+
+    if (query.institutionId) {
+      where.institutionId = query.institutionId;
+    }
 
     if (query.teacherId) {
       where.teacherId = query.teacherId;

@@ -13,6 +13,9 @@ export class CourseResponseDto {
   @ApiPropertyOptional({ nullable: true })
   capacity?: number | null;
 
+  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  institutionId?: string | null;
+
   @ApiProperty({ format: 'uuid' })
   academicPeriodId: string;
 
