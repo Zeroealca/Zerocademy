@@ -23,17 +23,17 @@ import type {
 } from "@/features/academic-structure/types";
 import { ACTIVE_STATUS_LABELS } from "@/features/academic-levels/constants";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
-import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
-import { canViewAcademicStructure } from "@/lib/permissions";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
+import { canViewInstitutionOperations } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
 export function AcademicHierarchyPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [filters, setFilters] = useState<AcademicHierarchyFilters>({});
-  const { data: periodsData } = useAcademicPeriods({ page: 1, limit: 100 });
+  const { data: periodsData } = useInstitutionAcademicPeriods();
   const { data, isLoading, isError, refetch } = useAcademicHierarchy(filters);
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canViewInstitutionOperations(currentUser?.role)) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1>

@@ -17,8 +17,7 @@ import type {
   AcademicLevelsFilters,
 } from "@/features/academic-levels/types";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -34,11 +33,11 @@ export function AcademicLevelsListPage() {
   const activate = useActivateAcademicLevel();
   const deactivate = useDeactivateAcademicLevel();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return <AccessDenied />;
   }
 
-  const canManage = canManageAcademicStructure(currentUser?.role);
+  const canManage = true;
 
   const handleToggleActive = async (level: AcademicLevel) => {
     if (

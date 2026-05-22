@@ -4,11 +4,7 @@ const PLATFORM_CALENDAR_ROLES: UserRole[] = ["SUPER_ADMIN"];
 const INSTITUTION_OPS_ROLES: UserRole[] = ["ADMIN"];
 const INSTITUTION_VIEW_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
 const PERIOD_CONTEXT_ROLES: UserRole[] = ["ADMIN", "TEACHER", "STUDENT"];
-const ACADEMIC_STRUCTURE_VIEW_ROLES: UserRole[] = [
-  "SUPER_ADMIN",
-  "ADMIN",
-  "TEACHER",
-];
+const INSTITUTION_OPS_VIEW_ROLES: UserRole[] = ["ADMIN", "TEACHER"];
 const USER_ADMIN_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
 
 function hasRole(
@@ -49,15 +45,23 @@ export function canSelectAcademicPeriod(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, PERIOD_CONTEXT_ROLES);
 }
 
-/** Reusable catalog: levels, grades, subjects. */
+/** Create, update, delete global catalog: academic levels, grade levels, subjects (SUPER_ADMIN only). */
 export function canManagePlatformCatalog(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
 }
 
-export function canViewAcademicStructure(role: UserRole | undefined): boolean {
-  return hasRole(role, ACADEMIC_STRUCTURE_VIEW_ROLES);
+/** Courses, teacher assignments, and structure tree (ADMIN, TEACHER). */
+export function canViewInstitutionOperations(
+  role: UserRole | undefined,
+): boolean {
+  return hasRoleStrict(role, INSTITUTION_OPS_VIEW_ROLES);
 }
 
+export function canViewAcademicStructure(role: UserRole | undefined): boolean {
+  return canViewInstitutionOperations(role);
+}
+
+/** Institution operations: courses, teacher assignments (ADMIN only). */
 export function canManageAcademicStructure(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
 }
@@ -90,6 +94,31 @@ export function canManageAcademicTransitions(role: UserRole | undefined): boolea
   return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
 }
 
-export function canCreateStudents(role: UserRole | undefined): boolean {
-  return hasRole(role, [...INSTITUTION_OPS_ROLES, ...PLATFORM_CALENDAR_ROLES]);
+/** Student CRUD, enrollments, and CSV import (ADMIN only; strict). */
+export function canManageStudents(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
+}
+
+/** Institution student directory (ADMIN, TEACHER). Students use own-profile routes only. */
+export function canViewStudents(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, INSTITUTION_OPS_VIEW_ROLES);
+}
+
+export function canManageEnrollments(role: UserRole | undefined): boolean {
+  return canManageStudents(role);
+}
+
+/** Full enrollments module: list, create, bulk (ADMIN, TEACHER). */
+export function canViewEnrollments(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, INSTITUTION_OPS_VIEW_ROLES);
+}
+
+/** Student self-service: own enrollment history. */
+export function canViewOwnEnrollmentHistory(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["STUDENT"]);
+}
+
+/** Student grades module (read-only own data when implemented). */
+export function canViewGrades(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["STUDENT"]);
 }

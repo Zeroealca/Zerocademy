@@ -12,6 +12,7 @@ export interface AcademicPeriodContext {
   effectivePeriod: AcademicPeriod | null;
   activeByRegime: ActivePeriodByRegime[];
   institutionId?: string;
+  institutionRegime?: AcademicRegime;
 }
 
 export function fetchAcademicPeriodContext(): Promise<AcademicPeriodContext> {

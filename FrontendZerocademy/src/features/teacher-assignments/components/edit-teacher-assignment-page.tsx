@@ -12,7 +12,7 @@ import { useTeacherAssignment } from "@/features/teacher-assignments/hooks/use-t
 import type { CreateTeacherAssignmentInput } from "@/features/teacher-assignments/schemas/teacher-assignment.schema";
 import {
   canManageAcademicStructure,
-  canViewAcademicStructure,
+  canViewInstitutionOperations,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -28,7 +28,7 @@ export function EditTeacherAssignmentPage({
   const { data: assignment, isLoading, isError } = useTeacherAssignment(id);
   const updateAssignment = useUpdateTeacherAssignment();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canViewInstitutionOperations(currentUser?.role)) {
     return <AccessDenied href="/dashboard" label="Volver al panel" />;
   }
 

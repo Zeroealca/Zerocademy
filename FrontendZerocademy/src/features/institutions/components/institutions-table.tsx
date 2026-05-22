@@ -23,6 +23,8 @@ interface InstitutionsTableProps {
   isLoading: boolean;
   isError: boolean;
   canManage: boolean;
+  canViewMembers: boolean;
+  canViewTransitions: boolean;
   onRetry: () => void;
   onPageChange: (page: number) => void;
   onToggleActive: (institution: Institution) => void;
@@ -34,6 +36,8 @@ export function InstitutionsTable({
   isLoading,
   isError,
   canManage,
+  canViewMembers,
+  canViewTransitions,
   onRetry,
   onPageChange,
   onToggleActive,
@@ -131,20 +135,24 @@ export function InstitutionsTable({
                                 Configuración
                               </Link>
                             </Button>
-                            <Button variant="outline" size="sm" asChild>
-                              <Link
-                                href={`/institutions/${institution.id}/members`}
-                              >
-                                Miembros
-                              </Link>
-                            </Button>
-                            <Button variant="outline" size="sm" asChild>
-                              <Link
-                                href={`/institutions/${institution.id}/transitions`}
-                              >
-                                Transiciones
-                              </Link>
-                            </Button>
+                            {canViewMembers ? (
+                              <Button variant="outline" size="sm" asChild>
+                                <Link
+                                  href={`/institutions/${institution.id}/members`}
+                                >
+                                  Miembros
+                                </Link>
+                              </Button>
+                            ) : null}
+                            {canViewTransitions ? (
+                              <Button variant="outline" size="sm" asChild>
+                                <Link
+                                  href={`/institutions/${institution.id}/transitions`}
+                                >
+                                  Transiciones
+                                </Link>
+                              </Button>
+                            ) : null}
                             {canManage ? (
                               <>
                                 <Button variant="outline" size="sm" asChild>

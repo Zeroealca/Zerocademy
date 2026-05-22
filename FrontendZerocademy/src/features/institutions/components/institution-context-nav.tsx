@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
+  canManageInstitutionSettings,
   canViewAcademicTransitions,
   canViewInstitutionMemberships,
 } from "@/lib/permissions";
@@ -21,7 +22,7 @@ export function InstitutionContextNav({ institutionId }: InstitutionContextNavPr
     {
       href: `/institutions/${institutionId}/settings`,
       label: "Configuración",
-      visible: true,
+      visible: canManageInstitutionSettings(role),
     },
     {
       href: `/institutions/${institutionId}/members`,

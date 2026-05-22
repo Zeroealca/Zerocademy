@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import type { AcademicPeriod } from "@/features/academic-periods/types";
 import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
-import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import { TeacherAssignmentsTable } from "@/features/teacher-assignments/components/teacher-assignments-table";
 import { useDeleteTeacherAssignment } from "@/features/teacher-assignments/hooks/use-teacher-assignment-mutations";
 import { useTeacherAssignments } from "@/features/teacher-assignments/hooks/use-teacher-assignments";
@@ -19,7 +19,7 @@ import type {
 } from "@/features/teacher-assignments/types";
 import {
   canManageAcademicStructure,
-  canViewAcademicStructure,
+  canViewInstitutionOperations,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -43,10 +43,10 @@ export function TeacherAssignmentsListPage() {
       }));
     }
   }, [effectivePeriodId, filters.academicPeriodId]);
-  const { data: periodsData } = useAcademicPeriods({ page: 1, limit: 100 });
+  const { data: periodsData } = useInstitutionAcademicPeriods();
   const removeAssignment = useDeleteTeacherAssignment();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canViewInstitutionOperations(currentUser?.role)) {
     return <AccessDenied />;
   }
 

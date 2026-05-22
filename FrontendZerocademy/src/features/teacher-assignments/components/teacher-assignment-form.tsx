@@ -13,7 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
-import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import { useCourses } from "@/features/courses/hooks/use-courses";
 import { useSubjects } from "@/features/subjects/hooks/use-subjects";
 import {
@@ -52,11 +52,13 @@ export function TeacherAssignmentForm({
   onSubmit,
   disabled = false,
 }: TeacherAssignmentFormProps) {
-  const { data: periodsData, isLoading: periodsLoading } = useAcademicPeriods({
-    page: 1,
-    limit: 100,
-  });
-  const { data: teachersData, isLoading: teachersLoading } = useUsers({
+  const { data: periodsData, isLoading: periodsLoading } =
+    useInstitutionAcademicPeriods();
+  const {
+    data: teachersData,
+    isLoading: teachersLoading,
+    isError: teachersError,
+  } = useUsers({
     page: 1,
     limit: 100,
     role: "TEACHER",
@@ -98,9 +100,9 @@ export function TeacherAssignmentForm({
   });
 
   const periods = periodsData?.data ?? [];
-  const teachers =
-    teachersData?.data.filter((user) => user.profileId && user.profileType === "teacher") ??
-    [];
+  const teachers = (teachersData?.data ?? []).filter(
+    (user) => user.profileId != null,
+  );
   const courses = coursesData?.data ?? [];
   const subjects = subjectsData?.data ?? [];
 
@@ -176,8 +178,9 @@ export function TeacherAssignmentForm({
                 >
                   <option value="">Seleccionar docente</option>
                   {teachers.map((teacher) => (
-                    <option key={teacher.profileId} value={teacher.profileId}>
+                    <option key={teacher.profileId!} value={teacher.profileId!}>
                       {teacher.firstName} {teacher.lastName}
+                      {teacher.email ? ` (${teacher.email})` : ""}
                     </option>
                   ))}
                 </Select>
@@ -185,6 +188,19 @@ export function TeacherAssignmentForm({
             />
             {errors.teacherId ? (
               <p className="text-sm text-destructive">{errors.teacherId.message}</p>
+            ) : null}
+            {teachersError ? (
+              <p className="text-sm text-destructive">
+                No se pudo cargar el listado de docentes. Verifica tu sesión e
+                inténtalo de nuevo.
+              </p>
+            ) : null}
+            {!teachersLoading && !teachersError && teachers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay docentes activos. Un super administrador debe crear
+                usuarios con rol Docente en la sección Usuarios antes de
+                asignarlos.
+              </p>
             ) : null}
           </div>
 

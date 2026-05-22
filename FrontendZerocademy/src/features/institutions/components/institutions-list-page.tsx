@@ -18,6 +18,8 @@ import { useInstitutions } from "@/features/institutions/hooks/use-institutions"
 import type { Institution, InstitutionsFilters } from "@/features/institutions/types";
 import {
   canManageInstitutions,
+  canViewAcademicTransitions,
+  canViewInstitutionMemberships,
   canViewInstitutions,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
@@ -48,6 +50,8 @@ export function InstitutionsListPage() {
   }
 
   const canManage = canManageInstitutions(currentUser?.role);
+  const canViewMembers = canViewInstitutionMemberships(currentUser?.role);
+  const canViewTransitions = canViewAcademicTransitions(currentUser?.role);
 
   const handleToggleActive = async (institution: Institution) => {
     const action = institution.isActive ? "desactivar" : "activar";
@@ -102,6 +106,8 @@ export function InstitutionsListPage() {
         isLoading={isLoading}
         isError={isError}
         canManage={canManage}
+        canViewMembers={canViewMembers}
+        canViewTransitions={canViewTransitions}
         onRetry={() => refetch()}
         onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
         onToggleActive={handleToggleActive}

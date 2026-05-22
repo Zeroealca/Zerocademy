@@ -7,8 +7,7 @@ import { SubjectForm } from "@/features/subjects/components/subject-form";
 import { useCreateSubject } from "@/features/subjects/hooks/use-subject-mutations";
 import type { CreateSubjectInput } from "@/features/subjects/schemas/subject.schema";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -17,16 +16,12 @@ export function CreateSubjectPage() {
   const currentUser = useAuthStore((state) => state.user);
   const createSubject = useCreateSubject();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/dashboard" label="Volver al panel" />;
-  }
-
-  if (!canManageAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return (
       <AccessDenied
         href="/subjects"
         label="Volver al listado"
-        message="Solo los administradores pueden crear materias."
+        message="Solo el super administrador puede crear materias."
       />
     );
   }

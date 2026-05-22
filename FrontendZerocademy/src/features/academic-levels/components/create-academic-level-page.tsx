@@ -7,8 +7,7 @@ import { AcademicLevelForm } from "@/features/academic-levels/components/academi
 import { useCreateAcademicLevel } from "@/features/academic-levels/hooks/use-academic-level-mutations";
 import type { CreateAcademicLevelInput } from "@/features/academic-levels/schemas/academic-level.schema";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -17,16 +16,12 @@ export function CreateAcademicLevelPage() {
   const currentUser = useAuthStore((state) => state.user);
   const createLevel = useCreateAcademicLevel();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/dashboard" label="Volver al panel" />;
-  }
-
-  if (!canManageAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return (
       <AccessDenied
         href="/academic-levels"
         label="Volver al listado"
-        message="Solo los administradores pueden crear niveles académicos."
+        message="Solo el super administrador puede crear niveles académicos."
       />
     );
   }
