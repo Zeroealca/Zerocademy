@@ -22,7 +22,10 @@ import {
   assertValidPeriodDates,
   parseDateOnly,
 } from './academic-period.validation';
-import { findActiveInstitutionOrThrow } from '../institutions/institution.validation';
+import {
+  findActiveInstitutionOrThrow,
+  resolveInstitutionAcademicRegime,
+} from '../institutions/institution.validation';
 import {
   assertActorCanAccessPeriod,
   resolveActorInstitutionId,
@@ -52,7 +55,7 @@ export class AcademicPeriodsService {
   async findAll(
     query: ListAcademicPeriodsQueryDto,
   ): Promise<AcademicPeriodListResponseDto> {
-    const where = this.buildListWhere(query);
+    const where = await this.buildListWhere(query);
     const skip = getPaginationSkip(query.page, query.limit);
 
     const [total, periods] = await this.prisma.$transaction([
@@ -338,11 +341,16 @@ export class AcademicPeriodsService {
       selectedPeriod ??
       (await this.resolveDefaultPeriod(actor, institutionId, activeByRegime));
 
+    const institutionRegime = institutionId
+      ? await resolveInstitutionAcademicRegime(this.prisma, institutionId)
+      : undefined;
+
     return {
       selectedPeriod,
       effectivePeriod,
       activeByRegime,
       institutionId,
+      institutionRegime: institutionRegime ?? undefined,
     };
   }
 
@@ -408,17 +416,32 @@ export class AcademicPeriodsService {
     return activeByRegime.find((r) => r.period)?.period ?? null;
   }
 
-  private buildListWhere(
+  private async buildListWhere(
     query: ListAcademicPeriodsQueryDto,
-  ): Prisma.AcademicPeriodWhereInput {
+  ): Promise<Prisma.AcademicPeriodWhereInput> {
     const where: Prisma.AcademicPeriodWhereInput = {};
 
+    let regimeFilter = query.regime;
+
     if (query.institutionId) {
-      where.institutionId = query.institutionId;
+      const institutionRegime = await resolveInstitutionAcademicRegime(
+        this.prisma,
+        query.institutionId,
+      );
+
+      if (institutionRegime) {
+        regimeFilter = institutionRegime;
+        where.OR = [
+          { institutionId: null },
+          { institutionId: query.institutionId },
+        ];
+      } else {
+        where.institutionId = query.institutionId;
+      }
     }
 
-    if (query.regime) {
-      where.regime = query.regime;
+    if (regimeFilter) {
+      where.regime = regimeFilter;
     }
 
     if (query.status) {

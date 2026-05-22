@@ -54,8 +54,12 @@ export class UsersService {
       }),
     ]);
 
+    const data = await Promise.all(
+      users.map((user) => this.toUserResponseWithEnsuredProfile(user)),
+    );
+
     return {
-      data: users.map(toUserResponseDto),
+      data,
       meta: buildPaginationMeta(query.page, query.limit, total),
     };
   }
@@ -66,7 +70,7 @@ export class UsersService {
   ): Promise<UserResponseDto> {
     const user = await this.findActiveUserOrThrow(id);
     this.assertCanManageUser(actor, user);
-    return toUserResponseDto(user);
+    return this.toUserResponseWithEnsuredProfile(user);
   }
 
   async create(
@@ -106,7 +110,7 @@ export class UsersService {
         });
       });
 
-      return toUserResponseDto(user);
+      return this.toUserResponseWithEnsuredProfile(user);
     } catch (error) {
       this.mapPrismaError(error);
       throw error;
@@ -198,6 +202,31 @@ export class UsersService {
       where: { userId: id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+  }
+
+  private async toUserResponseWithEnsuredProfile(
+    user: UserWithProfiles,
+  ): Promise<UserResponseDto> {
+    if (
+      RoleUtils.requiresAcademicProfile(user.role) &&
+      !mapProfileFromUser(user).profileId
+    ) {
+      const institutionId = mapProfileFromUser(user).institutionId;
+      await this.profileProvisioning.ensureProfileForUser(
+        user.id,
+        user.role,
+        institutionId,
+      );
+
+      const refreshed = await this.prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+        select: userWithProfilesSelect,
+      });
+
+      return toUserResponseDto(refreshed);
+    }
+
+    return toUserResponseDto(user);
   }
 
   private buildListWhere(
