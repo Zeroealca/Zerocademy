@@ -3,11 +3,11 @@
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
-import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
 import {
   useAcademicPeriodContext,
   useSetSelectedAcademicPeriod,
 } from "@/features/academic-periods/hooks/use-academic-period-context";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import { canSelectAcademicPeriod } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -23,15 +23,25 @@ export function AcademicPeriodSelector() {
 
 function AcademicPeriodSelectorInner() {
   const { data: context, isLoading: contextLoading } = useAcademicPeriodContext();
-  const { data: periodsData, isLoading: periodsLoading } = useAcademicPeriods({
-    page: 1,
-    limit: 100,
-    institutionId: context?.institutionId,
-  });
+  const {
+    data: periodsData,
+    isLoading: periodsLoading,
+    hasInstitutionScope,
+    hasRegime,
+    isScopeReady,
+  } = useInstitutionAcademicPeriods();
   const setPeriod = useSetSelectedAcademicPeriod();
 
   const effectiveId = context?.effectivePeriod?.id ?? "";
   const periods = periodsData?.data ?? [];
+
+  const emptyHint = !contextLoading && !hasInstitutionScope
+    ? "Sin institución asignada"
+    : !contextLoading && hasInstitutionScope && !hasRegime
+      ? "Institución sin régimen"
+      : periods.length === 0 && isScopeReady
+        ? "Sin períodos para este régimen"
+        : "Seleccionar período";
 
   return (
     <div className="hidden min-w-[200px] flex-col gap-1 sm:flex">
@@ -41,7 +51,12 @@ function AcademicPeriodSelectorInner() {
       <Select
         id="header-period"
         value={effectiveId}
-        disabled={contextLoading || periodsLoading || setPeriod.isPending}
+        disabled={
+          contextLoading ||
+          periodsLoading ||
+          setPeriod.isPending ||
+          !isScopeReady
+        }
         onChange={(event) => {
           const nextId = event.target.value;
           if (nextId && nextId !== effectiveId) {
@@ -52,7 +67,7 @@ function AcademicPeriodSelectorInner() {
         aria-label="Período académico seleccionado"
       >
         <option value="">
-          {contextLoading ? "Cargando…" : "Seleccionar período"}
+          {contextLoading || periodsLoading ? "Cargando…" : emptyHint}
         </option>
         {periods.map((period) => (
           <option key={period.id} value={period.id}>

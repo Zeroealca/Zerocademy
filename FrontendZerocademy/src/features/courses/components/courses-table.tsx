@@ -116,19 +116,21 @@ export function CoursesTable({
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             {canManage ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onToggleActive(course)}
-                              >
-                                {course.isActive ? "Desactivar" : "Activar"}
-                              </Button>
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onToggleActive(course)}
+                                >
+                                  {course.isActive ? "Desactivar" : "Activar"}
+                                </Button>
+                                <Button asChild variant="outline" size="sm">
+                                  <Link href={`/courses/${course.id}/edit`}>
+                                    Editar
+                                  </Link>
+                                </Button>
+                              </>
                             ) : null}
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`/courses/${course.id}/edit`}>
-                                Editar
-                              </Link>
-                            </Button>
                           </div>
                         </td>
                       </tr>

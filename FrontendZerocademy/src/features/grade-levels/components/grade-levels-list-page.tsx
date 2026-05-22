@@ -15,8 +15,7 @@ import {
 import { useGradeLevels } from "@/features/grade-levels/hooks/use-grade-levels";
 import type { GradeLevel, GradeLevelsFilters } from "@/features/grade-levels/types";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -33,11 +32,11 @@ export function GradeLevelsListPage() {
   const activate = useActivateGradeLevel();
   const deactivate = useDeactivateGradeLevel();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return <AccessDenied />;
   }
 
-  const canManage = canManageAcademicStructure(currentUser?.role);
+  const canManage = true;
 
   const handleToggleActive = async (grade: GradeLevel) => {
     if (

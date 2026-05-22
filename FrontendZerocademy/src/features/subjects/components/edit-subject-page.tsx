@@ -11,8 +11,7 @@ import {
 import { useSubject } from "@/features/subjects/hooks/use-subject";
 import type { CreateSubjectInput } from "@/features/subjects/schemas/subject.schema";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -27,16 +26,12 @@ export function EditSubjectPage({ subjectId }: EditSubjectPageProps) {
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/dashboard" label="Volver al panel" />;
-  }
-
-  if (!canManageAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return (
       <AccessDenied
         href="/subjects"
         label="Volver al listado"
-        message="Solo los administradores pueden editar materias."
+        message="Solo el super administrador puede editar materias."
       />
     );
   }

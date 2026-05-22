@@ -11,8 +11,7 @@ import { useAcademicLevel } from "@/features/academic-levels/hooks/use-academic-
 import { useUpdateAcademicLevel } from "@/features/academic-levels/hooks/use-academic-level-mutations";
 import type { CreateAcademicLevelInput } from "@/features/academic-levels/schemas/academic-level.schema";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -26,13 +25,13 @@ export function EditAcademicLevelPage({ levelId }: EditAcademicLevelPageProps) {
   const { data: level, isLoading, isError } = useAcademicLevel(levelId);
   const updateLevel = useUpdateAcademicLevel(levelId);
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/dashboard" label="Volver al panel" />;
-  }
-
-  if (!canManageAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return (
-      <AccessDenied href="/academic-levels" label="Volver al listado" />
+      <AccessDenied
+        href="/academic-levels"
+        label="Volver al listado"
+        message="Solo el super administrador puede editar niveles académicos."
+      />
     );
   }
 
@@ -71,10 +70,21 @@ export function EditAcademicLevelPage({ levelId }: EditAcademicLevelPageProps) {
   );
 }
 
-function AccessDenied({ href, label }: { href: string; label: string }) {
+function AccessDenied({
+  href,
+  label,
+  message,
+}: {
+  href: string;
+  label: string;
+  message?: string;
+}) {
   return (
     <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
       <h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1>
+      {message ? (
+        <p className="text-sm text-muted-foreground">{message}</p>
+      ) : null}
       <Button asChild variant="outline">
         <Link href={href}>{label}</Link>
       </Button>

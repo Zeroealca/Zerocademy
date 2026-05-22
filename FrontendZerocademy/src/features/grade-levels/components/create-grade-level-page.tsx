@@ -7,8 +7,7 @@ import { GradeLevelForm } from "@/features/grade-levels/components/grade-level-f
 import { useCreateGradeLevel } from "@/features/grade-levels/hooks/use-grade-level-mutations";
 import type { CreateGradeLevelInput } from "@/features/grade-levels/schemas/grade-level.schema";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -17,16 +16,12 @@ export function CreateGradeLevelPage() {
   const currentUser = useAuthStore((state) => state.user);
   const createGrade = useCreateGradeLevel();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/dashboard" label="Volver al panel" />;
-  }
-
-  if (!canManageAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return (
       <AccessDenied
         href="/grade-levels"
         label="Volver al listado"
-        message="Solo los administradores pueden crear grados."
+        message="Solo el super administrador puede crear grados."
       />
     );
   }

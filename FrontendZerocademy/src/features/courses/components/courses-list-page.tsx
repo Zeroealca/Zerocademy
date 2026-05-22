@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
-import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import type { AcademicPeriod } from "@/features/academic-periods/types";
 import { CoursesTable } from "@/features/courses/components/courses-table";
 import {
@@ -20,7 +20,7 @@ import { useGradeLevels } from "@/features/grade-levels/hooks/use-grade-levels";
 import type { Course, CoursesFilters } from "@/features/courses/types";
 import {
   canManageAcademicStructure,
-  canViewAcademicStructure,
+  canViewInstitutionOperations,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -44,12 +44,12 @@ export function CoursesListPage() {
       }));
     }
   }, [effectivePeriodId, filters.academicPeriodId]);
-  const { data: periodsData } = useAcademicPeriods({ page: 1, limit: 100 });
+  const { data: periodsData } = useInstitutionAcademicPeriods();
   const { data: gradesData } = useGradeLevels({ page: 1, limit: 100 });
   const activate = useActivateCourse();
   const deactivate = useDeactivateCourse();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canViewInstitutionOperations(currentUser?.role)) {
     return <AccessDenied />;
   }
 

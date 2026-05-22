@@ -11,8 +11,7 @@ import { useGradeLevel } from "@/features/grade-levels/hooks/use-grade-level";
 import { useUpdateGradeLevel } from "@/features/grade-levels/hooks/use-grade-level-mutations";
 import type { CreateGradeLevelInput } from "@/features/grade-levels/schemas/grade-level.schema";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -26,12 +25,14 @@ export function EditGradeLevelPage({ gradeId }: EditGradeLevelPageProps) {
   const { data: grade, isLoading, isError } = useGradeLevel(gradeId);
   const updateGrade = useUpdateGradeLevel(gradeId);
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/dashboard" label="Volver al panel" />;
-  }
-
-  if (!canManageAcademicStructure(currentUser?.role)) {
-    return <AccessDenied href="/grade-levels" label="Volver al listado" />;
+  if (!canManagePlatformCatalog(currentUser?.role)) {
+    return (
+      <AccessDenied
+        href="/grade-levels"
+        label="Volver al listado"
+        message="Solo el super administrador puede editar grados."
+      />
+    );
   }
 
   if (isLoading) {
@@ -65,10 +66,21 @@ export function EditGradeLevelPage({ gradeId }: EditGradeLevelPageProps) {
   );
 }
 
-function AccessDenied({ href, label }: { href: string; label: string }) {
+function AccessDenied({
+  href,
+  label,
+  message,
+}: {
+  href: string;
+  label: string;
+  message?: string;
+}) {
   return (
     <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
       <h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1>
+      {message ? (
+        <p className="text-sm text-muted-foreground">{message}</p>
+      ) : null}
       <Button asChild variant="outline">
         <Link href={href}>{label}</Link>
       </Button>

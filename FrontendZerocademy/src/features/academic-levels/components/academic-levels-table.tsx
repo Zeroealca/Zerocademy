@@ -124,19 +124,23 @@ export function AcademicLevelsTable({
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             {canManage ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onToggleActive(level)}
-                              >
-                                {level.isActive ? "Desactivar" : "Activar"}
-                              </Button>
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onToggleActive(level)}
+                                >
+                                  {level.isActive ? "Desactivar" : "Activar"}
+                                </Button>
+                                <Button asChild variant="outline" size="sm">
+                                  <Link
+                                    href={`/academic-levels/${level.id}/edit`}
+                                  >
+                                    Editar
+                                  </Link>
+                                </Button>
+                              </>
                             ) : null}
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`/academic-levels/${level.id}/edit`}>
-                                Editar
-                              </Link>
-                            </Button>
                           </div>
                         </td>
                       </tr>

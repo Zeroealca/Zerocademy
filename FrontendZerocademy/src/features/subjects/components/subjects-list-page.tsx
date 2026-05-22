@@ -14,8 +14,7 @@ import {
 import { useSubjects } from "@/features/subjects/hooks/use-subjects";
 import type { Subject, SubjectsFilters } from "@/features/subjects/types";
 import {
-  canManageAcademicStructure,
-  canViewAcademicStructure,
+  canManagePlatformCatalog,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -31,11 +30,11 @@ export function SubjectsListPage() {
   const activate = useActivateSubject();
   const deactivate = useDeactivateSubject();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canManagePlatformCatalog(currentUser?.role)) {
     return <AccessDenied />;
   }
 
-  const canManage = canManageAcademicStructure(currentUser?.role);
+  const canManage = true;
 
   const handleToggleActive = async (subject: Subject) => {
     if (

@@ -8,7 +8,7 @@ import { useCreateTeacherAssignment } from "@/features/teacher-assignments/hooks
 import type { CreateTeacherAssignmentInput } from "@/features/teacher-assignments/schemas/teacher-assignment.schema";
 import {
   canManageAcademicStructure,
-  canViewAcademicStructure,
+  canViewInstitutionOperations,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -17,7 +17,7 @@ export function CreateTeacherAssignmentPage() {
   const currentUser = useAuthStore((state) => state.user);
   const createAssignment = useCreateTeacherAssignment();
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canViewInstitutionOperations(currentUser?.role)) {
     return <AccessDenied href="/dashboard" label="Volver al panel" />;
   }
 

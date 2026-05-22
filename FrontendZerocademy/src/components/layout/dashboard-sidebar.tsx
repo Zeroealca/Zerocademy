@@ -9,7 +9,9 @@ import {
   GraduationCap,
   Layers,
   Library,
+  NotebookPen,
   School,
+  UserRound,
   LayoutDashboard,
   Users,
 } from "lucide-react";
@@ -20,8 +22,12 @@ import {
   canManageAcademicPeriods,
   canManagePlatformCatalog,
   canManageUsers,
-  canViewAcademicStructure,
+  canViewEnrollments,
+  canViewGrades,
+  canViewInstitutionOperations,
   canViewInstitutions,
+  canViewOwnEnrollmentHistory,
+  canViewStudents,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -77,6 +83,30 @@ const teacherAssignmentsNavItem = {
   icon: ClipboardList,
 };
 
+const studentsNavItem = {
+  href: "/students",
+  label: "Estudiantes",
+  icon: UserRound,
+};
+
+const enrollmentsNavItem = {
+  href: "/enrollments",
+  label: "Matrículas",
+  icon: GraduationCap,
+};
+
+const myEnrollmentsNavItem = {
+  href: "/my-enrollments",
+  label: "Mis matrículas",
+  icon: GraduationCap,
+};
+
+const gradesNavItem = {
+  href: "/grades",
+  label: "Notas",
+  icon: NotebookPen,
+};
+
 const academicStructureNavItem = {
   href: "/academic-structure",
   label: "Estructura (árbol)",
@@ -93,15 +123,36 @@ export function DashboardSidebar() {
     navItems.push(academicPeriodsNavItem);
   }
 
-  if (canViewAcademicStructure(currentUser?.role)) {
-    if (canManagePlatformCatalog(currentUser?.role)) {
-      navItems.push(academicLevelsNavItem, gradeLevelsNavItem, subjectsNavItem);
-    }
+  if (canManagePlatformCatalog(currentUser?.role)) {
+    navItems.push(
+      academicLevelsNavItem,
+      gradeLevelsNavItem,
+      subjectsNavItem,
+    );
+  }
+
+  if (canViewInstitutionOperations(currentUser?.role)) {
     navItems.push(
       coursesNavItem,
       teacherAssignmentsNavItem,
       academicStructureNavItem,
     );
+  }
+
+  if (canViewStudents(currentUser?.role)) {
+    navItems.push(studentsNavItem);
+  }
+
+  if (canViewEnrollments(currentUser?.role)) {
+    navItems.push(enrollmentsNavItem);
+  }
+
+  if (canViewOwnEnrollmentHistory(currentUser?.role)) {
+    navItems.push(myEnrollmentsNavItem);
+  }
+
+  if (canViewGrades(currentUser?.role)) {
+    navItems.push(gradesNavItem);
   }
 
   if (canViewInstitutions(currentUser?.role)) {

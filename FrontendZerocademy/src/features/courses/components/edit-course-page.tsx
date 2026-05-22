@@ -12,7 +12,7 @@ import { useUpdateCourse } from "@/features/courses/hooks/use-course-mutations";
 import type { CreateCourseInput } from "@/features/courses/schemas/course.schema";
 import {
   canManageAcademicStructure,
-  canViewAcademicStructure,
+  canViewInstitutionOperations,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -26,7 +26,7 @@ export function EditCoursePage({ courseId }: EditCoursePageProps) {
   const { data: course, isLoading, isError } = useCourse(courseId);
   const updateCourse = useUpdateCourse(courseId);
 
-  if (!canViewAcademicStructure(currentUser?.role)) {
+  if (!canViewInstitutionOperations(currentUser?.role)) {
     return <AccessDenied href="/dashboard" label="Volver al panel" />;
   }
 

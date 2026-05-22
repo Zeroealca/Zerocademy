@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
-import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import { useGradeLevels } from "@/features/grade-levels/hooks/use-grade-levels";
 import {
   createCourseSchema,
@@ -40,10 +40,8 @@ export function CourseForm({
   onSubmit,
   disabled = false,
 }: CourseFormProps) {
-  const { data: periodsData, isLoading: periodsLoading } = useAcademicPeriods({
-    page: 1,
-    limit: 100,
-  });
+  const { data: periodsData, isLoading: periodsLoading } =
+    useInstitutionAcademicPeriods();
   const { data: gradesData, isLoading: gradesLoading } = useGradeLevels({
     page: 1,
     limit: 100,
