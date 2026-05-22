@@ -26,6 +26,8 @@ FrontendZerocademy/src/
 │   ├── courses/
 │   ├── subjects/
 │   ├── teacher-assignments/
+│   ├── students/
+│   ├── enrollments/
 │   ├── academic-structure/
 │   ├── institutions/
 │   ├── institution-settings/

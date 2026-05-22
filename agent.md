@@ -41,7 +41,8 @@ One bounded context per row. Implement in the mapped folders only.
 |--------|----------------|--------------------|-----------------------|
 | Auth | Login, JWT, session context | `auth` | `auth` |
 | Users | Accounts, profiles, role assignment | `users` | `users` |
-| Students | Enrollment, profiles, guardians, class assignment | `students` | `students` |
+| Students | Permanent student profiles and CSV import | `students` | `students` |
+| Enrollments | Student ↔ course ↔ period relationships | `enrollments` | `enrollments` |
 | Teachers | Profiles, qualifications | `teachers` | `teachers` |
 | Courses | Classroom / parallel groups per period | `courses` | `courses` |
 | Subjects | Subject catalog, curricula links | `subjects` | `subjects` |
