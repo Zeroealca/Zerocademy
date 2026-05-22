@@ -27,6 +27,13 @@ npx prisma generate --schema="$PRISMA_SCHEMA"
 echo "Applying database migrations..."
 npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
 
+if [ "${RUN_PRISMA_SEED:-true}" != "false" ]; then
+  echo "Running database seed..."
+  npm run prisma:seed -w backend-zerocademy
+else
+  echo "Skipping database seed (RUN_PRISMA_SEED=false)."
+fi
+
 if [ "$#" -eq 0 ]; then
   echo "Starting NestJS in development mode (watch)..."
   exec npm run start:dev -w backend-zerocademy

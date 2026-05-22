@@ -223,7 +223,8 @@ npx prisma studio
 1. Espera a Postgres
 2. `prisma generate`
 3. `prisma migrate deploy`
-4. `nest start --watch`
+4. `prisma seed` (admin + catálogo Ecuador; idempotente). Desactivar con `RUN_PRISMA_SEED=false` en `.env`
+5. `nest start --watch`
 
 **Nueva migración (desarrollo):**
 
