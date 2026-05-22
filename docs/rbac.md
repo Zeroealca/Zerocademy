@@ -12,7 +12,7 @@ Granular permissions and ABAC remain future work.
 
 | Can | Cannot |
 |-----|--------|
-| Create institutions | Manage institution operational data (courses, assignments) via strict routes |
+| Create institutions | Manage institution operational data (courses, assignments, students, enrollments) via strict routes |
 | Create academic levels, grades, subjects, periods | |
 | Activate/deactivate periods (one active per regime globally) | |
 | Create all user types | |
@@ -22,8 +22,9 @@ Granular permissions and ABAC remain future work.
 
 | Can | Cannot |
 |-----|--------|
-| Create students | Create global catalog or calendar periods |
-| Manage courses/parallels and teacher assignments | Assign institution memberships |
+| Create students, enrollments, and CSV bulk import | Create academic levels, grade levels, or subjects |
+| Manage courses/parallels and teacher assignments | Create academic periods or activate global calendar |
+| View academic levels, grades, and subjects (read-only catalog) | Assign institution memberships |
 | Run institution academic transitions | Manage super admins |
 | Select academic period context | |
 | View academic structures | |
@@ -34,6 +35,7 @@ Granular permissions and ABAC remain future work.
 |-----|--------|
 | Access assigned courses/subjects for selected period | Institution or platform configuration |
 | Select academic period context | Unassigned data |
+| View students/enrollments in assigned courses (read-only) | Create students or manage enrollments |
 
 ### STUDENT
 
@@ -71,6 +73,8 @@ HTTP Request
 | `PLATFORM_CATALOG_WRITE_ROLES` | SUPER_ADMIN |
 | `INSTITUTION_OPS_WRITE_ROLES` | ADMIN (strict) |
 | `INSTITUTION_OPS_READ_ROLES` | SUPER_ADMIN, ADMIN, TEACHER |
+| `STUDENT_ENROLLMENT_WRITE_ROLES` | ADMIN (strict) |
+| `STUDENT_ENROLLMENT_READ_ROLES` | ADMIN, TEACHER, STUDENT (strict) |
 
 ## Academic period context API
 
@@ -94,6 +98,8 @@ Returns `selectedPeriod`, `effectivePeriod`, and `activeByRegime`.
 - Period selector in dashboard header for ADMIN / TEACHER / STUDENT
 - Academic periods admin UI: SUPER_ADMIN only
 - Catalog nav (levels, grades, subjects): SUPER_ADMIN write; ADMIN/TEACHER view operations via courses
+- Students / enrollments (institution): ADMIN write; TEACHER read (scoped); hidden from SUPER_ADMIN on strict routes
+- **STUDENT** nav: `Mis matrículas` (`/my-enrollments`), `Notas` (`/grades`) only — no `/students` or `/enrollments` admin list
 
 ## JWT payload
 

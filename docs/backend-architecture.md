@@ -30,6 +30,8 @@ BackendZerocademy/src/
     ├── courses/
     ├── subjects/
     ├── teacher-assignments/
+    ├── students/
+    ├── enrollments/
     ├── institutions/
     ├── institution-memberships/
     └── academic-period-transitions/

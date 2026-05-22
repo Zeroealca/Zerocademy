@@ -31,7 +31,8 @@ Separated from `User` so authentication stays lean and domain models can evolve 
 
 | Model | Linked role | Notes |
 |-------|-------------|-------|
-| `StudentProfile` | `STUDENT` | 1:1 with `User`, optional `institutionId` |
+| `StudentProfile` | `STUDENT` | 1:1 with `User`; `nationalId` (unique), demographics, `isActive`, optional `institutionId` |
+| `Enrollment` | — | Links `StudentProfile` + `Course` + `AcademicPeriod`; `EnrollmentStatus` |
 | `TeacherProfile` | `TEACHER` | 1:1 with `User`, optional `institutionId` |
 | `RepresentativeProfile` | `REPRESENTATIVE` | 1:1 with `User`, optional `institutionId` |
 
