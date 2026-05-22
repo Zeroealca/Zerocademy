@@ -42,8 +42,8 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
       'Platform owner: institutions, global catalog, academic calendar, and user provisioning.',
     capabilities: [
       'Create and manage institutions',
-      'Create academic levels, grades, subjects, and periods',
-      'Activate or deactivate academic periods (one active per regime)',
+      'Create and manage academic levels, grade levels, and subjects',
+      'Create academic periods and activate one active period per regime',
       'Create all user types and assign institution memberships',
     ],
     limitations: [
@@ -62,7 +62,8 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
       'Run institution academic period transitions',
     ],
     limitations: [
-      'Cannot create global catalog or calendar periods',
+      'Cannot create or edit academic levels, grade levels, or subjects',
+      'Cannot create academic periods or activate global calendar',
       'Cannot assign institution memberships',
       'Cannot manage super admins',
     ],

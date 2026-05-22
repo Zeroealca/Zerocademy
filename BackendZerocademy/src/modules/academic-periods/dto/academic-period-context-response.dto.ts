@@ -34,4 +34,11 @@ export class AcademicPeriodContextResponseDto {
     description: 'Institution scope when applicable',
   })
   institutionId?: string;
+
+  @ApiPropertyOptional({
+    enum: AcademicRegime,
+    description:
+      'Academic regime derived from the institution (for period pickers)',
+  })
+  institutionRegime?: AcademicRegime;
 }

@@ -115,6 +115,35 @@ export class ProfileProvisioningService {
     return {};
   }
 
+  /**
+   * Creates the academic profile when missing (e.g. legacy users created before provisioning).
+   */
+  async ensureProfileForUser(
+    userId: string,
+    role: Role,
+    institutionId?: string,
+    tx?: TransactionClient,
+  ): Promise<ProvisionedProfile> {
+    if (!RoleUtils.requiresAcademicProfile(role)) {
+      return {};
+    }
+
+    const existingId = await this.resolveProfileId(userId, role, tx);
+    if (existingId) {
+      if (role === Role.STUDENT) {
+        return { profileId: existingId, profileType: 'student' };
+      }
+      if (role === Role.TEACHER) {
+        return { profileId: existingId, profileType: 'teacher' };
+      }
+      if (role === Role.REPRESENTATIVE) {
+        return { profileId: existingId, profileType: 'representative' };
+      }
+    }
+
+    return this.provisionForUser(userId, role, institutionId, tx);
+  }
+
   async resolveProfileId(
     userId: string,
     role: Role,

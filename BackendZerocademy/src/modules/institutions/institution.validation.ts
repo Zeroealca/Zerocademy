@@ -63,6 +63,43 @@ export function assertValidHexColor(
   }
 }
 
+export function resolveAcademicRegimeFromRegion(
+  region: InstitutionRegion,
+): AcademicRegime {
+  if (
+    region === InstitutionRegion.COSTA ||
+    region === InstitutionRegion.GALAPAGOS
+  ) {
+    return AcademicRegime.COSTA_GALAPAGOS;
+  }
+
+  return AcademicRegime.SIERRA_AMAZONIA;
+}
+
+export async function resolveInstitutionAcademicRegime(
+  prisma: PrismaService,
+  institutionId: string,
+): Promise<AcademicRegime | null> {
+  const institution = await prisma.institution.findUnique({
+    where: { id: institutionId },
+    select: { regime: true, region: true },
+  });
+
+  if (!institution) {
+    return null;
+  }
+
+  if (institution.regime) {
+    return institution.regime;
+  }
+
+  if (institution.region) {
+    return resolveAcademicRegimeFromRegion(institution.region);
+  }
+
+  return null;
+}
+
 export function assertRegionRegimeConsistency(
   region?: InstitutionRegion | null,
   regime?: AcademicRegime | null,

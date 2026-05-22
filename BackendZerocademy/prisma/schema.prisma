@@ -81,6 +81,21 @@ enum InstitutionMembershipRole {
   TEACHER
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNSPECIFIED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  WITHDRAWN
+  COMPLETED
+  FAILED
+  TRANSFERRED
+}
+
 model Institution {
   id             String             @id @default(uuid())
   name           String
@@ -137,16 +152,27 @@ model InstitutionMembership {
   @@map("institution_memberships")
 }
 
+/// Permanent student entity (1:1 with User account role STUDENT).
 model StudentProfile {
-  id            String       @id @default(uuid())
-  userId        String       @unique
-  institutionId String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  id               String       @id @default(uuid())
+  userId           String       @unique
+  institutionId    String?
+  nationalId       String?      @unique
+  birthDate        DateTime?    @db.Date
+  gender           Gender?
+  phone            String?
+  address          String?
+  emergencyContact String?
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution      Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  enrollments      Enrollment[]
 
   @@index([institutionId])
+  @@index([isActive])
+  @@index([nationalId])
   @@map("student_profiles")
 }
 
@@ -211,6 +237,7 @@ model AcademicPeriod {
   transitionsFrom        AcademicPeriodTransition[] @relation("TransitionFromPeriod")
   transitionsTo          AcademicPeriodTransition[] @relation("TransitionToPeriod")
   selectedByUsers        User[]                     @relation("UserSelectedPeriod")
+  enrollments            Enrollment[]
 
   @@index([institutionId])
   @@index([regime])
@@ -303,6 +330,7 @@ model Course {
   academicPeriod     AcademicPeriod      @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
   gradeLevel         GradeLevel          @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
   teacherAssignments TeacherAssignment[]
+  enrollments        Enrollment[]
 
   @@unique([academicPeriodId, gradeLevelId, section])
   @@index([institutionId])
@@ -374,6 +402,29 @@ model TeacherAssignment {
   @@index([academicPeriodId])
   @@index([academicPeriodId, teacherId])
   @@map("teacher_assignments")
+}
+
+/// Student enrollment in a classroom course for an academic period (historical status tracked).
+model Enrollment {
+  id               String           @id @default(uuid())
+  studentId        String
+  courseId         String
+  academicPeriodId String
+  enrollmentDate   DateTime         @db.Date
+  status           EnrollmentStatus @default(ACTIVE)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  student          StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course           Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  academicPeriod   AcademicPeriod   @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, academicPeriodId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([academicPeriodId])
+  @@index([status])
+  @@index([academicPeriodId, courseId])
+  @@map("enrollments")
 }
 
 /// Audit record for academic year transitions — historical data is never mutated.

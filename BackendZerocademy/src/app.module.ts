@@ -21,6 +21,8 @@ import { InstitutionsModule } from './modules/institutions/institutions.module';
 import { InstitutionMembershipsModule } from './modules/institution-memberships/institution-memberships.module';
 import { AcademicPeriodTransitionsModule } from './modules/academic-period-transitions/academic-period-transitions.module';
 import { UsersModule } from './modules/users/users.module';
+import { StudentsModule } from './modules/students/students.module';
+import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { UsersModule } from './modules/users/users.module';
     InstitutionsModule,
     InstitutionMembershipsModule,
     AcademicPeriodTransitionsModule,
+    StudentsModule,
+    EnrollmentsModule,
   ],
   controllers: [AppController],
   providers: [

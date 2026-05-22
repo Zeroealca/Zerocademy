@@ -28,3 +28,12 @@ export const INSTITUTION_ADMIN_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
 export const INSTITUTION_PLATFORM_WRITE_ROLES = [Role.SUPER_ADMIN] as const;
 
 export const USER_ADMIN_ROLES = [Role.SUPER_ADMIN, Role.ADMIN] as const;
+
+/** Student and enrollment management — ADMIN only; SUPER_ADMIN excluded (strict). */
+export const STUDENT_ENROLLMENT_WRITE_ROLES = [Role.ADMIN] as const;
+
+export const STUDENT_ENROLLMENT_READ_ROLES = [
+  Role.ADMIN,
+  Role.TEACHER,
+  Role.STUDENT,
+] as const;
