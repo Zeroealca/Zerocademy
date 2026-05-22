@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ROLE_LABELS, USER_ROLES } from "@/features/users/constants";
@@ -117,9 +118,8 @@ export function CreateUserForm() {
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="password">Contraseña temporal</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               {...register("password")}
             />

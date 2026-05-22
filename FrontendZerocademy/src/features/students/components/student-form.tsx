@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { GENDER_LABELS, GENDERS } from "@/features/students/constants";
@@ -115,9 +116,9 @@ export function StudentForm({
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="password">Contraseña temporal</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
+                  autoComplete="new-password"
                   {...form.register("password")}
                 />
               </div>
