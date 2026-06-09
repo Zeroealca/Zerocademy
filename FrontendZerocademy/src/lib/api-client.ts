@@ -1,8 +1,6 @@
+import { getApiBaseUrl } from "@/lib/api-base-url";
 import { ApiError, isApiErrorBody } from "@/lib/api-error";
 import { useAuthStore } from "@/stores/use-auth-store";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:3001";
 
 export interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -50,7 +48,7 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+    const response = await fetch(`${getApiBaseUrl()}/v1/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
@@ -81,7 +79,7 @@ export async function apiUploadClient<T>(
   options: Omit<RequestOptions, "body"> = {},
 ): Promise<T> {
   const { skipAuth, headers, ...rest } = options;
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith("http") ? path : `${getApiBaseUrl()}${path}`;
 
   const requestHeaders = new Headers(headers);
 
@@ -122,7 +120,7 @@ export async function apiClient<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const { body, skipAuth, headers, ...rest } = options;
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  const url = path.startsWith("http") ? path : `${getApiBaseUrl()}${path}`;
 
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Content-Type", "application/json");
