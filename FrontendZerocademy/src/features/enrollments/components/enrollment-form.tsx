@@ -155,6 +155,12 @@ export function EnrollmentForm({
                     </Select>
                   )}
                 />
+                {"academicPeriodId" in form.formState.errors &&
+                form.formState.errors.academicPeriodId ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.academicPeriodId.message}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="studentId">Estudiante</Label>
@@ -181,6 +187,12 @@ export function EnrollmentForm({
                     </Select>
                   )}
                 />
+                {"studentId" in form.formState.errors &&
+                form.formState.errors.studentId ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.studentId.message}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="courseId">Curso / paralelo</Label>
@@ -203,6 +215,12 @@ export function EnrollmentForm({
                     </Select>
                   )}
                 />
+                {"courseId" in form.formState.errors &&
+                form.formState.errors.courseId ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.courseId.message}
+                  </p>
+                ) : null}
               </div>
             </>
           ) : null}

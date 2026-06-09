@@ -81,7 +81,7 @@ export function AcademicHierarchyPage() {
                 }))
               }
             >
-              <option value="">Sin cursos en el árbol</option>
+              <option value="">Solo niveles y grados (sin cursos)</option>
               {(periodsData?.data ?? []).map((period) => (
                 <option key={period.id} value={period.id}>
                   {formatAcademicPeriodOptionLabel(period)}

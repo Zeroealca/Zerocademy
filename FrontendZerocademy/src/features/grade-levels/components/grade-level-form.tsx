@@ -20,6 +20,7 @@ import {
 } from "@/features/grade-levels/schemas/grade-level.schema";
 import type { GradeLevel } from "@/features/grade-levels/types";
 import { ApiError } from "@/lib/api-error";
+import { isSelectValueMissing } from "@/lib/select-utils";
 
 interface GradeLevelFormProps {
   title: string;
@@ -114,6 +115,12 @@ export function GradeLevelForm({
                   <option value="">
                     {levelsLoading ? "Cargando niveles…" : "Selecciona un nivel"}
                   </option>
+                  {isSelectValueMissing(
+                    field.value,
+                    academicLevels.map((level) => level.id),
+                  ) ? (
+                    <option value={field.value}>Cargando nivel seleccionado…</option>
+                  ) : null}
                   {academicLevels.map((level) => (
                     <option key={level.id} value={level.id}>
                       {level.name} ({level.code})

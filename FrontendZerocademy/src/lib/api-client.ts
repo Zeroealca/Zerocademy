@@ -17,7 +17,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       throw new ApiError({
         statusCode: response.status,
-        message: response.statusText || "Request failed",
+        message: response.statusText || "La solicitud falló",
         error: "Error",
       });
     }
@@ -34,7 +34,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
     throw new ApiError({
       statusCode: response.status,
-      message: "Request failed",
+      message: "La solicitud falló",
       error: "Error",
     });
   }

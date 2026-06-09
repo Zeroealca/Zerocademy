@@ -1,8 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  STUDENT_CSV_FIELDS,
-  STUDENT_CSV_HEADER_LINE,
-} from "@/features/students/constants";
+import { STUDENT_CSV_FIELDS } from "@/features/students/constants";
 
 export function CsvFormatSpec() {
   return (
@@ -24,9 +21,9 @@ export function CsvFormatSpec() {
               {index + 1}.
             </span>
             <span className="font-medium">{field.label}</span>
-            <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-              {field.key}
-            </code>
+            <span className="text-xs text-muted-foreground">
+              (columna {index + 1})
+            </span>
             {field.required ? (
               <Badge variant="secondary" className="text-xs">
                 Obligatorio
@@ -45,15 +42,10 @@ export function CsvFormatSpec() {
         ))}
       </ol>
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-foreground">
-          Línea de encabezado (opcional, no pegarla dentro de datos con comas
-          extra)
-        </p>
-        <pre className="overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-xs">
-          {STUDENT_CSV_HEADER_LINE}
-        </pre>
-      </div>
+      <p className="text-xs text-muted-foreground">
+        No incluyas una fila de encabezado en los datos: pega únicamente filas
+        de estudiantes respetando el orden de columnas indicado arriba.
+      </p>
     </div>
   );
 }
