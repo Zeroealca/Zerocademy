@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { runCatalogSeeds } from './seeds';
+import { seedGradesDemo } from './seeds/grades-demo.seed';
 import { seedError, seedLog } from './seeds/seed-logger';
 
 const prisma = new PrismaClient();
@@ -65,6 +66,14 @@ async function main(): Promise<void> {
       event: 'CATALOG_SEED_DISABLED',
       message: 'Catalog seeds skipped (SEED_SKIP_CATALOG=true)',
     });
+  }
+
+  const seedDemoGrades =
+    process.env.SEED_DEMO_GRADES === 'true' ||
+    process.env.SEED_GRADES_DEMO === 'true';
+
+  if (seedDemoGrades) {
+    await seedGradesDemo(prisma, { dryRun });
   }
 
   seedLog({
