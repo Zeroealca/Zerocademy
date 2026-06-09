@@ -23,6 +23,7 @@ import { AcademicPeriodTransitionsModule } from './modules/academic-period-trans
 import { UsersModule } from './modules/users/users.module';
 import { StudentsModule } from './modules/students/students.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
+import { AcademicEvaluationModule } from './modules/academic-evaluation/academic-evaluation.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
     AcademicPeriodTransitionsModule,
     StudentsModule,
     EnrollmentsModule,
+    AcademicEvaluationModule,
   ],
   controllers: [AppController],
   providers: [

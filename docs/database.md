@@ -129,6 +129,22 @@ Reusable subject catalog and period-scoped teacher staffing. See [subjects.md](.
 
 Unique: `Subject.code` (global partial index); `Subject(institutionId, code)` when scoped; `TeacherAssignment(teacherId, subjectId, courseId, academicPeriodId)`.
 
+### Academic evaluation configuration
+
+Configurable grading engine foundation. See [academic-evaluation.md](./academic-evaluation.md).
+
+| Model | Scope | Key relations |
+|-------|-------|---------------|
+| `GradingScheme` | Institution or global template | `GradeScale`, `InstitutionAcademicConfiguration` |
+| `GradeScale` | Per grading scheme | Qualitative bands (DAR, AAR, …) |
+| `EvaluationTerm` | Per institution + academic period | Weighted grading periods (not calendar quimesters) |
+| `AssessmentCategory` | Per institution | Exam/project/task weights |
+| `InstitutionAcademicConfiguration` | 1:1 per institution | Active scheme, rounding, period |
+
+Enum: `RoundingStrategy` — `ROUND_HALF_UP`, `ROUND_DOWN`, `ROUND_UP`, `TRUNCATE`.
+
+> Calendar quimesters remain on `AcademicTerm` (FK → `AcademicPeriod`). `EvaluationTerm` is a separate model for grade weighting.
+
 ### HealthCheck
 
 Bootstrap table for infrastructure health probes.
@@ -159,6 +175,7 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20250520120000_institutions_foundation` | Institution fields, ownership FKs on academic domain |
 | `20250521120000_memberships_transitions` | Memberships, transition audit, `activeAcademicPeriodId` |
 | `20250521140000_user_selected_academic_period` | `User.selectedAcademicPeriodId` |
+| `20260609120000_academic_evaluation` | Grading schemes, evaluation terms, assessment categories, institution config |
 
 Never edit applied migration SQL retroactively.
 

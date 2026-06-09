@@ -21,7 +21,8 @@ Canonical domains (from root `agent.md`):
 | Subjects | `subjects` | `subjects` |
 | Teacher assignments | `teacher-assignments` | `teacher-assignments` |
 | Institutions | `institutions` | `institutions`, `institution-settings` |
-| Students, Teachers, Grades, … | Planned | Planned |
+| Academic evaluation | `academic-evaluation` | `academic-evaluation` |
+| Students, Teachers, Grades, … | Partial / planned | Partial / planned |
 
 **Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Dashboard shell.
 
@@ -67,6 +68,7 @@ npm run docker:up
 - [tenancy-strategy.md](./tenancy-strategy.md)
 - [academic-structure.md](./academic-structure.md)
 - [academic-periods.md](./academic-periods.md)
+- [academic-evaluation.md](./academic-evaluation.md)
 - [academic-periods-frontend.md](./academic-periods-frontend.md)
 - [subjects.md](./subjects.md)
 - [teacher-assignments.md](./teacher-assignments.md)

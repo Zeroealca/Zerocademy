@@ -59,6 +59,7 @@ One bounded context per row. Implement in the mapped folders only.
 | Institutions | Educational institutions, settings, branding | `institutions` | `institutions`, `institution-settings` |
 | Institution memberships | Admins/teachers assigned to institutions | `institution-memberships` | `institution-memberships` |
 | Academic period transitions | School-year transitions, active period per institution | `academic-period-transitions` | `academic-period-transitions` |
+| Academic evaluation | Grading schemes, evaluation terms, assessment categories, institution config | `academic-evaluation` | `academic-evaluation` |
 | Dashboard | Aggregated KPIs and analytics UI | — *(reads other modules)* | `dashboard` |
 
 Cross-cutting: **RBAC** (`auth` + `users` + `common/rbac`), **audit logging**, **institution scope**, **academic period context** (`selectedAcademicPeriodId`).
