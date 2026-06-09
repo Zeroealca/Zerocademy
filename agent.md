@@ -153,15 +153,35 @@ App-specific naming → child `agent.md` files.
 
 ---
 
+## Jira & Confluence (feature delivery)
+
+Every **new feature** (new bounded context, substantial module, or user-facing capability spanning backend and/or frontend) must be tracked in **Jira** and documented in **Confluence** — not only in repo `docs/`.
+
+| Phase | Jira | Confluence |
+|-------|------|------------|
+| **Before implementation** | Create a task (Story or Task) with scope, acceptance criteria, and mapped domain from the registry | Optional draft page or link from the Jira issue |
+| **After implementation** | Move to Done / Resolved; add PR or commit links in comments if applicable | Publish or update a page: purpose, flows, API endpoints, roles, frontend routes, known limits |
+| **Cross-link** | Jira issue ↔ Confluence page URL in both directions | Same |
+
+**In scope for Jira + Confluence:** new domains, major CRUD modules, RBAC changes, API contract changes, academic workflows, institution-scoped features.
+
+**Out of scope:** typo fixes, refactors without behavior change, dependency bumps, config-only tweaks — unless the user explicitly asks.
+
+Use the **Atlassian** MCP and skills when available (`spec-to-backlog`, `search-company-knowledge`, etc.). Repo docs ([`documentation-sync-skill`](.cursor/skills/documentation-sync-skill/SKILL.md), `docs/`) remain required for technical reference; Confluence is the **product / team** source of truth.
+
+---
+
 ## Agent Behavior
 
 1. Route to the correct `agent.md` (backend vs frontend).
 2. Check the **domain registry** before creating folders.
-3. For scaffolding or repetitive tasks, **read the matching skill** under `.cursor/skills/`.
-4. Implement inside the mapped module/feature — minimal diffs, no drive-by refactors.
-5. Add validation and authorization with every new endpoint or sensitive form.
-6. Use `npm` from repo root or `npm run <script> -w <workspace>`.
-7. Run [`architecture-review-skill`](.cursor/skills/architecture-review-skill/SKILL.md) before considering a feature complete.
+3. For a **new feature**, ensure a **Jira task** exists (create one if missing) before substantial implementation.
+4. For scaffolding or repetitive tasks, **read the matching skill** under `.cursor/skills/`.
+5. Implement inside the mapped module/feature — minimal diffs, no drive-by refactors.
+6. Add validation and authorization with every new endpoint or sensitive form.
+7. Use `npm` from repo root or `npm run <script> -w <workspace>`.
+8. Run [`architecture-review-skill`](.cursor/skills/architecture-review-skill/SKILL.md) before considering a feature complete.
+9. **Document the feature in Confluence** when delivery is done (create or update the page linked from Jira).
 
 ---
 
@@ -183,4 +203,5 @@ cp .env.example .env && npm run docker:up   # full stack
 - Changing auth strategy or stack without explicit approval.
 - Committing secrets or disabling strict mode / guards to pass builds.
 - Duplicating layer-specific rules here instead of child guides.
-- Creating markdown docs unless requested or required by [`documentation-sync-skill`](.cursor/skills/documentation-sync-skill/SKILL.md) as part of feature delivery.
+- Shipping a new feature without a Jira task and Confluence documentation (see **Jira & Confluence** above).
+- Creating repo markdown docs unless requested or required by [`documentation-sync-skill`](.cursor/skills/documentation-sync-skill/SKILL.md) as part of feature delivery.
