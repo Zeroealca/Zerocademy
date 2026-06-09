@@ -32,6 +32,7 @@ prisma/
 |------|---------|
 | Admin user | `SUPER_ADMIN` (if missing) |
 | Ecuador catalog | Levels, grades, subjects, `SubjectGradeLevel` links |
+| Grades demo (optional) | Demo institution, teacher, students, assessment, sample grades |
 
 Curriculum display names remain **Spanish**; logs and code comments are **English**.
 
@@ -42,6 +43,7 @@ From repository root:
 ```bash
 npm run prisma:seed -w backend-zerocademy
 npm run prisma:seed:curriculum -w backend-zerocademy
+npm run prisma:seed:grades-demo -w backend-zerocademy
 npm run prisma:seed:dry-run -w backend-zerocademy
 ```
 
@@ -68,6 +70,30 @@ docker compose exec backend npm run prisma:seed
 | `SEED_CATALOGS` | `ecuador` | Comma-separated catalog keys |
 | `SEED_SKIP_CATALOG` | — | `true` skips curriculum seeds |
 | `SEED_DRY_RUN` | — | `true` logs without writes |
+| `SEED_DEMO_GRADES` | — | `true` runs grades demo after catalog (main seed) |
+
+## Grades demo seed
+
+Command:
+
+```bash
+npm run prisma:seed:grades-demo -w backend-zerocademy
+```
+
+Creates institution `demo-grades` with:
+
+| User | Email | Password | Role |
+|------|-------|----------|------|
+| Admin demo | `admin.demo@zerocademy.edu` | `DemoAdmin123!` | `ADMIN` |
+| Teacher demo | `teacher.demo@zerocademy.edu` | `DemoTeacher123!` | `TEACHER` |
+| Student 1 | `student1.demo@zerocademy.edu` | `DemoStudent123!` | `STUDENT` |
+| Student 2 | `student2.demo@zerocademy.edu` | `DemoStudent123!` | `STUDENT` |
+
+Includes: academic period + terms, course 8vo A, Matemática assignment, institution evaluation config, sample assessment **Demo Unit 1 Exam**, and two seeded grades.
+
+Requires Ecuador catalog and platform evaluation defaults (the grades-demo runner executes catalog seeds first).
+
+E2E tests: `npm run test:e2e:grades` from repository root.
 
 ## Execution flow
 
