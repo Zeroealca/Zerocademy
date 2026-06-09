@@ -168,3 +168,32 @@ export function canManagePlatformAcademicEvaluation(
 ): boolean {
   return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
 }
+
+/** Academic performance — student self-service averages. */
+export function canViewAcademicPerformanceStudent(
+  role: UserRole | undefined,
+): boolean {
+  return hasRoleStrict(role, ["STUDENT"]);
+}
+
+/** Academic performance — teacher course and student views. */
+export function canViewAcademicPerformanceTeacher(
+  role: UserRole | undefined,
+): boolean {
+  return hasRole(role, ["ADMIN", "TEACHER"]);
+}
+
+/** Academic performance — institution oversight. */
+export function canViewAcademicPerformanceAdmin(
+  role: UserRole | undefined,
+): boolean {
+  return hasRole(role, ["ADMIN"]);
+}
+
+export function canViewAcademicPerformance(role: UserRole | undefined): boolean {
+  return (
+    canViewAcademicPerformanceStudent(role) ||
+    canViewAcademicPerformanceTeacher(role) ||
+    canViewAcademicPerformanceAdmin(role)
+  );
+}

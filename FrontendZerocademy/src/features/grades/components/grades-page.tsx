@@ -94,6 +94,22 @@ export function GradesPage() {
           </Card>
         ) : null}
 
+        {(canViewGradesMonitoring(role) || role === "STUDENT") ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Rendimiento académico</CardTitle>
+              <CardDescription>
+                Promedios por materia, trimestre y resumen de rendimiento.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline">
+                <Link href="/academic-performance">Ver promedios</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {canManageAssessments(role) ? (
           <Card>
             <CardHeader>

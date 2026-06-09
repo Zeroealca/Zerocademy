@@ -10,6 +10,7 @@ import {
   Layers,
   Library,
   NotebookPen,
+  BarChart3,
   Scale,
   School,
   UserRound,
@@ -24,6 +25,7 @@ import {
   canManagePlatformCatalog,
   canManageUsers,
   canViewAcademicEvaluation,
+  canViewAcademicPerformance,
   canViewEnrollments,
   canViewGrades,
   canViewInstitutionOperations,
@@ -109,6 +111,12 @@ const gradesNavItem = {
   icon: NotebookPen,
 };
 
+const academicPerformanceNavItem = {
+  href: "/academic-performance",
+  label: "Rendimiento",
+  icon: BarChart3,
+};
+
 const academicStructureNavItem = {
   href: "/academic-structure",
   label: "Estructura (árbol)",
@@ -165,6 +173,10 @@ export function DashboardSidebar() {
 
   if (canViewGrades(currentUser?.role)) {
     navItems.push(gradesNavItem);
+  }
+
+  if (canViewAcademicPerformance(currentUser?.role)) {
+    navItems.push(academicPerformanceNavItem);
   }
 
   if (canViewInstitutions(currentUser?.role)) {
