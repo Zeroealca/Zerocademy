@@ -30,6 +30,8 @@ export function useSetSelectedAcademicPeriod() {
       queryClient.setQueryData(academicPeriodsKeys.context(), data);
       void queryClient.invalidateQueries({ queryKey: ["courses"] });
       void queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
+      void queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      void queryClient.invalidateQueries({ queryKey: ["grades"] });
     },
   });
 }

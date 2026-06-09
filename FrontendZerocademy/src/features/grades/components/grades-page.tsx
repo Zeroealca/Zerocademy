@@ -9,13 +9,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { canViewGrades } from "@/lib/permissions";
+import { StudentGradesPage } from "@/features/grades/components/student-grades-page";
+import {
+  canManageAssessments,
+  canManageGrades,
+  canViewAssessments,
+  canViewGradeEntry,
+  canViewGradesMonitoring,
+  canViewOwnGrades,
+} from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
 export function GradesPage() {
   const currentUser = useAuthStore((state) => state.user);
+  const role = currentUser?.role;
 
-  if (!canViewGrades(currentUser?.role)) {
+  if (canViewOwnGrades(role) && role === "STUDENT") {
+    return <StudentGradesPage />;
+  }
+
+  if (
+    !canViewAssessments(role) &&
+    !canViewGradeEntry(role) &&
+    !canViewGradesMonitoring(role)
+  ) {
     return <AccessDenied />;
   }
 
@@ -24,24 +41,75 @@ export function GradesPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Notas</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Consulta tus calificaciones del período académico seleccionado.
+          Gestión de evaluaciones y registro de calificaciones.
         </p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Próximamente</CardTitle>
-          <CardDescription>
-            El módulo de notas estará disponible en una próxima versión.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Mientras tanto, puedes revisar tu historial de matrículas desde el
-            menú lateral.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        {canViewAssessments(role) ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Evaluaciones</CardTitle>
+              <CardDescription>
+                Crea y administra instrumentos de evaluación por materia.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/grades/assessments">Ver evaluaciones</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canViewGradeEntry(role) ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Registro de notas</CardTitle>
+              <CardDescription>
+                Ingresa calificaciones por curso, materia y evaluación.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant={canManageGrades(role) ? "default" : "outline"}>
+                <Link href="/grades/entry">
+                  {canManageGrades(role) ? "Registrar notas" : "Consultar hoja"}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canViewGradesMonitoring(role) ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Monitoreo</CardTitle>
+              <CardDescription>
+                Supervisa evaluaciones y calificaciones de la institución.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Usa el listado de evaluaciones y la hoja de notas en modo lectura.
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canManageAssessments(role) ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Nueva evaluación</CardTitle>
+              <CardDescription>
+                Acceso rápido para crear un instrumento de evaluación.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline">
+                <Link href="/grades/assessments/new">Crear evaluación</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
     </div>
   );
 }

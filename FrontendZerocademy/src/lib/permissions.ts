@@ -118,9 +118,33 @@ export function canViewOwnEnrollmentHistory(role: UserRole | undefined): boolean
   return hasRoleStrict(role, ["STUDENT"]);
 }
 
-/** Student grades module (read-only own data when implemented). */
+/** Grades module — students (own data), teachers, admins (monitoring). */
 export function canViewGrades(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN"]);
+}
+
+export function canViewOwnGrades(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, ["STUDENT"]);
+}
+
+export function canViewAssessments(role: UserRole | undefined): boolean {
+  return hasRole(role, ["ADMIN", "TEACHER"]);
+}
+
+export function canManageAssessments(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["TEACHER"]);
+}
+
+export function canManageGrades(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["TEACHER"]);
+}
+
+export function canViewGradeEntry(role: UserRole | undefined): boolean {
+  return hasRole(role, ["ADMIN", "TEACHER"]);
+}
+
+export function canViewGradesMonitoring(role: UserRole | undefined): boolean {
+  return hasRole(role, ["ADMIN"]);
 }
 
 /** Academic evaluation configuration (grading schemes, terms, categories). */
