@@ -10,7 +10,9 @@ The academic evaluation module is the **configurable grading engine foundation**
 - Assessment category composition
 - Institution-level active configuration (rounding, decimals, active scheme)
 
-Future modules (**Grades**, **Report cards**, **Promotions**, **Reports**, Ministry exports) must **read** this configuration — they must not hardcode Ecuadorian rules.
+Future modules (**Report cards**, **Promotions**, **Reports**, Ministry exports) must **read** this configuration — they must not hardcode Ecuadorian rules.
+
+The **Grade Calculation Engine** (`academic-performance` module) already consumes this configuration for weighted averages — see [grade-calculation-engine.md](./grade-calculation-engine.md).
 
 Ecuador is provided as an **optional default template** (seed + initialization endpoints), not as application logic.
 

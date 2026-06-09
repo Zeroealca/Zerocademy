@@ -23,6 +23,7 @@ Canonical domains (from root `agent.md`):
 | Institutions | `institutions` | `institutions`, `institution-settings` |
 | Academic evaluation | `academic-evaluation` | `academic-evaluation` |
 | Grades | `grades` | `grades` |
+| Academic performance | `academic-performance` | `academic-performance` |
 | Students, Teachers, Attendance, … | Partial / planned | Partial / planned |
 
 **Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Dashboard shell.
@@ -73,6 +74,7 @@ npm run docker:up
 - [grades.md](./grades.md)
 - [assessments.md](./assessments.md)
 - [grading-workflow.md](./grading-workflow.md)
+- [grade-calculation-engine.md](./grade-calculation-engine.md)
 - [academic-periods-frontend.md](./academic-periods-frontend.md)
 - [subjects.md](./subjects.md)
 - [teacher-assignments.md](./teacher-assignments.md)

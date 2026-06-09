@@ -63,9 +63,20 @@ Before grades work in production, the institution needs:
 | Bulk save | `POST /v1/grades/bulk` |
 | Student list | `GET /v1/grades?academicPeriodId=&academicTermId=&subjectId=` |
 
+## Phase 2: averages and performance (implemented)
+
+The **Academic Performance** module computes:
+
+- Category averages (weighted by `assessment.weight` and `AssessmentCategory.weight`)
+- Academic term averages (calendar `AcademicTerm`)
+- Subject averages (weighted by `EvaluationTerm` mapped to term `order`)
+
+API: `/v1/academic-performance/*` · UI: `/academic-performance/*`
+
+See [grade-calculation-engine.md](./grade-calculation-engine.md).
+
 ## Future phases (not implemented)
 
-- Term / annual averages using `EvaluationTerm` weights
 - Report cards with configuration snapshots
 - Promotions and recovery exams
 - PDF / ministry exports

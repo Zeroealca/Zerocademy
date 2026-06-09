@@ -35,6 +35,7 @@ FrontendZerocademy/src/
 │   ├── academic-period-transitions/
 │   ├── academic-evaluation/    # Grading engine configuration UI
 │   ├── grades/                 # Assessments, grade entry, student grades
+│   ├── academic-performance/   # Averages dashboards and performance views
 │   └── dashboard/
 ├── components/
 │   ├── ui/                 # Shared primitives
@@ -94,6 +95,13 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/institutions/[id]/settings` | Protected — settings/branding: ADMIN, SUPER_ADMIN |
 | `/institutions/[id]/members` | Protected — memberships: ADMIN, SUPER_ADMIN |
 | `/institutions/[id]/transitions` | Protected — view: ADMIN, SUPER_ADMIN, TEACHER; wizard: ADMIN, SUPER_ADMIN |
+| `/academic-performance` | Protected — role-based hub (STUDENT, TEACHER, ADMIN) |
+| `/academic-performance/my-averages` | Protected — STUDENT |
+| `/academic-performance/course-averages` | Protected — TEACHER, ADMIN |
+| `/academic-performance/subject-performance` | Protected — TEACHER, ADMIN |
+| `/academic-performance/student-performance` | Protected — TEACHER, ADMIN |
+| `/academic-performance/institution` | Protected — ADMIN |
+| `/academic-performance/course-performance` | Protected — ADMIN |
 
 ## Environment
 
