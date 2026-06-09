@@ -25,6 +25,7 @@ import { StudentsModule } from './modules/students/students.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { AcademicEvaluationModule } from './modules/academic-evaluation/academic-evaluation.module';
 import { GradesModule } from './modules/grades/grades.module';
+import { AcademicPerformanceModule } from './modules/academic-performance/academic-performance.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { GradesModule } from './modules/grades/grades.module';
     EnrollmentsModule,
     AcademicEvaluationModule,
     GradesModule,
+    AcademicPerformanceModule,
   ],
   controllers: [AppController],
   providers: [
