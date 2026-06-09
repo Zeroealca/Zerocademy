@@ -80,3 +80,19 @@ export const GRADES_ENTRY_READ_ROLES = [
   Role.ADMIN,
   Role.TEACHER,
 ] as const;
+
+/** Academic performance — student self-service averages. */
+export const ACADEMIC_PERFORMANCE_STUDENT_ROLES = [Role.STUDENT] as const;
+
+/** Academic performance — teacher course and student views. */
+export const ACADEMIC_PERFORMANCE_TEACHER_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+  Role.TEACHER,
+] as const;
+
+/** Academic performance — institution oversight. */
+export const ACADEMIC_PERFORMANCE_ADMIN_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+] as const;
