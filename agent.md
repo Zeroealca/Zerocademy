@@ -49,6 +49,7 @@ One bounded context per row. Implement in the mapped folders only.
 | Teacher assignments | Staffing: teacher + subject + course + period | `teacher-assignments` | `teacher-assignments` |
 | Planning | Schedules, class groups, academic structure | `planning` | `planning` |
 | Grades | Assessments, entry, transcripts | `grades` | `grades` |
+| Academic performance | Grade calculation engine, averages, performance queries | `academic-performance` | `academic-performance` |
 | Attendance | Records, absences, justifications | `attendance` | `attendance` |
 | Reports | Exports, period summaries | `reports` | `reports` |
 | Notifications | In-app and async delivery | `notifications` | `notifications` |

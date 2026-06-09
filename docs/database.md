@@ -156,6 +156,12 @@ Unique: `Grade(assessmentId, enrollmentId)`.
 
 See [grades.md](./grades.md) and [assessments.md](./assessments.md).
 
+### Academic performance (phase 2)
+
+Calculated averages are **not persisted**. The `academic-performance` module reads `Grade`, `Assessment`, and evaluation configuration at query time. See [grade-calculation-engine.md](./grade-calculation-engine.md).
+
+**Design decision:** Dynamic calculation chosen over caching/persistence for maintainability; snapshot tables deferred to report-card phase.
+
 ### HealthCheck
 
 Bootstrap table for infrastructure health probes.

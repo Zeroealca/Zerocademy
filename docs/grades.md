@@ -9,7 +9,9 @@ The grades module records **student scores** against teacher-created **assessmen
 - Student self-service read
 - Admin / super-admin monitoring (read-only)
 
-**Out of scope (phase 1):** report cards, final averages, promotions, PDF exports, recovery exams, ministry reports.
+**Phase 2 (implemented):** grade calculation engine and academic performance queries — see [grade-calculation-engine.md](./grade-calculation-engine.md).
+
+**Still out of scope:** report cards, promotions, PDF exports, recovery exams, ministry reports.
 
 ## Architecture
 
@@ -84,11 +86,23 @@ Structured events on `GradesModule`:
 | `/grades/entry` | Grade entry workflow |
 | `/grades` (student) | Own grades with filters |
 
+## Grade calculation (phase 2)
+
+Averages are computed **dynamically** by `academic-performance` module:
+
+```
+Grade → Category Average → Term Average → Subject Average
+```
+
+Configuration: `GradingScheme`, `AssessmentCategory`, `EvaluationTerm` (mapped to `AcademicTerm.order`), `InstitutionAcademicConfiguration`.
+
+API: `/v1/academic-performance/*` — see [grade-calculation-engine.md](./grade-calculation-engine.md).
+
 ## Future extensibility
 
 - `gradingSchemeId` on `Grade` supports configuration snapshots for report cards
 - Assessments retain historical FK graph for analytics and transcripts
-- Averages and promotions will consume grades without schema breaking changes
+- Promotions and ministry exports will consume engine output without schema breaking changes
 
 ## Related documentation
 
