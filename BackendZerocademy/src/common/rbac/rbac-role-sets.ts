@@ -52,3 +52,31 @@ export const ACADEMIC_EVALUATION_WRITE_ROLES = [Role.ADMIN] as const;
 export const ACADEMIC_EVALUATION_PLATFORM_WRITE_ROLES = [
   Role.SUPER_ADMIN,
 ] as const;
+
+/** Read assessments (monitoring for admins; scoped for teachers). */
+export const ASSESSMENTS_READ_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+  Role.TEACHER,
+] as const;
+
+/** Create, update, delete assessments — TEACHER only (strict). */
+export const ASSESSMENTS_WRITE_ROLES = [Role.TEACHER] as const;
+
+/** Read grade records (scoped by role). */
+export const GRADES_READ_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+  Role.TEACHER,
+  Role.STUDENT,
+] as const;
+
+/** Create and update grades — TEACHER only (strict). */
+export const GRADES_WRITE_ROLES = [Role.TEACHER] as const;
+
+/** Grade entry sheet and monitoring — teachers plus institution oversight. */
+export const GRADES_ENTRY_READ_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+  Role.TEACHER,
+] as const;

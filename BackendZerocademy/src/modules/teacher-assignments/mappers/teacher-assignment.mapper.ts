@@ -31,7 +31,7 @@ export function toTeacherAssignmentResponseDto(
 ): TeacherAssignmentResponseDto {
   return {
     id: assignment.id,
-    institutionId: assignment.institutionId,
+    institutionId: assignment.institutionId ?? null,
     teacherId: assignment.teacherId,
     teacherFirstName: assignment.teacher.user.firstName,
     teacherLastName: assignment.teacher.user.lastName,
