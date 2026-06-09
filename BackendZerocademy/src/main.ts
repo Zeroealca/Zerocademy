@@ -15,9 +15,27 @@ async function bootstrap() {
     prefix: '/uploads',
   });
   const corsOrigin = configService.get('corsOrigin', { infer: true });
+  const nodeEnv = configService.get('nodeEnv', { infer: true });
+  const allowedOrigins = corsOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const privateNetworkOriginPattern =
+    /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
 
   app.enableCors({
-    origin: corsOrigin,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (nodeEnv === 'development' && privateNetworkOriginPattern.test(origin))
+      ) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   });
 
@@ -42,7 +60,7 @@ async function bootstrap() {
   }
 
   const port = configService.get('port', { infer: true });
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 }
 
 void bootstrap();

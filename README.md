@@ -181,6 +181,16 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
+### Acceso desde otra computadora en la red (LAN)
+
+El frontend escucha en `0.0.0.0:3000` y el API en `0.0.0.0:3001`. Las peticiones del navegador van por el proxy de Next.js (`/v1`, `/uploads`), así que no hace falta configurar la IP manualmente.
+
+1. Obtén la IP local de la máquina que ejecuta el proyecto (ej. `192.168.1.42`).
+2. Desde otro equipo en la misma red, abre `http://192.168.1.42:3000`.
+3. Asegúrate de que el firewall del host permita conexiones entrantes en los puertos **3000** y **3001**.
+
+En macOS, si el firewall está activo: *Ajustes del Sistema → Red → Firewall → Opciones* y permite Node.js, o desactiva el bloqueo temporalmente para probar.
+
 ### Prisma (local)
 
 ```bash

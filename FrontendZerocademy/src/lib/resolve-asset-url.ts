@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:3001";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
 /** Resolves API-hosted upload paths (e.g. /uploads/...) to a full URL. */
 export function resolveAssetUrl(path: string | null | undefined): string | null {
@@ -11,5 +10,7 @@ export function resolveAssetUrl(path: string | null | undefined): string | null 
     return path;
   }
 
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const base = getApiBaseUrl();
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return base ? `${base}${normalizedPath}` : normalizedPath;
 }
