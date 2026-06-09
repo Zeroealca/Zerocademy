@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { seedEcuadorCurriculum } from './curriculum/ecuador-curriculum.seed';
+import { seedEcuadorEvaluationDefaults } from './ecuador-evaluation.seed';
 import { seedLog } from './seed-logger';
 import type { SeedRunSummary } from './types';
 
@@ -8,6 +9,7 @@ export { seedGradeLevels } from './grade-levels.seed';
 export { seedSubjects } from './subjects.seed';
 export { seedSubjectAssignments } from './subject-assignments.seed';
 export { seedEcuadorCurriculum } from './curriculum/ecuador-curriculum.seed';
+export { seedEcuadorEvaluationDefaults } from './ecuador-evaluation.seed';
 export type { EcuadorCurriculumSeedOptions } from './curriculum/ecuador-curriculum.seed';
 
 export interface RunCatalogSeedsOptions {
@@ -34,6 +36,11 @@ export async function runCatalogSeeds(
     if (catalog === 'ecuador') {
       summaries.push(
         await seedEcuadorCurriculum(prisma, { dryRun: options?.dryRun }),
+      );
+      summaries.push(
+        await seedEcuadorEvaluationDefaults(prisma, {
+          dryRun: options?.dryRun,
+        }),
       );
       continue;
     }

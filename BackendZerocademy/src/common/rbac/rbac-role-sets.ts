@@ -37,3 +37,18 @@ export const STUDENT_ENROLLMENT_READ_ROLES = [
   Role.TEACHER,
   Role.STUDENT,
 ] as const;
+
+/** Read academic evaluation configuration (grading schemes, terms, categories). */
+export const ACADEMIC_EVALUATION_READ_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+  Role.TEACHER,
+] as const;
+
+/** Manage institution evaluation configuration — strict (ADMIN only). */
+export const ACADEMIC_EVALUATION_WRITE_ROLES = [Role.ADMIN] as const;
+
+/** Initialize global Ecuador evaluation templates — SUPER_ADMIN only. */
+export const ACADEMIC_EVALUATION_PLATFORM_WRITE_ROLES = [
+  Role.SUPER_ADMIN,
+] as const;

@@ -124,7 +124,11 @@ model Institution {
   courses                Course[]
   subjects               Subject[]
   teacherAssignments     TeacherAssignment[]
-  periodTransitions      AcademicPeriodTransition[]
+  periodTransitions             AcademicPeriodTransition[]
+  gradingSchemes                GradingScheme[]
+  evaluationTerms               EvaluationTerm[]
+  assessmentCategories          AssessmentCategory[]
+  academicEvaluationConfig      InstitutionAcademicConfiguration?
 
   @@index([isActive])
   @@index([activeAcademicPeriodId])
@@ -238,6 +242,8 @@ model AcademicPeriod {
   transitionsTo          AcademicPeriodTransition[] @relation("TransitionToPeriod")
   selectedByUsers        User[]                     @relation("UserSelectedPeriod")
   enrollments            Enrollment[]
+  evaluationTerms        EvaluationTerm[]
+  evaluationConfigActive InstitutionAcademicConfiguration[] @relation("ConfigActivePeriod")
 
   @@index([institutionId])
   @@index([regime])
@@ -450,6 +456,169 @@ model AcademicPeriodTransition {
   @@index([executedById])
   @@index([createdAt])
   @@map("academic_period_transitions")
+}
+
+// ---------------------------------------------------------------------------
+// Academic evaluation configuration — grading engine foundation
+// ---------------------------------------------------------------------------
+enum RoundingStrategy {
+  ROUND_HALF_UP
+  ROUND_DOWN
+  ROUND_UP
+  TRUNCATE
+}
+
+/// Numeric grading scale definition (institution-owned or global template).
+model GradingScheme {
+  id            String   @id @default(uuid())
+  institutionId String?
+  name          String
+  minScore      Decimal  @db.Decimal(6, 2)
+  maxScore      Decimal  @db.Decimal(6, 2)
+  passingScore  Decimal  @db.Decimal(6, 2)
+  decimalPlaces Int      @default(2)
+  isDefault     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institution    Institution?                       @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  gradeScales       GradeScale[]
+  configurations    InstitutionAcademicConfiguration[]
+  platformConfig    PlatformAcademicEvaluationConfig?
+
+  @@index([institutionId])
+  @@index([institutionId, isDefault])
+  @@index([isActive])
+  @@map("grading_schemes")
+}
+
+/// Grading period with weighting — distinct from calendar AcademicTerm (quimesters).
+model EvaluationTerm {
+  id               String    @id @default(uuid())
+  institutionId    String
+  academicPeriodId String
+  name             String
+  order            Int
+  weight           Decimal   @db.Decimal(5, 2)
+  startDate        DateTime? @db.Date
+  endDate          DateTime? @db.Date
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  institution    Institution    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  academicPeriod AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+
+  @@unique([institutionId, academicPeriodId, order])
+  @@unique([institutionId, academicPeriodId, name])
+  @@index([institutionId])
+  @@index([academicPeriodId])
+  @@index([isActive])
+  @@map("evaluation_terms")
+}
+
+/// Assessment category with weight for grade composition (e.g. exams, projects).
+model AssessmentCategory {
+  id            String   @id @default(uuid())
+  institutionId String
+  name          String
+  weight        Decimal  @db.Decimal(5, 2)
+  description   String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([institutionId, name])
+  @@index([institutionId])
+  @@index([isActive])
+  @@map("assessment_categories")
+}
+
+/// Qualitative equivalency band within a grading scheme.
+model GradeScale {
+  id              String   @id @default(uuid())
+  gradingSchemeId String
+  code            String
+  description     String
+  minValue        Decimal  @db.Decimal(6, 2)
+  maxValue        Decimal  @db.Decimal(6, 2)
+  order           Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  gradingScheme GradingScheme @relation(fields: [gradingSchemeId], references: [id], onDelete: Cascade)
+
+  @@unique([gradingSchemeId, code])
+  @@unique([gradingSchemeId, order])
+  @@index([gradingSchemeId])
+  @@map("grade_scales")
+}
+
+/// Institution-level active evaluation configuration snapshot.
+model InstitutionAcademicConfiguration {
+  id                     String           @id @default(uuid())
+  institutionId          String           @unique
+  gradingSchemeId        String
+  activeAcademicPeriodId String?
+  roundingStrategy       RoundingStrategy @default(ROUND_HALF_UP)
+  decimalPlaces          Int              @default(2)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  institution          Institution     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  gradingScheme        GradingScheme   @relation(fields: [gradingSchemeId], references: [id], onDelete: Restrict)
+  activeAcademicPeriod AcademicPeriod? @relation("ConfigActivePeriod", fields: [activeAcademicPeriodId], references: [id], onDelete: SetNull)
+
+  @@index([gradingSchemeId])
+  @@index([activeAcademicPeriodId])
+  @@map("institution_academic_configurations")
+}
+
+/// Singleton platform defaults applied to all institutions unless customized.
+model PlatformAcademicEvaluationConfig {
+  id               String           @id @default("platform-evaluation-defaults")
+  gradingSchemeId  String           @unique
+  roundingStrategy RoundingStrategy @default(ROUND_HALF_UP)
+  decimalPlaces    Int              @default(2)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  gradingScheme GradingScheme @relation(fields: [gradingSchemeId], references: [id], onDelete: Restrict)
+
+  @@map("platform_academic_evaluation_config")
+}
+
+/// Platform-wide assessment category template (copied per institution on apply).
+model AssessmentCategoryTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  weight      Decimal  @db.Decimal(5, 2)
+  description String?
+  order       Int      @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("assessment_category_templates")
+}
+
+/// Platform-wide evaluation term template (copied per institution period on apply).
+model EvaluationTermTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  order       Int      @unique
+  weight      Decimal  @db.Decimal(5, 2)
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("evaluation_term_templates")
 }
 
 // Bootstrap health probe — kept for infrastructure checks.
