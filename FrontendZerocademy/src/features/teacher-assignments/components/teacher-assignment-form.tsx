@@ -68,6 +68,7 @@ export function TeacherAssignmentForm({
   const {
     control,
     handleSubmit,
+    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateTeacherAssignmentInput>({
@@ -143,7 +144,11 @@ export function TeacherAssignmentForm({
                 <Select
                   id="academicPeriodId"
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    setValue("courseId", "");
+                    setValue("subjectId", "");
+                  }}
                   onBlur={field.onBlur}
                   disabled={disabled || periodsLoading}
                 >
@@ -213,7 +218,10 @@ export function TeacherAssignmentForm({
                 <Select
                   id="courseId"
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    setValue("subjectId", "");
+                  }}
                   onBlur={field.onBlur}
                   disabled={disabled || !academicPeriodId || coursesLoading}
                 >

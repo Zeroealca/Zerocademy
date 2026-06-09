@@ -32,8 +32,14 @@ function AcademicPeriodSelectorInner() {
   } = useInstitutionAcademicPeriods();
   const setPeriod = useSetSelectedAcademicPeriod();
 
-  const effectiveId = context?.effectivePeriod?.id ?? "";
+  const effectivePeriod = context?.effectivePeriod ?? null;
+  const effectiveId = effectivePeriod?.id ?? "";
   const periods = periodsData?.data ?? [];
+  const periodOptions =
+    effectivePeriod &&
+    !periods.some((period) => period.id === effectivePeriod.id)
+      ? [effectivePeriod, ...periods]
+      : periods;
 
   const emptyHint = !contextLoading && !hasInstitutionScope
     ? "Sin institución asignada"
@@ -69,7 +75,7 @@ function AcademicPeriodSelectorInner() {
         <option value="">
           {contextLoading || periodsLoading ? "Cargando…" : emptyHint}
         </option>
-        {periods.map((period) => (
+        {periodOptions.map((period) => (
           <option key={period.id} value={period.id}>
             {formatAcademicPeriodOptionLabel(period)}
           </option>

@@ -1,3 +1,5 @@
+import { localizeApiMessage } from "@/lib/localize-api-message";
+
 export interface ApiErrorDetail {
   field: string;
   message: string | string[];
@@ -16,11 +18,16 @@ export class ApiError extends Error {
   readonly details?: ApiErrorDetail[];
 
   constructor(body: ApiErrorBody) {
-    super(body.message);
+    super(localizeApiMessage(body.message));
     this.name = "ApiError";
     this.statusCode = body.statusCode;
-    this.error = body.error;
-    this.details = body.details;
+    this.error = localizeApiMessage(body.error);
+    this.details = body.details?.map((detail) => ({
+      ...detail,
+      message: Array.isArray(detail.message)
+        ? detail.message.map(localizeApiMessage)
+        : localizeApiMessage(detail.message),
+    }));
   }
 }
 

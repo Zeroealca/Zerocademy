@@ -19,7 +19,10 @@ export const academicTransitionWizardSchema = z
   .object({
     fromAcademicPeriodId: z.string().uuid("Selecciona el período origen"),
     targetMode: z.enum(["existing", "create"]),
-    toAcademicPeriodId: z.string().uuid().optional(),
+    toAcademicPeriodId: z
+      .string()
+      .uuid("Selecciona un período destino válido")
+      .optional(),
     createTargetPeriod: createTargetPeriodSchema.optional(),
     options: transitionOptionsSchema,
   })

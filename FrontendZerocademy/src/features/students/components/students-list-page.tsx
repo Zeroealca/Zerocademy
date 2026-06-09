@@ -52,7 +52,7 @@ export function StudentsListPage() {
         {canManage ? (
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
-              <Link href="/students/bulk-import">Importar CSV</Link>
+              <Link href="/students/bulk-import">Importar masivamente</Link>
             </Button>
             <Button asChild>
               <Link href="/students/new">Nuevo estudiante</Link>

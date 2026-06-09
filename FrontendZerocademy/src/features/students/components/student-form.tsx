@@ -113,6 +113,11 @@ export function StudentForm({
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="email">Correo electrónico</Label>
                 <Input id="email" type="email" {...form.register("email")} />
+                {"email" in form.formState.errors && form.formState.errors.email ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.email.message}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="password">Contraseña temporal</Label>
@@ -121,6 +126,12 @@ export function StudentForm({
                   autoComplete="new-password"
                   {...form.register("password")}
                 />
+                {"password" in form.formState.errors &&
+                form.formState.errors.password ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
+                ) : null}
               </div>
             </>
           ) : null}
@@ -128,14 +139,29 @@ export function StudentForm({
           <div className="space-y-2">
             <Label htmlFor="firstName">Nombre</Label>
             <Input id="firstName" {...form.register("firstName")} />
+            {form.formState.errors.firstName ? (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.firstName.message}
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="lastName">Apellido</Label>
             <Input id="lastName" {...form.register("lastName")} />
+            {form.formState.errors.lastName ? (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.lastName.message}
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="nationalId">Cédula / ID nacional</Label>
             <Input id="nationalId" {...form.register("nationalId")} />
+            {form.formState.errors.nationalId ? (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.nationalId.message}
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="birthDate">Fecha de nacimiento</Label>

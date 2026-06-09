@@ -43,13 +43,13 @@ export const STUDENT_CSV_FIELDS = [
     key: "birthDate",
     label: "Fecha de nacimiento",
     required: false,
-    hint: "YYYY-MM-DD (vacío si no aplica)",
+    hint: "Formato AAAA-MM-DD (vacío si no aplica)",
   },
   {
     key: "gender",
     label: "Género",
     required: false,
-    hint: "MALE, FEMALE, OTHER o UNSPECIFIED",
+    hint: "Masculino (MALE), Femenino (FEMALE), Otro (OTHER) o Sin especificar (UNSPECIFIED)",
   },
   {
     key: "phone",
@@ -77,5 +77,5 @@ export const STUDENT_CSV_HEADER = STUDENT_CSV_FIELDS.map((field) => field.key).j
 export const STUDENT_CSV_HEADER_LINE = `${STUDENT_CSV_HEADER};`;
 
 /** Example data rows only — paste below the header line documented on the page. */
-export const CSV_EXAMPLE_ROWS = `student1@example.com,password123,Juan,Pérez,0912345678,2010-05-15,MALE,0991234567,Av. Principal 123,María Pérez (madre);
-student2@example.com,password123,María,Gómez,0923456789,,FEMALE,,,`;
+export const CSV_EXAMPLE_ROWS = `estudiante1@colegio.edu,clave12345,Juan,Pérez,0912345678,2010-05-15,MALE,0991234567,Av. Principal 123,María Pérez (madre);
+estudiante2@colegio.edu,clave12345,María,Gómez,0923456789,,FEMALE,,,`;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,6 +27,8 @@ import {
   type BulkImportFormInput,
 } from "@/features/students/schemas/student.schema";
 import type { BulkImportResult } from "@/features/students/types";
+import { localizeApiMessage } from "@/lib/localize-api-message";
+import { isSelectValueMissing } from "@/lib/select-utils";
 import { canManageStudents, canViewStudents } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -82,7 +84,7 @@ export function StudentBulkImportPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Importación masiva (CSV)</CardTitle>
+          <CardTitle className="text-lg">Importación masiva de estudiantes</CardTitle>
           <CardDescription>
             Los datos de cada estudiante deben coincidir con el formulario de
             creación. Revisa el orden de columnas antes de pegar el archivo.
@@ -94,50 +96,94 @@ export function StudentBulkImportPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="academicPeriodId">Período académico</Label>
-              <Select
-                id="academicPeriodId"
-                value={form.watch("academicPeriodId")}
-                onChange={(e) => {
-                  form.setValue("academicPeriodId", e.target.value);
-                  form.setValue("courseId", "");
+              <Controller
+                name="academicPeriodId"
+                control={form.control}
+                render={({ field }) => {
+                  const periods = periodsData?.data ?? [];
+                  return (
+                    <Select
+                      id="academicPeriodId"
+                      value={field.value}
+                      onChange={(event) => {
+                        field.onChange(event);
+                        form.setValue("courseId", "");
+                      }}
+                    >
+                      <option value="">
+                        {!hasRegime
+                          ? "Configura el régimen de la institución"
+                          : "Seleccionar período"}
+                      </option>
+                      {isSelectValueMissing(
+                        field.value,
+                        periods.map((period) => period.id),
+                      ) ? (
+                        <option value={field.value}>
+                          Cargando período seleccionado…
+                        </option>
+                      ) : null}
+                      {periods.map((period) => (
+                        <option key={period.id} value={period.id}>
+                          {formatAcademicPeriodOptionLabel(period)}
+                        </option>
+                      ))}
+                    </Select>
+                  );
                 }}
-              >
-                <option value="">
-                  {!hasRegime
-                    ? "Configura el régimen de la institución"
-                    : "Seleccionar período"}
-                </option>
-                {(periodsData?.data ?? []).map((period) => (
-                  <option key={period.id} value={period.id}>
-                    {formatAcademicPeriodOptionLabel(period)}
-                  </option>
-                ))}
-              </Select>
+              />
+              {form.formState.errors.academicPeriodId ? (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.academicPeriodId.message}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="courseId">Curso / paralelo</Label>
-              <Select
-                id="courseId"
-                value={form.watch("courseId")}
-                onChange={(e) => form.setValue("courseId", e.target.value)}
-                disabled={!academicPeriodId}
-              >
-                <option value="">
-                  {academicPeriodId
-                    ? "Seleccionar curso"
-                    : "Primero elige un período"}
-                </option>
-                {(coursesData?.data ?? []).map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.name} ({course.section})
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                name="courseId"
+                control={form.control}
+                render={({ field }) => {
+                  const courses = coursesData?.data ?? [];
+                  return (
+                    <Select
+                      id="courseId"
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={!academicPeriodId}
+                    >
+                      <option value="">
+                        {academicPeriodId
+                          ? "Seleccionar curso"
+                          : "Primero elige un período"}
+                      </option>
+                      {isSelectValueMissing(
+                        field.value,
+                        courses.map((course) => course.id),
+                      ) ? (
+                        <option value={field.value}>
+                          Cargando curso seleccionado…
+                        </option>
+                      ) : null}
+                      {courses.map((course) => (
+                        <option key={course.id} value={course.id}>
+                          {course.name} ({course.section})
+                        </option>
+                      ))}
+                    </Select>
+                  );
+                }}
+              />
+              {form.formState.errors.courseId ? (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.courseId.message}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="csvContent">Filas de datos CSV</Label>
+              <Label htmlFor="csvContent">Filas de datos</Label>
               <p className="text-xs text-muted-foreground">
                 Pega solo filas de estudiantes (una por línea). No incluyas la
                 línea de encabezado aquí si ya la tienes como referencia arriba.
@@ -146,7 +192,7 @@ export function StudentBulkImportPage() {
                 id="csvContent"
                 rows={8}
                 className="font-mono text-xs"
-                placeholder="email,password,firstName,lastName,nationalId,birthDate,gender,phone,address,emergencyContact;"
+                placeholder="Pega una fila por estudiante, separando los campos con comas y terminando cada fila con punto y coma"
                 {...form.register("csvContent")}
               />
             </div>
@@ -197,7 +243,8 @@ function ImportResultSummary({ result }: { result: BulkImportResult }) {
               {result.errors.map((error) => (
                 <li key={`${error.row}-${error.message}`}>
                   Fila {error.row}
-                  {error.email ? ` (${error.email})` : ""}: {error.message}
+                  {error.email ? ` (${error.email})` : ""}:{" "}
+                  {localizeApiMessage(error.message)}
                 </li>
               ))}
             </ul>
@@ -210,7 +257,7 @@ function ImportResultSummary({ result }: { result: BulkImportResult }) {
             <ul className="list-inside list-disc space-y-1 text-muted-foreground">
               {result.duplicateWarnings.map((warning) => (
                 <li key={`${warning.row}-${warning.nationalId}`}>
-                  Fila {warning.row}: {warning.message}
+                  Fila {warning.row}: {localizeApiMessage(warning.message)}
                 </li>
               ))}
             </ul>

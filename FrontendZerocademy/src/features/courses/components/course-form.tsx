@@ -22,6 +22,7 @@ import {
 } from "@/features/courses/schemas/course.schema";
 import type { Course } from "@/features/courses/types";
 import { ApiError } from "@/lib/api-error";
+import { isSelectValueMissing } from "@/lib/select-utils";
 
 interface CourseFormProps {
   title: string;
@@ -119,6 +120,12 @@ export function CourseForm({
                   <option value="">
                     {periodsLoading ? "Cargando períodos…" : "Selecciona un período"}
                   </option>
+                  {isSelectValueMissing(
+                    field.value,
+                    periods.map((period) => period.id),
+                  ) ? (
+                    <option value={field.value}>Cargando período seleccionado…</option>
+                  ) : null}
                   {periods.map((period) => (
                     <option key={period.id} value={period.id}>
                       {formatAcademicPeriodOptionLabel(period)}
@@ -150,6 +157,12 @@ export function CourseForm({
                   <option value="">
                     {gradesLoading ? "Cargando grados…" : "Selecciona un grado"}
                   </option>
+                  {isSelectValueMissing(
+                    field.value,
+                    grades.map((grade) => grade.id),
+                  ) ? (
+                    <option value={field.value}>Cargando grado seleccionado…</option>
+                  ) : null}
                   {grades.map((grade) => (
                     <option key={grade.id} value={grade.id}>
                       {grade.name} ({grade.code})

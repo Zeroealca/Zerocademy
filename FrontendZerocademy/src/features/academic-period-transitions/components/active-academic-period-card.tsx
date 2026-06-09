@@ -76,11 +76,17 @@ export function ActiveAcademicPeriodCard({
             <Label htmlFor="active-period-select">Cambiar período activo</Label>
             <Select
               id="active-period-select"
-              value={activePeriod?.id ?? ""}
-              onChange={(event) => void handleSetActive(event.target.value)}
+              defaultValue=""
+              onChange={(event) => {
+                const nextId = event.target.value;
+                event.target.value = "";
+                void handleSetActive(nextId);
+              }}
               disabled={setActivePeriodMutation.isPending}
             >
-              <option value="">Selecciona un período</option>
+              <option value="" disabled hidden>
+                Elegir otro período…
+              </option>
               {periods.map((period) => (
                 <option key={period.id} value={period.id}>
                   {formatAcademicPeriodOptionLabel(period)}

@@ -120,7 +120,7 @@ export function SubjectForm({
               id="code"
               {...register("code")}
               disabled={disabled}
-              placeholder="MATH"
+              placeholder="MAT"
             />
             {errors.code ? (
               <p className="text-sm text-destructive">{errors.code.message}</p>

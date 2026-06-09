@@ -21,9 +21,9 @@ export const createStudentSchema = z.object({
 export type CreateStudentInput = z.infer<typeof createStudentSchema>;
 
 export const updateStudentSchema = z.object({
-  firstName: z.string().min(1).max(100).optional(),
-  lastName: z.string().min(1).max(100).optional(),
-  nationalId: z.string().min(1).max(32).optional(),
+  firstName: z.string().min(1, "El nombre es obligatorio").max(100).optional(),
+  lastName: z.string().min(1, "El apellido es obligatorio").max(100).optional(),
+  nationalId: z.string().min(1, "La cédula es obligatoria").max(32).optional(),
   birthDate: z.string().optional(),
   gender: genderSchema.optional(),
   phone: z.string().max(32).optional(),
@@ -36,7 +36,7 @@ export const updateStudentSchema = z.object({
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
 
 export const bulkImportSchema = z.object({
-  csvContent: z.string().min(1, "El contenido CSV es obligatorio"),
+  csvContent: z.string().min(1, "El contenido del archivo es obligatorio"),
   courseId: z.string().uuid("Selecciona un curso válido"),
   academicPeriodId: z.string().uuid("Selecciona un período académico válido"),
 });
