@@ -122,3 +122,25 @@ export function canViewOwnEnrollmentHistory(role: UserRole | undefined): boolean
 export function canViewGrades(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, ["STUDENT"]);
 }
+
+/** Academic evaluation configuration (grading schemes, terms, categories). */
+export function canViewAcademicEvaluation(role: UserRole | undefined): boolean {
+  return hasRole(role, ["ADMIN", "TEACHER"]);
+}
+
+export function canManageAcademicEvaluation(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
+}
+
+export function canInitializeGlobalEvaluationDefaults(
+  role: UserRole | undefined,
+): boolean {
+  return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
+}
+
+/** Platform-wide evaluation defaults (SUPER_ADMIN only). */
+export function canManagePlatformAcademicEvaluation(
+  role: UserRole | undefined,
+): boolean {
+  return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
+}

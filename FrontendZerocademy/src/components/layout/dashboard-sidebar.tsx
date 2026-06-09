@@ -10,6 +10,7 @@ import {
   Layers,
   Library,
   NotebookPen,
+  Scale,
   School,
   UserRound,
   LayoutDashboard,
@@ -22,6 +23,7 @@ import {
   canManageAcademicPeriods,
   canManagePlatformCatalog,
   canManageUsers,
+  canViewAcademicEvaluation,
   canViewEnrollments,
   canViewGrades,
   canViewInstitutionOperations,
@@ -113,6 +115,12 @@ const academicStructureNavItem = {
   icon: GitBranch,
 };
 
+const academicEvaluationNavItem = {
+  href: "/academic-evaluation",
+  label: "Evaluación académica",
+  icon: Scale,
+};
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const currentUser = useAuthStore((state) => state.user);
@@ -137,6 +145,10 @@ export function DashboardSidebar() {
       teacherAssignmentsNavItem,
       academicStructureNavItem,
     );
+  }
+
+  if (canViewAcademicEvaluation(currentUser?.role)) {
+    navItems.push(academicEvaluationNavItem);
   }
 
   if (canViewStudents(currentUser?.role)) {
