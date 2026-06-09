@@ -34,6 +34,7 @@ FrontendZerocademy/src/
 │   ├── institution-memberships/
 │   ├── academic-period-transitions/
 │   ├── academic-evaluation/    # Grading engine configuration UI
+│   ├── grades/                 # Assessments, grade entry, student grades
 │   └── dashboard/
 ├── components/
 │   ├── ui/                 # Shared primitives

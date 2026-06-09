@@ -145,6 +145,17 @@ Enum: `RoundingStrategy` — `ROUND_HALF_UP`, `ROUND_DOWN`, `ROUND_UP`, `TRUNCAT
 
 > Calendar quimesters remain on `AcademicTerm` (FK → `AcademicPeriod`). `EvaluationTerm` is a separate model for grade weighting.
 
+### Grades (phase 1)
+
+| Model | Scope | Key relations |
+|-------|-------|---------------|
+| `Assessment` | Institution + period + term | `TeacherAssignment`, `Subject`, `AssessmentCategory`, `AcademicTerm` |
+| `Grade` | Per assessment + enrollment | `Assessment`, `Enrollment`, optional `GradingScheme` snapshot |
+
+Unique: `Grade(assessmentId, enrollmentId)`.
+
+See [grades.md](./grades.md) and [assessments.md](./assessments.md).
+
 ### HealthCheck
 
 Bootstrap table for infrastructure health probes.
@@ -176,6 +187,7 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20250521120000_memberships_transitions` | Memberships, transition audit, `activeAcademicPeriodId` |
 | `20250521140000_user_selected_academic_period` | `User.selectedAcademicPeriodId` |
 | `20260609120000_academic_evaluation` | Grading schemes, evaluation terms, assessment categories, institution config |
+| `20260610120000_grades_assessments_phase1` | Assessments and grade entries |
 
 Never edit applied migration SQL retroactively.
 

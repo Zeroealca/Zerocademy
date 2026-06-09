@@ -35,7 +35,8 @@ BackendZerocademy/src/
     ├── institutions/
     ├── institution-memberships/
     ├── academic-period-transitions/
-    └── academic-evaluation/   # Grading schemes, evaluation terms, categories
+    ├── academic-evaluation/   # Grading schemes, evaluation terms, categories
+    └── grades/                # Assessments and grade entries (phase 1)
 ```
 
 ## Dependency rules

@@ -27,7 +27,9 @@
     "docker:prisma:migrate": "docker compose exec backend npx prisma migrate deploy --schema=BackendZerocademy/prisma/schema.prisma",
     "docker:prisma:studio": "docker compose exec backend npx prisma studio --schema=BackendZerocademy/prisma/schema.prisma --port 5555 --browser none",
     "docker:shell:backend": "docker compose exec backend sh",
-    "docker:shell:frontend": "docker compose exec frontend sh"
+    "docker:shell:frontend": "docker compose exec frontend sh",
+    "prisma:seed:grades-demo": "npm run prisma:seed:grades-demo -w backend-zerocademy",
+    "test:e2e:grades": "npm run test:e2e -w backend-zerocademy -- grades.e2e-spec"
   },
   "engines": {
     "node": ">=20"
