@@ -1,5 +1,6 @@
 export interface TeacherAssignment {
   id: string;
+  institutionId?: string | null;
   teacherId: string;
   teacherFirstName: string;
   teacherLastName: string;
