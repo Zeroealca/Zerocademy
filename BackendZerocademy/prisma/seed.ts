@@ -42,19 +42,43 @@ async function seedAdminUser(): Promise<void> {
   }
 }
 
+async function seedHealthCheck(): Promise<void> {
+  if (process.env.SEED_DRY_RUN === 'true') {
+    seedLog({
+      event: 'HEALTH_CHECK_DRY_RUN',
+      message: 'Dry run: would upsert HealthCheck row',
+    });
+    return;
+  }
+
+  await prisma.healthCheck.upsert({
+    where: { id: 1 },
+    create: { id: 1 },
+    update: { checkedAt: new Date() },
+  });
+
+  seedLog({
+    event: 'HEALTH_CHECK_UPSERTED',
+    message: 'Seeded HealthCheck probe row',
+  });
+}
+
 async function main(): Promise<void> {
   const dryRun = process.env.SEED_DRY_RUN === 'true';
   const skipCatalog =
     process.env.SEED_SKIP_CATALOG === 'true' ||
     process.env.SEED_SKIP_CURRICULUM === 'true';
 
+  const skipDemo = process.env.SEED_SKIP_DEMO === 'true';
+
   seedLog({
     event: 'SEED_RUN_START',
     message: 'Prisma seed started',
-    metadata: { dryRun, skipCatalog },
+    metadata: { dryRun, skipCatalog, skipDemo },
   });
 
   await seedAdminUser();
+  await seedHealthCheck();
 
   if (!skipCatalog) {
     await runCatalogSeeds(prisma, {
@@ -68,12 +92,13 @@ async function main(): Promise<void> {
     });
   }
 
-  const seedDemoGrades =
-    process.env.SEED_DEMO_GRADES === 'true' ||
-    process.env.SEED_GRADES_DEMO === 'true';
-
-  if (seedDemoGrades) {
+  if (!skipDemo) {
     await seedGradesDemo(prisma, { dryRun });
+  } else {
+    seedLog({
+      event: 'DEMO_SEED_DISABLED',
+      message: 'Demo institution seed skipped (SEED_SKIP_DEMO=true)',
+    });
   }
 
   seedLog({
