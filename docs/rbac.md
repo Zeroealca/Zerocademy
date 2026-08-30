@@ -16,6 +16,7 @@ Granular permissions and ABAC remain future work.
 | Create academic levels, grades, subjects, periods | |
 | Activate/deactivate periods (one active per regime globally) | |
 | Create all user types | |
+| List, search, and filter users (including SUPER_ADMIN) | |
 | Assign institution memberships | |
 
 ### ADMIN
@@ -25,7 +26,9 @@ Granular permissions and ABAC remain future work.
 | Create students, enrollments, and CSV bulk import | Create academic levels, grade levels, or subjects |
 | Manage courses/parallels and teacher assignments | Create academic periods or activate global calendar |
 | View academic levels, grades, and subjects (read-only catalog) | Assign institution memberships |
-| Run institution academic transitions | Manage super admins |
+| List, search, and filter users (except SUPER_ADMIN) | Manage super admins |
+| View and configure **only institutions with an active ADMIN membership** | Access other institutions (404) |
+| Run institution academic transitions (membership required) | |
 | Select academic period context | |
 | View academic structures | |
 

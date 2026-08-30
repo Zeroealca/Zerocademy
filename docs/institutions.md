@@ -39,13 +39,13 @@ Region and regime are validated for consistency when both are set (e.g. Costa/Ga
 
 | Method | Path | Roles | Description |
 |--------|------|-------|-------------|
-| GET | `/institutions` | SUPER_ADMIN, ADMIN | Paginated list |
-| GET | `/institutions/:id` | SUPER_ADMIN, ADMIN | Detail |
+| GET | `/institutions` | SUPER_ADMIN, ADMIN | Paginated list (`ADMIN`: membership-scoped) |
+| GET | `/institutions/:id` | SUPER_ADMIN, ADMIN | Detail (`ADMIN`: membership required) |
 | POST | `/institutions` | SUPER_ADMIN | Create |
 | PATCH | `/institutions/:id` | SUPER_ADMIN | Update core fields |
-| PATCH | `/institutions/:id/settings` | SUPER_ADMIN, ADMIN | Contact, region, regime |
+| PATCH | `/institutions/:id/settings` | SUPER_ADMIN, ADMIN | Contact, region, regime (`ADMIN`: membership) |
 | POST | `/institutions/:id/logo` | SUPER_ADMIN, ADMIN | Upload logo (multipart, optimized WebP) |
-| PATCH | `/institutions/:id/branding` | SUPER_ADMIN, ADMIN | Theme colors |
+| PATCH | `/institutions/:id/branding` | SUPER_ADMIN, ADMIN | Theme colors (`ADMIN`: membership) |
 | POST | `/institutions/:id/activate` | SUPER_ADMIN | Enable academic use |
 | POST | `/institutions/:id/deactivate` | SUPER_ADMIN | Block new academic use |
 | DELETE | `/institutions/:id` | SUPER_ADMIN | Delete only if no dependents |
@@ -59,6 +59,7 @@ OpenAPI: `http://localhost:3001/api/docs` → tag `institutions`.
 3. Delete is blocked when profiles, periods, structure, courses, subjects, or assignments reference the institution.
 4. Academic period activation is scoped by `institutionId` + `regime` (no cross-institution collision).
 5. Global catalog rows (`institutionId` null) remain shared; institution-specific rows are owned by that institution.
+6. **ADMIN** may list, view, and update settings/branding only for institutions where they have an **active ADMIN membership**. Cross-institution access returns **404**. `SUPER_ADMIN` sees and manages all institutions.
 
 ## Logging
 

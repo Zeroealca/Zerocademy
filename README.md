@@ -185,11 +185,16 @@ npm run dev:frontend
 
 El frontend escucha en `0.0.0.0:3000` y el API en `0.0.0.0:3001`. Las peticiones del navegador van por el proxy de Next.js (`/v1`, `/uploads`), así que no hace falta configurar la IP manualmente.
 
+Next.js 15+ bloquea los scripts de desarrollo (`/_next/*`) si entras por IP. El `next.config.ts` permite automáticamente las IPs LAN de la máquina host (y `LAN_HOST` / `ALLOWED_DEV_ORIGINS` del `.env`). **Reinicia** `npm run dev:frontend` tras cambiar la IP o esas variables.
+
 1. Obtén la IP local de la máquina que ejecuta el proyecto (ej. `192.168.1.42`).
-2. Desde otro equipo en la misma red, abre `http://192.168.1.42:3000`.
-3. Asegúrate de que el firewall del host permita conexiones entrantes en los puertos **3000** y **3001**.
+2. Opcional en `.env` de la raíz: `LAN_HOST=192.168.1.42`.
+3. Desde otro equipo en la misma red, abre `http://192.168.1.42:3000` (verás `/login`).
+4. Asegúrate de que el firewall del host permita conexiones entrantes en los puertos **3000** y **3001**.
 
 En macOS, si el firewall está activo: *Ajustes del Sistema → Red → Firewall → Opciones* y permite Node.js, o desactiva el bloqueo temporalmente para probar.
+
+Si en la otra PC no responde el login ni botones (página “muerta”), en la consola del navegador suele aparecer un bloqueo cross-origin a `/_next/*`: reinicia el frontend con la IP correcta en `allowedDevOrigins`.
 
 ### Prisma (local)
 

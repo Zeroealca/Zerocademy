@@ -38,13 +38,13 @@ When a **teacher** membership is assigned or activated, `TeacherProfile.institut
 
 | Method | Path | Roles | Description |
 |--------|------|-------|-------------|
-| GET | `/` | SUPER_ADMIN, ADMIN | Paginated list (filters: role, isActive, search) |
-| GET | `/:membershipId` | SUPER_ADMIN, ADMIN | Detail |
-| POST | `/` | SUPER_ADMIN, ADMIN | Assign user |
-| PATCH | `/:membershipId` | SUPER_ADMIN, ADMIN | Update role / flags |
-| POST | `/:membershipId/activate` | SUPER_ADMIN, ADMIN | Activate |
-| POST | `/:membershipId/deactivate` | SUPER_ADMIN, ADMIN | Deactivate |
-| DELETE | `/:membershipId` | SUPER_ADMIN, ADMIN | Remove membership |
+| GET | `/` | SUPER_ADMIN, ADMIN | Paginated list (filters: role, isActive, search); `ADMIN` must belong to the institution |
+| GET | `/:membershipId` | SUPER_ADMIN, ADMIN | Detail (`ADMIN`: membership required) |
+| POST | `/` | SUPER_ADMIN | Assign user |
+| PATCH | `/:membershipId` | SUPER_ADMIN | Update role / flags |
+| POST | `/:membershipId/activate` | SUPER_ADMIN | Activate |
+| POST | `/:membershipId/deactivate` | SUPER_ADMIN | Deactivate |
+| DELETE | `/:membershipId` | SUPER_ADMIN | Remove membership |
 
 OpenAPI tag: `institution-memberships`.
 
@@ -80,4 +80,4 @@ Permissions: `canViewInstitutionMemberships`, `canManageInstitutionMemberships` 
 
 - Additional `InstitutionMembershipRole` values (e.g. `COORDINATOR`) without new tables.
 - Multiple active memberships per user across institutions (already supported by unique constraint scope).
-- Institution-scoped RBAC guards that check membership in addition to global `User.role`.
+- Broader domain modules continue to call `assertActorCanAccessInstitution` for row-level checks.

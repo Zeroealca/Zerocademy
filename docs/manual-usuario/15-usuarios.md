@@ -57,9 +57,34 @@ La gestión de usuarios es distinta de los **perfiles académicos** (estudiante,
 
 - Puede hacerlo desde **Usuarios** (solo rol Estudiante) o preferiblemente desde **Estudiantes**, que completa también el perfil académico.
 
+### Filtrar el directorio
+
+Encima de la tabla **Directorio** hay tres controles. Puede combinarlos; al cambiar un filtro se vuelve a la página 1.
+
+| Control | Qué hace | Ejemplo |
+|---------|----------|---------|
+| **Buscar** | Filtra por nombre o correo (no distingue mayúsculas). La lista se actualiza al dejar de escribir (~0,5 s) | `admin.demo` o `Ana` |
+| **Rol** | Muestra solo ese rol | Docente |
+| **Estado** | Activos, inactivos o todos | Activos |
+
+- Si no hay coincidencias, la tabla muestra **No se encontraron usuarios.**
+- El **administrador** no ve cuentas de super administrador ni la opción **Super administrador** en el filtro de rol.
+- Si hay más de 10 usuarios, use **Anterior** / **Siguiente**.
+
+### Ordenar el directorio
+
+Pulse **Rol** o **Estado** en la cabecera de la tabla (icono de flechas).
+
+| Columna | Primer clic | Segundo clic |
+|---------|-------------|--------------|
+| **Rol** | Super administrador → Representante | Orden inverso |
+| **Estado** | Activos primero | Inactivos primero |
+
+El orden se aplica a todo el listado (no solo a la página visible) y se puede combinar con los filtros.
+
 ### Editar o desactivar
 
-1. Busque al usuario en el listado (filtros por rol, estado, texto).
+1. Localice al usuario con **Buscar**, **Rol** y **Estado**.
 2. Abra la ficha y edite datos permitidos.
 3. Para impedir el acceso sin borrar historial, marque como **inactivo**.
 
@@ -89,3 +114,5 @@ La gestión de usuarios es distinta de los **perfiles académicos** (estudiante,
 | Docente sin acceso a cursos | Falta membresía en Instituciones → Miembros. |
 | Admin no crea otro admin | Limitación por rol; contacte al super administrador. |
 | Usuario no puede entrar | Verifique que esté **activo** y la contraseña sea correcta. |
+| No aparecen super administradores | Solo el super administrador los ve y puede filtrarlos por rol. |
+| Correo ya registrado | El formulario muestra *Este correo ya está registrado.* Use otro correo. |

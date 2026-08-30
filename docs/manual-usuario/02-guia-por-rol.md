@@ -33,7 +33,7 @@ Esta sección resume **qué menú ve cada rol**, **qué puede hacer** y **qué n
 | Estudiantes | **No** | — | Alta o edición de estudiantes institucionales |
 | Matrículas | **No** | — | Crear o editar matrículas |
 | Instituciones | Sí | Crear instituciones; activar/desactivar; ver listado | Editar configuración operativa como admin de colegio (lo hace el ADMIN de la institución) |
-| Usuarios | Sí | Crear cualquier tipo de usuario; asignar cualquier rol | — |
+| Usuarios | Sí | Crear cualquier tipo de usuario; asignar cualquier rol; buscar, filtrar y ordenar el directorio (nombre, correo, rol, estado) | — |
 | Miembros de institución | Desde Instituciones | Asignar administradores y docentes a instituciones | — |
 | Plantilla Ecuador (evaluación) | Desde Evaluación (si accede por URL) | Inicializar plantillas globales de calificación | — |
 | Selector de período (cabecera) | **No** | — | Seleccionar período de trabajo (no aplica a su flujo) |
@@ -57,7 +57,7 @@ Esta sección resume **qué menú ve cada rol**, **qué puede hacer** y **qué n
 | Matrículas | Sí | Matrícula individual, masiva, cambio de estado | — |
 | Instituciones | Sí | Ver institución; editar **configuración**, logo y colores; ver miembros | Crear o eliminar instituciones; asignar miembros (super admin) |
 | Transiciones de período | Desde Instituciones → Transiciones | Previsualizar y **ejecutar** cambio de año lectivo | — |
-| Usuarios | Sí | Crear y editar usuarios | Crear super administradores; asignar roles distintos de Estudiante al crear usuarios |
+| Usuarios | Sí | Crear y editar usuarios; buscar, filtrar y ordenar el directorio (sin ver super administradores) | Crear super administradores; asignar roles distintos de Estudiante al crear usuarios |
 | Selector de período (cabecera) | Sí | Elegir período de trabajo | — |
 
 **Enfoque:** operación completa de **su institución educativa**.

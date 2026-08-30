@@ -87,7 +87,7 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/` | Redirects to `/dashboard` |
 | `/login` | Public |
 | `/dashboard` | Protected (`AuthGuard`) |
-| `/users` | Protected — ADMIN, SUPER_ADMIN |
+| `/users` | Protected — ADMIN, SUPER_ADMIN. Directory: search, role, active state, sort by role/status, pagination |
 | `/academic-periods` | Protected — view: ADMIN, SUPER_ADMIN, TEACHER |
 | `/academic-periods/new`, `…/edit` | Protected — ADMIN, SUPER_ADMIN |
 | `/institutions` | Protected — view: ADMIN, SUPER_ADMIN |

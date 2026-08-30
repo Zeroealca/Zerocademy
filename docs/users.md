@@ -21,7 +21,7 @@ All routes require JWT and `@Roles(SUPER_ADMIN, ADMIN)`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/v1/users` | Paginated list (`page`, `limit`, `role`, `isActive`, `search`) |
+| GET | `/v1/users` | Paginated list (`page`, `limit`, `role`, `isActive`, `search`, `sortBy`, `sortOrder`) |
 | GET | `/v1/users/:id` | Single user |
 | POST | `/v1/users` | Create user |
 | PATCH | `/v1/users/:id` | Update user |
@@ -56,3 +56,19 @@ BackendZerocademy/src/modules/users/
 ```
 
 Business logic stays in `UsersService`; controllers remain thin and Swagger-documented.
+
+## Frontend
+
+Route `/users` (`SUPER_ADMIN`, `ADMIN`). Create form and directory share the page.
+
+The directory toolbar maps to `GET /v1/users` query params:
+
+| Control | Query | Behavior |
+|---------|-------|----------|
+| Buscar | `search` | Case-insensitive match on email, first name, or last name. The input is debounced (500 ms) before querying |
+| Rol | `role` | Exact role. ADMIN cannot select or list `SUPER_ADMIN` |
+| Estado | `isActive` | Active, inactive, or all |
+| Orden | `sortBy`, `sortOrder` | Column headers **Rol** and **Estado**. `sortBy`: `role` \| `isActive` \| `createdAt`. `sortOrder`: `asc` \| `desc`. Default is `createdAt desc`. Role order follows the Prisma enum (`SUPER_ADMIN` → `REPRESENTATIVE`). Status `desc` lists active first |
+| Paginación | `page`, `limit` | Default 10 per page; **Anterior** / **Siguiente** when `totalPages > 1` |
+
+Empty results show «No se encontraron usuarios.» Changing a filter or sort resets to page 1. Duplicate email on create shows «Este correo ya está registrado.»

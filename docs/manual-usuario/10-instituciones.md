@@ -5,8 +5,8 @@
 | Acción | Roles |
 |--------|-------|
 | Crear, activar, desactivar y eliminar instituciones | **Super administrador** |
-| Ver listado y detalle | **Super administrador**, **Administrador** |
-| Editar configuración, logo y colores | **Super administrador**, **Administrador** |
+| Ver listado y detalle | **Super administrador**; **Administrador** solo de las instituciones a las que pertenece |
+| Editar configuración, logo y colores | **Super administrador**; **Administrador** solo de sus instituciones |
 | Gestionar miembros (asignar admins y docentes) | **Super administrador** |
 | Ver transiciones de período | **Super administrador**, **Administrador**, **Docente** (consulta) |
 | Ejecutar transición de período | **Administrador** (y super admin en rutas permitidas) |
