@@ -17,6 +17,12 @@ export const PLATFORM_CATALOG_WRITE_ROLES = [Role.SUPER_ADMIN] as const;
 /** Institution operational writes — strict (no SUPER_ADMIN bypass). */
 export const INSTITUTION_OPS_WRITE_ROLES = [Role.ADMIN] as const;
 
+/** Academic period transitions — SUPER_ADMIN (platform QA) and institution ADMIN. */
+export const ACADEMIC_TRANSITION_WRITE_ROLES = [
+  Role.SUPER_ADMIN,
+  Role.ADMIN,
+] as const;
+
 export const INSTITUTION_OPS_READ_ROLES = [
   Role.SUPER_ADMIN,
   Role.ADMIN,

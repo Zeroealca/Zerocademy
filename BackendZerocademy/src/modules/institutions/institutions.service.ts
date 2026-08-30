@@ -7,11 +7,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { AppConfig } from '../../config/configuration';
+import {
+  assertActorCanAccessInstitution,
+  resolveActorInstitutionIds,
+} from '../../common/rbac/academic-scope.util';
+import { RoleUtils } from '../../common/rbac/role.utils';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
   buildPaginationMeta,
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   INSTITUTIONS_CONTEXT,
@@ -48,8 +54,10 @@ export class InstitutionsService {
 
   async findAll(
     query: ListInstitutionsQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionListResponseDto> {
-    const where = buildInstitutionListWhere(query);
+    const filters = buildInstitutionListWhere(query);
+    const where = await this.applyActorInstitutionScope(filters, actor);
     const skip = getPaginationSkip(query.page, query.limit);
 
     const [total, institutions] = await this.prisma.$transaction([
@@ -68,7 +76,11 @@ export class InstitutionsService {
     };
   }
 
-  async findOne(id: string): Promise<InstitutionResponseDto> {
+  async findOne(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<InstitutionResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, id);
     const institution = await this.findInstitutionOrThrow(id);
     return toInstitutionResponseDto(institution);
   }
@@ -170,7 +182,9 @@ export class InstitutionsService {
   async updateSettings(
     id: string,
     dto: UpdateInstitutionSettingsDto,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, id);
     const existing = await this.findInstitutionOrThrow(id);
     const region = dto.region !== undefined ? dto.region : existing.region;
     const regime = dto.regime !== undefined ? dto.regime : existing.regime;
@@ -202,8 +216,10 @@ export class InstitutionsService {
   async uploadLogo(
     id: string,
     file: Express.Multer.File | undefined,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
-    const existing = await this.findInstitutionOrThrow(id);
+    await assertActorCanAccessInstitution(this.prisma, actor, id);
+    await this.findInstitutionOrThrow(id);
     assertValidLogoUpload(file);
 
     const uploadsRoot = this.configService.get('uploadsDir', { infer: true });
@@ -232,7 +248,9 @@ export class InstitutionsService {
   async updateBranding(
     id: string,
     dto: UpdateInstitutionBrandingDto,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, id);
     await this.findInstitutionOrThrow(id);
     assertValidHexColor(dto.primaryColor, 'primaryColor');
     assertValidHexColor(dto.secondaryColor, 'secondaryColor');
@@ -321,6 +339,25 @@ export class InstitutionsService {
       message: 'Educational institution deleted',
       metadata: { institutionId: id },
     });
+  }
+
+  private async applyActorInstitutionScope(
+    filters: Prisma.InstitutionWhereInput,
+    actor: AuthenticatedUser,
+  ): Promise<Prisma.InstitutionWhereInput> {
+    if (RoleUtils.isSuperAdmin(actor.role)) {
+      return filters;
+    }
+
+    const institutionIds = await resolveActorInstitutionIds(this.prisma, actor);
+
+    if (institutionIds.length === 0) {
+      return { AND: [filters, { id: { in: [] } }] };
+    }
+
+    return {
+      AND: [filters, { id: { in: institutionIds } }],
+    };
   }
 
   private async countDependents(institutionId: string): Promise<number> {

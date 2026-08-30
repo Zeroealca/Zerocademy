@@ -8,11 +8,13 @@ import {
   Prisma,
   Role,
 } from '@prisma/client';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
   buildPaginationMeta,
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   INSTITUTION_MEMBERSHIPS_CONTEXT,
@@ -42,7 +44,9 @@ export class InstitutionMembershipsService {
   async findAll(
     institutionId: string,
     query: ListInstitutionMembershipsQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionMembershipListResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExists(this.prisma, institutionId);
 
     const where = this.buildListWhere(institutionId, query);
@@ -68,7 +72,9 @@ export class InstitutionMembershipsService {
   async findOne(
     institutionId: string,
     membershipId: string,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionMembershipResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     const membership = await this.findMembershipOrThrow(
       institutionId,
       membershipId,

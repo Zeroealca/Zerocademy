@@ -26,6 +26,8 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateInstitutionDto } from './dto/create-institution.dto';
 import { InstitutionListResponseDto } from './dto/institution-list-response.dto';
 import { InstitutionResponseDto } from './dto/institution-response.dto';
@@ -46,12 +48,17 @@ export class InstitutionsController {
 
   @Get()
   @ApiRequireRoles(...READ_ROLES)
-  @ApiOperation({ summary: 'List educational institutions (paginated)' })
+  @ApiOperation({
+    summary: 'List educational institutions (paginated)',
+    description:
+      'SUPER_ADMIN sees all institutions. ADMIN only sees institutions with an active ADMIN membership.',
+  })
   @ApiOkResponse({ type: InstitutionListResponseDto })
   findAll(
     @Query() query: ListInstitutionsQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionListResponseDto> {
-    return this.institutionsService.findAll(query);
+    return this.institutionsService.findAll(query, actor);
   }
 
   @Get(':id')
@@ -61,8 +68,9 @@ export class InstitutionsController {
   @ApiNotFoundResponse({ description: 'Institution not found' })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
-    return this.institutionsService.findOne(id);
+    return this.institutionsService.findOne(id, actor);
   }
 
   @Post()
@@ -94,8 +102,9 @@ export class InstitutionsController {
   updateSettings(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateInstitutionSettingsDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
-    return this.institutionsService.updateSettings(id, dto);
+    return this.institutionsService.updateSettings(id, dto, actor);
   }
 
   @Post(':id/logo')
@@ -122,8 +131,9 @@ export class InstitutionsController {
   uploadLogo(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
-    return this.institutionsService.uploadLogo(id, file);
+    return this.institutionsService.uploadLogo(id, file, actor);
   }
 
   @Patch(':id/branding')
@@ -136,8 +146,9 @@ export class InstitutionsController {
   updateBranding(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateInstitutionBrandingDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionResponseDto> {
-    return this.institutionsService.updateBranding(id, dto);
+    return this.institutionsService.updateBranding(id, dto, actor);
   }
 
   @Post(':id/activate')

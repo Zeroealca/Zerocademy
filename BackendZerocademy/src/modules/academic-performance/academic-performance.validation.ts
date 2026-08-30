@@ -4,59 +4,13 @@ import {
 } from '@nestjs/common';
 import { EnrollmentStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { resolveActorInstitutionId } from '../../common/rbac/academic-scope.util';
+import {
+  assertActorCanAccessInstitution,
+} from '../../common/rbac/academic-scope.util';
 import { RoleUtils } from '../../common/rbac/role.utils';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
-export async function assertActorCanAccessInstitution(
-  prisma: PrismaService,
-  actor: AuthenticatedUser,
-  institutionId: string,
-): Promise<void> {
-  if (RoleUtils.isSuperAdmin(actor.role)) {
-    return;
-  }
-
-  const actorInstitutionId = await resolveActorInstitutionId(prisma, actor);
-
-  if (actor.role === Role.ADMIN) {
-    if (actorInstitutionId && actorInstitutionId !== institutionId) {
-      throw new NotFoundException('Institution not found');
-    }
-    return;
-  }
-
-  if (actor.role === Role.TEACHER && actor.profileId) {
-    const assignment = await prisma.teacherAssignment.findFirst({
-      where: {
-        institutionId,
-        teacherId: actor.profileId,
-      },
-      select: { id: true },
-    });
-
-    if (assignment) {
-      return;
-    }
-  }
-
-  if (actor.role === Role.STUDENT && actor.profileId) {
-    const enrollment = await prisma.enrollment.findFirst({
-      where: {
-        studentId: actor.profileId,
-        course: { institutionId },
-        status: EnrollmentStatus.ACTIVE,
-      },
-      select: { id: true },
-    });
-
-    if (enrollment) {
-      return;
-    }
-  }
-
-  throw new NotFoundException('Institution not found');
-}
+export { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 
 export async function assertTeacherCanAccessCourse(
   prisma: PrismaService,
