@@ -21,7 +21,10 @@ export const createGradeLevelSchema = z.object({
     .string()
     .min(1, "El código es obligatorio")
     .max(32, "El código no puede superar 32 caracteres"),
-  order: z.number().int().min(1, "El orden debe ser al menos 1"),
+  order: z
+    .number({ error: "Indica el orden" })
+    .int("El orden debe ser un número entero")
+    .min(1, "El orden debe ser al menos 1"),
   description: optionalDescription,
   academicLevelId: z
     .string()

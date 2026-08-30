@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
@@ -185,11 +186,13 @@ function InstitutionSettingsForm({
     handleSubmit,
     control,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<InstitutionSettingsFormValues>({
     resolver: zodResolver(institutionSettingsSchema),
     defaultValues,
   });
+  const [isSuccess, setIsSuccess] = useState(false);
 
   return (
     <Card>
@@ -202,8 +205,11 @@ function InstitutionSettingsForm({
       <CardContent>
         <form
           onSubmit={handleSubmit(async (values) => {
+            setIsSuccess(false);
+            clearErrors("root");
             try {
               await onSubmit(values);
+              setIsSuccess(true);
             } catch (error) {
               const message =
                 error instanceof ApiError
@@ -280,9 +286,16 @@ function InstitutionSettingsForm({
             />
           </div>
           {errors.root ? (
-            <p className="text-sm text-destructive sm:col-span-2">
+            <p className="text-sm text-destructive sm:col-span-2" role="alert">
               {errors.root.message}
             </p>
+          ) : null}
+          {isSuccess ? (
+            <div className="sm:col-span-2">
+              <Badge variant="success" role="status">
+                Configuración guardada correctamente
+              </Badge>
+            </div>
           ) : null}
           <div className="sm:col-span-2">
             <Button type="submit" disabled={disabled || isSubmitting}>
@@ -317,11 +330,13 @@ function InstitutionBrandingForm({
     handleSubmit,
     watch,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<InstitutionBrandingFormValues>({
     resolver: zodResolver(institutionBrandingSchema),
     defaultValues,
   });
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const primaryColor = watch("primaryColor");
   const secondaryColor = watch("secondaryColor");
@@ -364,8 +379,11 @@ function InstitutionBrandingForm({
 
         <form
           onSubmit={handleSubmit(async (values) => {
+            setIsSuccess(false);
+            clearErrors("root");
             try {
               await onSubmit(values);
+              setIsSuccess(true);
             } catch (error) {
               const message =
                 error instanceof ApiError
@@ -415,9 +433,16 @@ function InstitutionBrandingForm({
             )}
           />
           {errors.root ? (
-            <p className="text-sm text-destructive sm:col-span-2">
+            <p className="text-sm text-destructive sm:col-span-2" role="alert">
               {errors.root.message}
             </p>
+          ) : null}
+          {isSuccess ? (
+            <div className="sm:col-span-2">
+              <Badge variant="success" role="status">
+                Marca actualizada correctamente
+              </Badge>
+            </div>
           ) : null}
           <div className="sm:col-span-2">
             <Button type="submit" disabled={disabled || isSubmitting}>

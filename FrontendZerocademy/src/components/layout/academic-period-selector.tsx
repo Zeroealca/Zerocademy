@@ -33,19 +33,30 @@ function AcademicPeriodSelectorInner() {
   const setPeriod = useSetSelectedAcademicPeriod();
 
   const effectivePeriod = context?.effectivePeriod ?? null;
-  const effectiveId = effectivePeriod?.id ?? "";
-  const periods = periodsData?.data ?? [];
-  const periodOptions =
+  const institutionRegime = context?.institutionRegime;
+  const effectiveId =
     effectivePeriod &&
-    !periods.some((period) => period.id === effectivePeriod.id)
-      ? [effectivePeriod, ...periods]
-      : periods;
+    (!institutionRegime || effectivePeriod.regime === institutionRegime)
+      ? effectivePeriod.id
+      : "";
+  const periods = periodsData?.data ?? [];
+  const periodOptions = periods.filter((period) =>
+    institutionRegime ? period.regime === institutionRegime : true,
+  );
+
+  // Si el efectivo coincide con el régimen pero no vino en la lista, incluirlo.
+  const optionsWithEffective =
+    effectivePeriod &&
+    effectiveId &&
+    !periodOptions.some((period) => period.id === effectivePeriod.id)
+      ? [effectivePeriod, ...periodOptions]
+      : periodOptions;
 
   const emptyHint = !contextLoading && !hasInstitutionScope
     ? "Sin institución asignada"
     : !contextLoading && hasInstitutionScope && !hasRegime
       ? "Institución sin régimen"
-      : periods.length === 0 && isScopeReady
+      : optionsWithEffective.length === 0 && isScopeReady
         ? "Sin períodos para este régimen"
         : "Seleccionar período";
 
@@ -75,7 +86,7 @@ function AcademicPeriodSelectorInner() {
         <option value="">
           {contextLoading || periodsLoading ? "Cargando…" : emptyHint}
         </option>
-        {periodOptions.map((period) => (
+        {optionsWithEffective.map((period) => (
           <option key={period.id} value={period.id}>
             {formatAcademicPeriodOptionLabel(period)}
           </option>

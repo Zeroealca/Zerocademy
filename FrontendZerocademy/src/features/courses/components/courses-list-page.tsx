@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,17 +33,22 @@ export function CoursesListPage() {
   const currentUser = useAuthStore((state) => state.user);
   const effectivePeriodId = useEffectiveAcademicPeriodId();
   const [filters, setFilters] = useState<CoursesFilters>(DEFAULT_FILTERS);
+  const seededPeriodFilter = useRef(false);
   const { data, isLoading, isError, refetch } = useCourses(filters);
 
+  // Seed once from the header period, then keep the list filter independent.
   useEffect(() => {
-    if (effectivePeriodId && filters.academicPeriodId !== effectivePeriodId) {
-      setFilters((prev) => ({
-        ...prev,
-        academicPeriodId: effectivePeriodId,
-        page: 1,
-      }));
+    if (seededPeriodFilter.current || !effectivePeriodId) {
+      return;
     }
-  }, [effectivePeriodId, filters.academicPeriodId]);
+    seededPeriodFilter.current = true;
+    setFilters((prev) => ({
+      ...prev,
+      academicPeriodId: effectivePeriodId,
+      page: 1,
+    }));
+  }, [effectivePeriodId]);
+
   const { data: periodsData } = useInstitutionAcademicPeriods();
   const { data: gradesData } = useGradeLevels({ page: 1, limit: 100 });
   const activate = useActivateCourse();

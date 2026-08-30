@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   InstitutionForm,
@@ -20,7 +19,6 @@ interface EditInstitutionPageProps {
 }
 
 export function EditInstitutionPage({ institutionId }: EditInstitutionPageProps) {
-  const router = useRouter();
   const currentUser = useAuthStore((state) => state.user);
   const {
     data: institution,
@@ -65,7 +63,6 @@ export function EditInstitutionPage({ institutionId }: EditInstitutionPageProps)
       id: institutionId,
       payload: formValuesToPayload(values),
     });
-    router.push(`/institutions/${institutionId}/settings`);
   };
 
   return (
@@ -83,6 +80,7 @@ export function EditInstitutionPage({ institutionId }: EditInstitutionPageProps)
         title="Datos generales"
         description="Actualiza la información principal de la institución."
         submitLabel="Guardar cambios"
+        successMessage="Institución actualizada correctamente"
         codeDisabled
         defaultValues={institutionToFormValues(institution)}
         onSubmit={handleSubmit}

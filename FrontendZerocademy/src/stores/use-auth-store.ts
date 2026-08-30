@@ -43,7 +43,13 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
       setTokens: (accessToken, refreshToken, user) =>
-        set({ accessToken, refreshToken, user }),
+        set({
+          accessToken,
+          refreshToken,
+          user,
+          // Login can finish before persist rehydration; never soft-lock AuthGuard.
+          hasHydrated: true,
+        }),
       clearAuth: () =>
         set({ accessToken: null, refreshToken: null, user: null }),
       isAuthenticated: () =>
@@ -56,8 +62,17 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
+      onRehydrateStorage: () => (state, error) => {
+        // Always mark hydrated — even when rehydration fails — or AuthGuard
+        // stays on "Cargando espacio de trabajo…" forever.
+        if (state) {
+          state.setHasHydrated(true);
+        } else {
+          useAuthStore.setState({ hasHydrated: true });
+        }
+        if (error) {
+          console.error("Auth store rehydration failed", error);
+        }
       },
     },
   ),

@@ -30,18 +30,18 @@ export function DashboardHome() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader>
             <CardTitle className="text-base">Sesión activa</CardTitle>
             <CardDescription>Usuario conectado</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="font-medium">{user?.email}</p>
+          <CardContent className="min-w-0">
+            <p className="break-all font-medium">{user?.email}</p>
             <p className="mt-1 text-sm text-muted-foreground">{roleLabel}</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle className="text-base">Estado de la plataforma</CardTitle>
             <CardDescription>Versión fundacional</CardDescription>

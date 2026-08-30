@@ -13,7 +13,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
-  const { isLoading, isError } = useCurrentUser();
+  const { isPending, isError, isSuccess } = useCurrentUser();
+
+  useEffect(() => {
+    if (!hasHydrated && useAuthStore.persist.hasHydrated()) {
+      useAuthStore.getState().setHasHydrated(true);
+    }
+  }, [hasHydrated]);
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
@@ -28,7 +34,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
   }, [hasHydrated, isAuthenticated, isError, router]);
 
-  if (!hasHydrated || !isAuthenticated || isLoading) {
+  const waitingForSession =
+    !hasHydrated ||
+    !isAuthenticated ||
+    isError ||
+    (isPending && !isSuccess);
+
+  if (waitingForSession) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-sm text-muted-foreground">Cargando espacio de trabajo…</p>

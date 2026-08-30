@@ -90,8 +90,10 @@ export function canViewAcademicTransitions(role: UserRole | undefined): boolean 
   return hasRole(role, [...INSTITUTION_VIEW_ROLES, "TEACHER"]);
 }
 
+const ACADEMIC_TRANSITION_MANAGE_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
+
 export function canManageAcademicTransitions(role: UserRole | undefined): boolean {
-  return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
+  return hasRoleStrict(role, ACADEMIC_TRANSITION_MANAGE_ROLES);
 }
 
 /** Student CRUD, enrollments, and CSV import (ADMIN only; strict). */

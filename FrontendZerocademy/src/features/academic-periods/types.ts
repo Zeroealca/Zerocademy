@@ -20,6 +20,7 @@ export interface AcademicTerm {
 export interface AcademicPeriod {
   id: string;
   name: string;
+  institutionId?: string | null;
   regime: AcademicRegime;
   startDate: string;
   endDate: string;
