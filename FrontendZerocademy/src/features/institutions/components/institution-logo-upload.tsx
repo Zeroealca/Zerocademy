@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { uploadInstitutionLogo } from "@/features/institutions/api/institutions.api";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ApiError } from "@/lib/api-error";
@@ -29,6 +30,7 @@ export function InstitutionLogoUpload({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     setPreviewUrl(resolveAssetUrl(currentLogoUrl));
@@ -45,6 +47,7 @@ export function InstitutionLogoUpload({
     }
 
     setError(null);
+    setIsSuccess(false);
     setIsUploading(true);
 
     const localPreview = URL.createObjectURL(file);
@@ -54,6 +57,7 @@ export function InstitutionLogoUpload({
       const institution = await uploadInstitutionLogo(institutionId, file);
       const resolved = resolveAssetUrl(institution.logoUrl);
       setPreviewUrl(resolved);
+      setIsSuccess(true);
       onUploaded?.(institution.logoUrl ?? "");
     } catch (uploadError) {
       setPreviewUrl(resolveAssetUrl(currentLogoUrl));
@@ -112,6 +116,11 @@ export function InstitutionLogoUpload({
             transparencia si la imagen la tiene.
           </p>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {isSuccess ? (
+            <Badge variant="success" role="status">
+              Logo actualizado correctamente
+            </Badge>
+          ) : null}
         </div>
       </div>
     </div>

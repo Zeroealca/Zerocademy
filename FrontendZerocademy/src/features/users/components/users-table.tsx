@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,24 +11,35 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ROLE_LABELS } from "@/features/users/constants";
-import type { PaginationMeta, User } from "@/features/users/types";
+import type {
+  PaginationMeta,
+  User,
+  UserSortField,
+  UserSortOrder,
+} from "@/features/users/types";
 
 interface UsersTableProps {
   users: User[];
   meta: PaginationMeta;
+  sortBy?: UserSortField;
+  sortOrder?: UserSortOrder;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
   onPageChange: (page: number) => void;
+  onSort: (field: UserSortField) => void;
 }
 
 export function UsersTable({
   users,
   meta,
+  sortBy,
+  sortOrder,
   isLoading,
   isError,
   onRetry,
   onPageChange,
+  onSort,
 }: UsersTableProps) {
   return (
     <Card>
@@ -61,8 +73,20 @@ export function UsersTable({
                   <tr>
                     <th className="px-4 py-3 font-medium">Nombre</th>
                     <th className="px-4 py-3 font-medium">Correo</th>
-                    <th className="px-4 py-3 font-medium">Rol</th>
-                    <th className="px-4 py-3 font-medium">Estado</th>
+                    <SortableColumnHeader
+                      label="Rol"
+                      field="role"
+                      sortBy={sortBy}
+                      sortOrder={sortOrder}
+                      onSort={onSort}
+                    />
+                    <SortableColumnHeader
+                      label="Estado"
+                      field="isActive"
+                      sortBy={sortBy}
+                      sortOrder={sortOrder}
+                      onSort={onSort}
+                    />
                   </tr>
                 </thead>
                 <tbody>
@@ -135,5 +159,50 @@ export function UsersTable({
         ) : null}
       </CardContent>
     </Card>
+  );
+}
+
+function SortableColumnHeader({
+  label,
+  field,
+  sortBy,
+  sortOrder,
+  onSort,
+}: {
+  label: string;
+  field: UserSortField;
+  sortBy?: UserSortField;
+  sortOrder?: UserSortOrder;
+  onSort: (field: UserSortField) => void;
+}) {
+  const active = sortBy === field;
+  const ariaSort = !active
+    ? "none"
+    : sortOrder === "desc"
+      ? "descending"
+      : "ascending";
+  const nextDirection =
+    active && sortOrder === "asc" ? "descendente" : "ascendente";
+
+  return (
+    <th className="px-4 py-3 font-medium" aria-sort={ariaSort}>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 rounded-md hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => onSort(field)}
+        aria-label={`Ordenar por ${label}, ${nextDirection}`}
+      >
+        {label}
+        {active ? (
+          sortOrder === "desc" ? (
+            <ArrowDown className="size-3.5" aria-hidden />
+          ) : (
+            <ArrowUp className="size-3.5" aria-hidden />
+          )
+        ) : (
+          <ArrowUpDown className="size-3.5 text-muted-foreground" aria-hidden />
+        )}
+      </button>
+    </th>
   );
 }

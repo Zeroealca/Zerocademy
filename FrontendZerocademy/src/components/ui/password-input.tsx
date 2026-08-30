@@ -2,31 +2,29 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { Input, type InputProps } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, type: _ignoredType, ...props }, ref) => {
     const [visible, setVisible] = React.useState(false);
 
     return (
-      <div className="relative">
+      <div className="flex gap-2">
         <Input
           ref={ref}
-          type={visible ? "text" : "password"}
-          className={cn("pr-10", className)}
+          className={cn(
+            "flex-1 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden",
+            className,
+          )}
           {...props}
+          type={visible ? "text" : "password"}
         />
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="icon"
-          className="absolute right-0 top-0 h-10 w-10 text-muted-foreground hover:text-foreground"
-          onClick={() => setVisible((prev) => !prev)}
-          aria-label={
-            visible ? "Ocultar contraseña" : "Mostrar contraseña"
-          }
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-input bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          onClick={() => setVisible((current) => !current)}
+          aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
           aria-pressed={visible}
         >
           {visible ? (
@@ -34,7 +32,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, InputProps>(
           ) : (
             <Eye className="h-4 w-4" aria-hidden />
           )}
-        </Button>
+        </button>
       </div>
     );
   },

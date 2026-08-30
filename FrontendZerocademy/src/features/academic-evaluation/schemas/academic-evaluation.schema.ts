@@ -1,12 +1,31 @@
 import { z } from "zod";
 
+const numberField = (message: string) =>
+  z.number({ error: message });
+
+const decimalPlacesField = z
+  .number({ error: "Indica los decimales" })
+  .int("Los decimales deben ser un número entero")
+  .min(0, "Los decimales no pueden ser menores que 0")
+  .max(4, "Los decimales no pueden ser mayores que 4");
+
+const orderField = z
+  .number({ error: "Indica el orden" })
+  .int("El orden debe ser un número entero")
+  .min(1, "El orden debe ser al menos 1");
+
+const roundingStrategyField = z.enum(
+  ["ROUND_HALF_UP", "ROUND_DOWN", "ROUND_UP", "TRUNCATE"],
+  { error: "Selecciona una estrategia de redondeo" },
+);
+
 export const gradingSchemeSchema = z
   .object({
     name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-    minScore: z.number(),
-    maxScore: z.number(),
-    passingScore: z.number(),
-    decimalPlaces: z.number().int().min(0).max(4),
+    minScore: numberField("Indica la nota mínima"),
+    maxScore: numberField("Indica la nota máxima"),
+    passingScore: numberField("Indica la nota de aprobación"),
+    decimalPlaces: decimalPlacesField,
     isDefault: z.boolean().optional(),
   })
   .refine((data) => data.minScore < data.maxScore, {
@@ -26,9 +45,9 @@ export const gradeScaleSchema = z
   .object({
     code: z.string().min(1, "El código es obligatorio"),
     description: z.string().min(2, "La descripción es obligatoria"),
-    minValue: z.number(),
-    maxValue: z.number(),
-    order: z.number().int().min(1, "El orden debe ser al menos 1"),
+    minValue: numberField("Indica el valor mínimo"),
+    maxValue: numberField("Indica el valor máximo"),
+    order: orderField,
   })
   .refine((data) => data.minValue <= data.maxValue, {
     message: "El valor mínimo no puede ser mayor que el máximo",
@@ -37,9 +56,9 @@ export const gradeScaleSchema = z
 
 export const evaluationTermSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  order: z.number().int().min(1, "El orden debe ser al menos 1"),
+  order: orderField,
   weight: z
-    .number()
+    .number({ error: "Indica el peso" })
     .gt(0, "El peso debe ser mayor que 0")
     .max(100, "El peso no puede superar 100"),
   startDate: z.string().optional(),
@@ -49,50 +68,40 @@ export const evaluationTermSchema = z.object({
 export const assessmentCategorySchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   weight: z
-    .number()
+    .number({ error: "Indica el peso" })
     .gt(0, "El peso debe ser mayor que 0")
     .max(100, "El peso no puede superar 100"),
   description: z.string().optional(),
 });
 
 export const assessmentCategoryTemplateSchema = assessmentCategorySchema.extend({
-  order: z.number().int().min(1, "El orden debe ser al menos 1"),
+  order: orderField,
 });
 
 export const evaluationTermTemplateSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  order: z.number().int().min(1, "El orden debe ser al menos 1"),
+  order: orderField,
   weight: z
-    .number()
+    .number({ error: "Indica el peso" })
     .gt(0, "El peso debe ser mayor que 0")
     .max(100, "El peso no puede superar 100"),
   description: z.string().optional(),
 });
 
 export const platformConfigurationSchema = z.object({
-  roundingStrategy: z.enum([
-    "ROUND_HALF_UP",
-    "ROUND_DOWN",
-    "ROUND_UP",
-    "TRUNCATE",
-  ]),
-  decimalPlaces: z.number().int().min(0).max(4),
+  roundingStrategy: roundingStrategyField,
+  decimalPlaces: decimalPlacesField,
 });
 
 export const institutionConfigurationSchema = z.object({
   gradingSchemeId: z.string().uuid("Seleccione un esquema de calificación"),
-  activeAcademicPeriodId: z.string().uuid().optional().or(z.literal("")),
-  roundingStrategy: z.enum([
-    "ROUND_HALF_UP",
-    "ROUND_DOWN",
-    "ROUND_UP",
-    "TRUNCATE",
-  ]),
-  decimalPlaces: z
-    .number()
-    .int("Los decimales deben ser un número entero")
-    .min(0)
-    .max(4),
+  activeAcademicPeriodId: z
+    .string()
+    .uuid("Seleccione un período académico válido")
+    .optional()
+    .or(z.literal("")),
+  roundingStrategy: roundingStrategyField,
+  decimalPlaces: decimalPlacesField,
 });
 
 export const ROUNDING_STRATEGY_LABELS: Record<

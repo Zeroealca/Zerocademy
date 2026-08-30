@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-const regimeSchema = z.enum(["COSTA_GALAPAGOS", "SIERRA_AMAZONIA"]);
+const regimeSchema = z.enum(["COSTA_GALAPAGOS", "SIERRA_AMAZONIA"], {
+  error: "Selecciona un régimen académico",
+});
 
 const dateRangeEndAfterStartMessage =
   "La fecha de fin debe ser posterior a la de inicio";
@@ -16,7 +18,10 @@ function isEndDateAfterStartDate(data: {
 }
 
 const academicPeriodBaseSchema = z.object({
-  name: z.string().min(2, "El nombre es obligatorio").max(100),
+  name: z
+    .string()
+    .min(2, "El nombre es obligatorio")
+    .max(100, "El nombre no puede superar 100 caracteres"),
   regime: regimeSchema,
   startDate: z.string().min(1, "La fecha de inicio es obligatoria"),
   endDate: z.string().min(1, "La fecha de fin es obligatoria"),
@@ -46,8 +51,14 @@ export type UpdateAcademicPeriodInput = z.infer<
 >;
 
 const academicTermBaseSchema = z.object({
-  name: z.string().min(2, "El nombre es obligatorio").max(100),
-  order: z.number().int().min(1, "El orden debe ser al menos 1"),
+  name: z
+    .string()
+    .min(2, "El nombre es obligatorio")
+    .max(100, "El nombre no puede superar 100 caracteres"),
+  order: z
+    .number({ error: "Indica el orden" })
+    .int("El orden debe ser un número entero")
+    .min(1, "El orden debe ser al menos 1"),
   startDate: z.string().min(1, "La fecha de inicio es obligatoria"),
   endDate: z.string().min(1, "La fecha de fin es obligatoria"),
 });

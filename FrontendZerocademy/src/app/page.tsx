@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  redirect("/dashboard");
+  // Unauthenticated entry point. LoginPage sends already-signed-in users to /dashboard.
+  redirect("/login");
 }

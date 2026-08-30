@@ -24,6 +24,7 @@ import {
 import type { AcademicTransitionPreview } from "@/features/academic-period-transitions/types";
 import { ApiError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
+import type { FieldErrors } from "react-hook-form";
 
 interface AcademicTransitionWizardProps {
   institutionId: string;
@@ -64,13 +65,45 @@ export function AcademicTransitionWizard({
   const currentStep = TRANSITION_WIZARD_STEPS[stepIndex];
 
   const runPreview = async () => {
+    const values = form.getValues();
+    const parsed = academicTransitionWizardSchema.safeParse(values);
     const valid = await form.trigger();
-    if (!valid) return;
+
+    // Diagnóstico: el botón azul no usa `disabled` por campos vacíos; si “no responde”
+    // suele ser porque la validación falla y antes no había feedback.
+    console.info("[Asistente transición] Vista previa", {
+      valid,
+      zodOk: parsed.success,
+      values,
+      zodIssues: parsed.success
+        ? []
+        : parsed.error.issues.map((issue) => ({
+            path: issue.path.join(".") || "(root)",
+            message: issue.message,
+          })),
+      rhfErrors: form.formState.errors,
+    });
+
+    if (!valid || !parsed.success) {
+      const messages = parsed.success
+        ? collectFormErrorMessages(form.formState.errors)
+        : parsed.error.issues.map((issue) => issue.message);
+      console.warn(
+        "[Asistente transición] Validación fallida — motivos:",
+        messages,
+      );
+      setPreviewError(
+        messages.length > 0
+          ? `No se puede generar la vista previa: ${messages.join(" · ")}`
+          : "Completa los pasos anteriores: período origen, destino y opciones válidas.",
+      );
+      return;
+    }
 
     setPreviewError(undefined);
     try {
       const result = await previewMutation.mutateAsync(
-        wizardValuesToRequest(form.getValues()),
+        wizardValuesToRequest(values),
       );
       setPreview(result);
       setStepIndex(TRANSITION_WIZARD_STEPS.length - 1);
@@ -282,6 +315,12 @@ export function AcademicTransitionWizard({
         />
       ) : null}
 
+      {currentStep.id !== "preview" && previewError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {previewError}
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
@@ -294,19 +333,23 @@ export function AcademicTransitionWizard({
         {currentStep.id !== "preview" ? (
           <Button
             type="button"
+            disabled={previewMutation.isPending}
             onClick={() => {
               if (stepIndex === TRANSITION_WIZARD_STEPS.length - 2) {
                 void runPreview();
               } else {
+                setPreviewError(undefined);
                 setStepIndex((i) =>
                   Math.min(TRANSITION_WIZARD_STEPS.length - 1, i + 1),
                 );
               }
             }}
           >
-            {stepIndex === TRANSITION_WIZARD_STEPS.length - 2
-              ? "Vista previa"
-              : "Siguiente"}
+            {previewMutation.isPending
+              ? "Generando vista previa…"
+              : stepIndex === TRANSITION_WIZARD_STEPS.length - 2
+                ? "Vista previa"
+                : "Siguiente"}
           </Button>
         ) : (
           <Button
@@ -320,6 +363,27 @@ export function AcademicTransitionWizard({
       </div>
     </div>
   );
+}
+
+function collectFormErrorMessages(
+  errors: FieldErrors<AcademicTransitionWizardValues>,
+): string[] {
+  const messages: string[] = [];
+
+  const walk = (node: unknown) => {
+    if (!node || typeof node !== "object") return;
+    const record = node as Record<string, unknown>;
+    if (typeof record.message === "string" && record.message.length > 0) {
+      messages.push(record.message);
+      return;
+    }
+    for (const value of Object.values(record)) {
+      walk(value);
+    }
+  };
+
+  walk(errors);
+  return messages;
 }
 
 function OptionCheckbox({

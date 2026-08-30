@@ -28,6 +28,7 @@ import {
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { ApiError } from "@/lib/api-error";
+import { localizeApiMessage } from "@/lib/localize-api-message";
 
 export function BulkEnrollmentPage() {
   const router = useRouter();
@@ -312,7 +313,9 @@ export function BulkEnrollmentPage() {
               {result.errors.length > 0 ? (
                 <ul className="mt-2 list-inside list-disc text-destructive">
                   {result.errors.map((err) => (
-                    <li key={err.studentId}>{err.message}</li>
+                    <li key={err.studentId}>
+                      {localizeApiMessage(err.message)}
+                    </li>
                   ))}
                 </ul>
               ) : null}

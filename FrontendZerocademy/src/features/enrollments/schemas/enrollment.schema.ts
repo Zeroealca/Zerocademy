@@ -1,12 +1,9 @@
 import { z } from "zod";
 
-const statusSchema = z.enum([
-  "ACTIVE",
-  "WITHDRAWN",
-  "COMPLETED",
-  "FAILED",
-  "TRANSFERRED",
-]);
+const statusSchema = z.enum(
+  ["ACTIVE", "WITHDRAWN", "COMPLETED", "FAILED", "TRANSFERRED"],
+  { error: "Selecciona un estado válido" },
+);
 
 export const createEnrollmentSchema = z.object({
   studentId: z.string().uuid("Selecciona un estudiante"),

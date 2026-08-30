@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,6 +37,7 @@ interface InstitutionFormProps {
   codeDisabled?: boolean;
   onSubmit: (values: InstitutionFormValues) => Promise<void>;
   disabled?: boolean;
+  successMessage?: string;
 }
 
 export function InstitutionForm({
@@ -45,12 +48,15 @@ export function InstitutionForm({
   codeDisabled = false,
   onSubmit,
   disabled = false,
+  successMessage = "Institución guardada correctamente",
 }: InstitutionFormProps) {
+  const [isSuccess, setIsSuccess] = useState(false);
   const {
     register,
     handleSubmit,
     control,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<InstitutionFormValues>({
     resolver: zodResolver(institutionFormSchema),
@@ -68,8 +74,11 @@ export function InstitutionForm({
   });
 
   const handleFormSubmit = handleSubmit(async (values) => {
+    setIsSuccess(false);
+    clearErrors("root");
     try {
       await onSubmit(values);
+      setIsSuccess(true);
     } catch (error) {
       const message =
         error instanceof ApiError
@@ -232,9 +241,17 @@ export function InstitutionForm({
           />
 
           {errors.root ? (
-            <p className="text-sm text-destructive sm:col-span-2">
+            <p className="text-sm text-destructive sm:col-span-2" role="alert">
               {errors.root.message}
             </p>
+          ) : null}
+
+          {isSuccess ? (
+            <div className="sm:col-span-2">
+              <Badge variant="success" role="status">
+                {successMessage}
+              </Badge>
+            </div>
           ) : null}
 
           <div className="sm:col-span-2">

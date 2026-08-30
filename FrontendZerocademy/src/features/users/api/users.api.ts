@@ -23,6 +23,14 @@ function buildQuery(filters: UsersFilters): string {
     params.set("search", filters.search);
   }
 
+  if (filters.sortBy) {
+    params.set("sortBy", filters.sortBy);
+  }
+
+  if (filters.sortOrder) {
+    params.set("sortOrder", filters.sortOrder);
+  }
+
   return params.toString();
 }
 

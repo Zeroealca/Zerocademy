@@ -26,10 +26,15 @@ export interface UsersListResponse {
   meta: PaginationMeta;
 }
 
+export type UserSortField = "role" | "isActive" | "createdAt";
+export type UserSortOrder = "asc" | "desc";
+
 export interface UsersFilters {
   page: number;
   limit: number;
   role?: UserRole;
   isActive?: boolean;
   search?: string;
+  sortBy?: UserSortField;
+  sortOrder?: UserSortOrder;
 }

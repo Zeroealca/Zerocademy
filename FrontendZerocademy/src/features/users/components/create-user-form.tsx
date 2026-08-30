@@ -37,6 +37,19 @@ function getAssignableRoles(actorRole: UserRole | undefined): UserRole[] {
   return [];
 }
 
+const CREATE_USER_FIELDS = new Set<keyof CreateUserInput>([
+  "email",
+  "password",
+  "firstName",
+  "lastName",
+  "role",
+  "isActive",
+]);
+
+function isCreateUserField(field: string): field is keyof CreateUserInput {
+  return CREATE_USER_FIELDS.has(field as keyof CreateUserInput);
+}
+
 export function CreateUserForm() {
   const currentUser = useAuthStore((state) => state.user);
   const createUserMutation = useCreateUser();
@@ -77,19 +90,32 @@ export function CreateUserForm() {
         isActive: true,
       });
     } catch (error) {
-      const message =
-        error instanceof ApiError
-          ? error.message
-          : "No se pudo crear el usuario. Inténtalo de nuevo.";
-
-      if (error instanceof ApiError && error.details?.length) {
-        error.details.forEach((detail) => {
-          const field = detail.field as keyof CreateUserInput;
-          setError(field, { message: String(detail.message) });
-        });
+      if (error instanceof ApiError && error.statusCode === 409) {
+        setError("email", { message: "Este correo ya está registrado." });
+        return;
       }
 
-      setError("root", { message });
+      if (error instanceof ApiError && error.details?.length) {
+        const mappedFields = error.details.filter((detail) =>
+          isCreateUserField(detail.field),
+        );
+
+        if (mappedFields.length > 0) {
+          mappedFields.forEach((detail) => {
+            setError(detail.field as keyof CreateUserInput, {
+              message: String(detail.message),
+            });
+          });
+          return;
+        }
+      }
+
+      setError("root", {
+        message:
+          error instanceof ApiError
+            ? error.message
+            : "No se pudo crear el usuario. Inténtalo de nuevo.",
+      });
     }
   });
 
@@ -102,7 +128,14 @@ export function CreateUserForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
+        <form
+          method="post"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onSubmit(event);
+          }}
+          className="grid gap-4 sm:grid-cols-2"
+        >
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="email">Correo electrónico</Label>
             <Input

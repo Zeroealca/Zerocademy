@@ -1,11 +1,14 @@
 import { z } from "zod";
 
 export const gradeEntryRowSchema = z.object({
-  enrollmentId: z.string().uuid(),
+  enrollmentId: z.string().uuid("La matrícula no es válida"),
   score: z
     .number({ error: "Indica una nota válida" })
     .min(0, "La nota no puede ser negativa"),
-  observations: z.string().max(2000).optional(),
+  observations: z
+    .string()
+    .max(2000, "Las observaciones no pueden superar 2000 caracteres")
+    .optional(),
 });
 
 export const bulkGradeEntrySchema = z.object({

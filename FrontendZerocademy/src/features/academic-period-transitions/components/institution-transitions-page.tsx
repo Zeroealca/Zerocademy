@@ -50,6 +50,11 @@ export function InstitutionTransitionsPage({
 
   const canManage = canManageAcademicTransitions(currentUser?.role);
   const periods = periodsData?.data ?? [];
+  // Calendario de la institución: períodos propios o compartidos del régimen (institutionId null).
+  const institutionPeriods = periods.filter(
+    (period) =>
+      period.institutionId == null || period.institutionId === institutionId,
+  );
 
   const handleTransitionComplete = () => {
     void refetchActive();
@@ -82,22 +87,23 @@ export function InstitutionTransitionsPage({
         institutionId={institutionId}
         activeData={activeData}
         isLoading={activeLoading || periodsLoading}
-        periods={periods}
+        periods={institutionPeriods}
         canManage={canManage}
       />
 
       {canManage ? (
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">Asistente de transición</h2>
-          {periods.length === 0 ? (
+          {institutionPeriods.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Crea al menos un período académico vinculado a esta institución
-              antes de ejecutar una transición.
+              No hay períodos del régimen de esta institución. Crea un período
+              académico (Costa/Galápagos o Sierra/Amazonía según la región) o
+              revisa la región/régimen en la ficha de la institución.
             </p>
           ) : (
             <AcademicTransitionWizard
               institutionId={institutionId}
-              periods={periods}
+              periods={institutionPeriods}
               onExecuted={handleTransitionComplete}
             />
           )}

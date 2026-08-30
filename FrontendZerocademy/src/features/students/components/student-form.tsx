@@ -107,7 +107,14 @@ export function StudentForm({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+        <form
+          method="post"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit(event);
+          }}
+          className="grid gap-4 sm:grid-cols-2"
+        >
           {isCreate ? (
             <>
               <div className="space-y-2 sm:col-span-2">

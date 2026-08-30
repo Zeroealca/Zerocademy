@@ -24,6 +24,18 @@ interface LoginFormProps {
   onSuccess?: () => void;
 }
 
+function resolveLoginErrorMessage(error: unknown): string {
+  if (error instanceof ApiError && error.statusCode === 401) {
+    return "Correo o contraseña incorrectos.";
+  }
+
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  return "No se pudo iniciar sesión. Inténtalo de nuevo.";
+}
+
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const loginMutation = useLogin();
 
@@ -45,12 +57,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       await loginMutation.mutateAsync(values);
       onSuccess?.();
     } catch (error) {
-      const message =
-        error instanceof ApiError
-          ? error.message
-          : "No se pudo iniciar sesión. Inténtalo de nuevo.";
-
-      setError("root", { message });
+      setError("root", { message: resolveLoginErrorMessage(error) });
     }
   });
 
@@ -63,7 +70,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        <form
+          method="post"
+          action="#"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onSubmit(event);
+          }}
+          className="space-y-4"
+          noValidate
+        >
           <div className="space-y-2">
             <Label htmlFor="email">Correo electrónico</Label>
             <Input

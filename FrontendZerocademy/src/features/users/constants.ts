@@ -1,3 +1,4 @@
+import type { UserSortField, UserSortOrder } from "@/features/users/types";
 import type { UserRole } from "@/stores/use-auth-store";
 
 export const USER_ROLES: UserRole[] = [
@@ -15,3 +16,21 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   STUDENT: "Estudiante",
   REPRESENTATIVE: "Representante",
 };
+
+export function nextUsersSort(
+  field: UserSortField,
+  currentField?: UserSortField,
+  currentOrder?: UserSortOrder,
+): { sortBy: UserSortField; sortOrder: UserSortOrder } {
+  if (currentField === field) {
+    return {
+      sortBy: field,
+      sortOrder: currentOrder === "asc" ? "desc" : "asc",
+    };
+  }
+
+  return {
+    sortBy: field,
+    sortOrder: field === "isActive" ? "desc" : "asc",
+  };
+}

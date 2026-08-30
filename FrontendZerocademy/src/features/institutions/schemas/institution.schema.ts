@@ -28,7 +28,7 @@ export const institutionFormSchema = z.object({
   email: z
     .string()
     .email("Correo electrónico inválido")
-    .max(255)
+    .max(255, "El correo no puede superar 255 caracteres")
     .optional()
     .or(z.literal("")),
   phone: z.string().max(40, "Teléfono demasiado largo").optional().or(z.literal("")),
@@ -38,11 +38,15 @@ export const institutionFormSchema = z.object({
     .optional()
     .or(z.literal("")),
   region: z
-    .enum(["COSTA", "SIERRA", "AMAZONIA", "GALAPAGOS"])
+    .enum(["COSTA", "SIERRA", "AMAZONIA", "GALAPAGOS"], {
+      error: "Selecciona una región válida",
+    })
     .optional()
     .or(z.literal("")),
   regime: z
-    .enum(["COSTA_GALAPAGOS", "SIERRA_AMAZONIA"])
+    .enum(["COSTA_GALAPAGOS", "SIERRA_AMAZONIA"], {
+      error: "Selecciona un régimen válido",
+    })
     .optional()
     .or(z.literal("")),
   primaryColor: hexColor,
@@ -55,17 +59,29 @@ export const institutionSettingsSchema = z.object({
   email: z
     .string()
     .email("Correo electrónico inválido")
-    .max(255)
+    .max(255, "El correo no puede superar 255 caracteres")
     .optional()
     .or(z.literal("")),
-  phone: z.string().max(40).optional().or(z.literal("")),
-  address: z.string().max(500).optional().or(z.literal("")),
+  phone: z
+    .string()
+    .max(40, "Teléfono demasiado largo")
+    .optional()
+    .or(z.literal("")),
+  address: z
+    .string()
+    .max(500, "Dirección demasiado larga")
+    .optional()
+    .or(z.literal("")),
   region: z
-    .enum(["COSTA", "SIERRA", "AMAZONIA", "GALAPAGOS"])
+    .enum(["COSTA", "SIERRA", "AMAZONIA", "GALAPAGOS"], {
+      error: "Selecciona una región válida",
+    })
     .optional()
     .or(z.literal("")),
   regime: z
-    .enum(["COSTA_GALAPAGOS", "SIERRA_AMAZONIA"])
+    .enum(["COSTA_GALAPAGOS", "SIERRA_AMAZONIA"], {
+      error: "Selecciona un régimen válido",
+    })
     .optional()
     .or(z.literal("")),
 });
