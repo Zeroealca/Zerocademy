@@ -10,6 +10,7 @@ import {
   Prisma,
   Role,
 } from '@prisma/client';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
   academicLevelVisibilityFilter,
@@ -20,7 +21,7 @@ import {
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
-import { findActiveInstitutionOrThrow } from '../institutions/institution.validation';
+import { findActiveInstitutionOrThrow, assertPeriodAvailableForInstitution, resolveInstitutionAcademicRegime } from '../institutions/institution.validation';
 import {
   assertValidPeriodDates,
   parseDateOnly,
@@ -56,7 +57,9 @@ export class AcademicPeriodTransitionsService {
 
   async getActivePeriod(
     institutionId: string,
+    actor: AuthenticatedUser,
   ): Promise<ActiveAcademicPeriodResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await this.assertInstitutionExists(institutionId);
 
     const institution = await this.prisma.institution.findUnique({
@@ -95,11 +98,16 @@ export class AcademicPeriodTransitionsService {
       throw new NotFoundException('Academic period not found');
     }
 
-    if (period.institutionId !== institutionId) {
-      throw new BadRequestException(
-        'Academic period does not belong to this institution',
-      );
-    }
+    const institutionRegime = await resolveInstitutionAcademicRegime(
+      this.prisma,
+      institutionId,
+    );
+    assertPeriodAvailableForInstitution(
+      period,
+      institutionId,
+      institutionRegime,
+      'Academic period',
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.academicPeriod.updateMany({
@@ -129,13 +137,15 @@ export class AcademicPeriodTransitionsService {
       metadata: { institutionId, periodId: dto.academicPeriodId },
     });
 
-    return this.getActivePeriod(institutionId);
+    return this.getActivePeriod(institutionId, actor);
   }
 
   async preview(
     institutionId: string,
     dto: AcademicTransitionRequestDto,
+    actor: AuthenticatedUser,
   ): Promise<AcademicTransitionPreviewResponseDto> {
+    await this.assertCanManageTransitions(actor, institutionId);
     const context = await this.resolveTransitionContext(institutionId, dto);
 
     this.logger.log({
@@ -338,7 +348,9 @@ export class AcademicPeriodTransitionsService {
     institutionId: string,
     page: number,
     limit: number,
+    actor: AuthenticatedUser,
   ): Promise<AcademicTransitionListResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await this.assertInstitutionExists(institutionId);
     const skip = getPaginationSkip(page, limit);
 
@@ -379,13 +391,22 @@ export class AcademicPeriodTransitionsService {
       throw new NotFoundException('Source academic period not found');
     }
 
-    if (fromPeriod.institutionId !== institutionId) {
-      throw new BadRequestException(
-        'Source period does not belong to this institution',
-      );
-    }
+    const institutionRegime = await resolveInstitutionAcademicRegime(
+      this.prisma,
+      institutionId,
+    );
+    assertPeriodAvailableForInstitution(
+      fromPeriod,
+      institutionId,
+      institutionRegime,
+      'Source period',
+    );
 
-    const target = await this.resolveTarget(institutionId, dto);
+    const target = await this.resolveTarget(
+      institutionId,
+      dto,
+      institutionRegime,
+    );
 
     if (fromPeriod.id === target.toPeriodId) {
       throw new BadRequestException(
@@ -444,6 +465,9 @@ export class AcademicPeriodTransitionsService {
   private async resolveTarget(
     institutionId: string,
     dto: AcademicTransitionRequestDto,
+    institutionRegime: Awaited<
+      ReturnType<typeof resolveInstitutionAcademicRegime>
+    >,
   ): Promise<ResolvedTransitionTarget> {
     if (dto.toAcademicPeriodId && dto.createTargetPeriod) {
       throw new BadRequestException(
@@ -466,11 +490,12 @@ export class AcademicPeriodTransitionsService {
         throw new NotFoundException('Target academic period not found');
       }
 
-      if (toPeriod.institutionId !== institutionId) {
-        throw new BadRequestException(
-          'Target period does not belong to this institution',
-        );
-      }
+      assertPeriodAvailableForInstitution(
+        toPeriod,
+        institutionId,
+        institutionRegime,
+        'Target period',
+      );
 
       return {
         toPeriodId: toPeriod.id,

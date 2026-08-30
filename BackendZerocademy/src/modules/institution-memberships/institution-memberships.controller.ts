@@ -21,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateInstitutionMembershipDto } from './dto/create-institution-membership.dto';
 import { InstitutionMembershipListResponseDto } from './dto/institution-membership-list-response.dto';
 import { InstitutionMembershipResponseDto } from './dto/institution-membership-response.dto';
@@ -45,8 +47,13 @@ export class InstitutionMembershipsController {
   findAll(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
     @Query() query: ListInstitutionMembershipsQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionMembershipListResponseDto> {
-    return this.institutionMembershipsService.findAll(institutionId, query);
+    return this.institutionMembershipsService.findAll(
+      institutionId,
+      query,
+      actor,
+    );
   }
 
   @Get(':membershipId')
@@ -57,10 +64,12 @@ export class InstitutionMembershipsController {
   findOne(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
     @Param('membershipId', ParseUUIDPipe) membershipId: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionMembershipResponseDto> {
     return this.institutionMembershipsService.findOne(
       institutionId,
       membershipId,
+      actor,
     );
   }
 

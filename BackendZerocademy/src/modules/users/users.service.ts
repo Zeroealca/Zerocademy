@@ -50,7 +50,7 @@ export class UsersService {
         select: userWithProfilesSelect,
         skip,
         take: query.limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: this.buildListOrderBy(query),
       }),
     ]);
 
@@ -258,6 +258,24 @@ export class UsersService {
     }
 
     return where;
+  }
+
+  private buildListOrderBy(
+    query: ListUsersQueryDto,
+  ): Prisma.UserOrderByWithRelationInput[] {
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortOrder: Prisma.SortOrder =
+      query.sortOrder ?? (sortBy === 'createdAt' ? 'desc' : 'asc');
+
+    const primary = {
+      [sortBy]: sortOrder,
+    } as Prisma.UserOrderByWithRelationInput;
+
+    if (sortBy === 'createdAt') {
+      return [primary];
+    }
+
+    return [primary, { createdAt: 'desc' }];
   }
 
   private assertCanQueryRole(actorRole: Role, filterRole?: Role): void {

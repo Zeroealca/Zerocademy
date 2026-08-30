@@ -76,6 +76,11 @@ export function resolveAcademicRegimeFromRegion(
   return AcademicRegime.SIERRA_AMAZONIA;
 }
 
+/**
+ * Régimen académico efectivo de la institución.
+ * La región geográfica manda cuando está definida (Costa → COSTA_GALAPAGOS, etc.);
+ * el campo `regime` solo se usa si no hay región.
+ */
 export async function resolveInstitutionAcademicRegime(
   prisma: PrismaService,
   institutionId: string,
@@ -89,15 +94,40 @@ export async function resolveInstitutionAcademicRegime(
     return null;
   }
 
-  if (institution.regime) {
-    return institution.regime;
-  }
-
   if (institution.region) {
     return resolveAcademicRegimeFromRegion(institution.region);
   }
 
+  if (institution.regime) {
+    return institution.regime;
+  }
+
   return null;
+}
+
+/**
+ * Período usable por la institución: propio o calendario compartido del mismo régimen.
+ */
+export function assertPeriodAvailableForInstitution(
+  period: { institutionId: string | null; regime: AcademicRegime },
+  institutionId: string,
+  institutionRegime: AcademicRegime | null,
+  label: 'Academic period' | 'Source period' | 'Target period' = 'Academic period',
+): void {
+  if (
+    period.institutionId != null &&
+    period.institutionId !== institutionId
+  ) {
+    throw new BadRequestException(
+      `${label} does not belong to this institution`,
+    );
+  }
+
+  if (institutionRegime && period.regime !== institutionRegime) {
+    throw new BadRequestException(
+      `${label} regime does not match this institution`,
+    );
+  }
 }
 
 export function assertRegionRegimeConsistency(

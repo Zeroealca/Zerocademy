@@ -21,8 +21,8 @@ import {
   ApiRequireRolesStrict,
 } from '../../common/decorators/api';
 import {
+  ACADEMIC_TRANSITION_WRITE_ROLES,
   INSTITUTION_OPS_READ_ROLES,
-  INSTITUTION_OPS_WRITE_ROLES,
 } from '../../common/rbac/rbac-role-sets';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -47,12 +47,13 @@ export class AcademicPeriodTransitionsController {
   @ApiOkResponse({ type: ActiveAcademicPeriodResponseDto })
   getActivePeriod(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<ActiveAcademicPeriodResponseDto> {
-    return this.transitionsService.getActivePeriod(institutionId);
+    return this.transitionsService.getActivePeriod(institutionId, actor);
   }
 
   @Put('active-period')
-  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
+  @ApiRequireRolesStrict(...ACADEMIC_TRANSITION_WRITE_ROLES)
   @ApiOperation({ summary: 'Set institution active academic period' })
   @ApiOkResponse({ type: ActiveAcademicPeriodResponseDto })
   setActivePeriod(
@@ -70,16 +71,18 @@ export class AcademicPeriodTransitionsController {
   findHistory(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
     @Query() query: PaginationQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AcademicTransitionListResponseDto> {
     return this.transitionsService.findHistory(
       institutionId,
       query.page,
       query.limit,
+      actor,
     );
   }
 
   @Post('preview')
-  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
+  @ApiRequireRolesStrict(...ACADEMIC_TRANSITION_WRITE_ROLES)
   @ApiOperation({
     summary: 'Preview academic period transition',
     description:
@@ -89,12 +92,13 @@ export class AcademicPeriodTransitionsController {
   preview(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
     @Body() dto: AcademicTransitionRequestDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AcademicTransitionPreviewResponseDto> {
-    return this.transitionsService.preview(institutionId, dto);
+    return this.transitionsService.preview(institutionId, dto, actor);
   }
 
   @Post('execute')
-  @ApiRequireRolesStrict(...INSTITUTION_OPS_WRITE_ROLES)
+  @ApiRequireRolesStrict(...ACADEMIC_TRANSITION_WRITE_ROLES)
   @ApiOperation({
     summary: 'Execute academic period transition',
     description:

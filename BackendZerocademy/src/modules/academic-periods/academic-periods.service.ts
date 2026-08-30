@@ -337,13 +337,21 @@ export class AcademicPeriodsService {
       }
     }
 
-    const effectivePeriod =
-      selectedPeriod ??
-      (await this.resolveDefaultPeriod(actor, institutionId, activeByRegime));
-
     const institutionRegime = institutionId
       ? await resolveInstitutionAcademicRegime(this.prisma, institutionId)
       : undefined;
+
+    if (
+      selectedPeriod &&
+      institutionRegime &&
+      selectedPeriod.regime !== institutionRegime
+    ) {
+      selectedPeriod = null;
+    }
+
+    const effectivePeriod =
+      selectedPeriod ??
+      (await this.resolveDefaultPeriod(actor, institutionId, activeByRegime));
 
     return {
       selectedPeriod,
@@ -394,7 +402,7 @@ export class AcademicPeriodsService {
     if (institutionId) {
       const institution = await this.prisma.institution.findUnique({
         where: { id: institutionId },
-        select: { activeAcademicPeriodId: true, regime: true },
+        select: { activeAcademicPeriodId: true },
       });
 
       if (institution?.activeAcademicPeriodId) {
@@ -407,13 +415,20 @@ export class AcademicPeriodsService {
         }
       }
 
-      if (institution?.regime) {
-        const match = activeByRegime.find((r) => r.regime === institution.regime);
+      const institutionRegime = await resolveInstitutionAcademicRegime(
+        this.prisma,
+        institutionId,
+      );
+
+      if (institutionRegime) {
+        const match = activeByRegime.find(
+          (entry) => entry.regime === institutionRegime,
+        );
         return match?.period ?? null;
       }
     }
 
-    return activeByRegime.find((r) => r.period)?.period ?? null;
+    return null;
   }
 
   private async buildListWhere(
