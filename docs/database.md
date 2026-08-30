@@ -202,10 +202,11 @@ Never edit applied migration SQL retroactively.
 ```bash
 npm run prisma:seed -w backend-zerocademy
 npm run prisma:seed:curriculum -w backend-zerocademy   # catalog only
+npm run prisma:seed:grades-demo -w backend-zerocademy  # catalog + demo institution
 npm run prisma:seed:dry-run -w backend-zerocademy    # no writes
 ```
 
-Creates a `SUPER_ADMIN` if none exists and upserts the **Ecuador reference catalog** (levels, grades, subjects, subject–grade links). See [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md).
+Creates a `SUPER_ADMIN` if none exists, upserts the **Ecuador reference catalog**, platform evaluation defaults, and the **demo institution** (`demo-grades`) so every current table has rows for QA. See [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md).
 
 Super admins do not require an academic profile.
 

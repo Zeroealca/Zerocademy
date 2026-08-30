@@ -84,11 +84,12 @@ See [grade-calculation-engine.md](./grade-calculation-engine.md).
 ## Demo data and E2E
 
 ```bash
+npm run prisma:seed -w backend-zerocademy
 npm run prisma:seed:grades-demo -w backend-zerocademy
 npm run test:e2e:grades   # from repository root
 ```
 
-Demo credentials are documented in [seeds.md](./seeds.md) (`demo-grades` institution).
+The main seed now includes the demo institution. Credentials are documented in [seeds.md](./seeds.md) (`demo-grades`).
 
 ## Related documentation
 

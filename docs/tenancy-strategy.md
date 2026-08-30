@@ -38,14 +38,14 @@ Institution (root)
 Today:
 
 - **SUPER_ADMIN** — platform-wide institution CRUD and activation
-- **ADMIN** — read institutions; update settings and branding
+- **ADMIN** — list/view/settings/branding only for institutions with an active ADMIN membership (404 across tenants)
 - **TEACHER** — no institution admin UI (academic modules unchanged)
 
 Next steps (without new infrastructure):
 
-1. Bind `ADMIN` mutations to `user.institutionId` from profile.
-2. Filter list/detail queries by institution for non–super-admin roles.
-3. Return `404` instead of `403` when hiding cross-institution resources (per backend agent guide).
+1. ~~Bind `ADMIN` mutations to membership / institution scope~~ (done for institutions settings and list/detail)
+2. Continue filtering domain list/detail queries by institution for non–super-admin roles
+3. Return `404` instead of `403` when hiding cross-institution resources (per backend agent guide)
 
 ## Data isolation principles
 

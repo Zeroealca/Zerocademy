@@ -48,7 +48,7 @@ Tras ejecutar las semillas de la base de datos, existe un usuario super administ
 
 ### Errores frecuentes al iniciar sesión
 
-- **Credenciales incorrectas:** verifique mayúsculas y la contraseña completa.
+- **Credenciales incorrectas:** la pantalla muestra *Correo o contraseña incorrectos* (el mismo texto si el correo no existe o la contraseña falla). Verifique mayúsculas y la contraseña completa.
 - **Cuenta inactiva:** un administrador debe reactivar su usuario.
 - **La página no carga:** confirme que el servidor frontend esté en ejecución (`npm run dev:frontend` desde la raíz del proyecto).
 

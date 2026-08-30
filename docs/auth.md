@@ -41,7 +41,7 @@ OpenAPI documentation: `http://localhost:3001/api/docs` (non-production by defau
 4. Service creates a `RefreshToken` row, issues JWT pair, stores refresh hash.
 5. Client receives `{ accessToken, refreshToken, user, ...expiresIn }`.
 
-Failed attempts log `LOGIN_FAILED` without exposing whether email or password was wrong (`401 Invalid credentials`).
+Failed attempts log `LOGIN_FAILED` without exposing whether email or password was wrong (`401 Invalid credentials`). The login UI shows a generic Spanish message (`Correo o contraseña incorrectos`) and does not echo the English API text.
 
 ## Refresh flow
 
