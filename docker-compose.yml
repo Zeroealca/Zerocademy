@@ -71,6 +71,7 @@ services:
     environment:
       PORT: ${BACKEND_PORT:-3001}
       DATABASE_URL: postgresql://${POSTGRES_USER:-zerocademy}:${POSTGRES_PASSWORD:-zerocademy_secret}@postgres:5432/${POSTGRES_DB:-zerocademy_db}?schema=public
+      DATABASE_URL_UNPOOLED: postgresql://${POSTGRES_USER:-zerocademy}:${POSTGRES_PASSWORD:-zerocademy_secret}@postgres:5432/${POSTGRES_DB:-zerocademy_db}?schema=public
       NODE_ENV: ${NODE_ENV:-development}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
