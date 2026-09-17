@@ -39,7 +39,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 - Cada tarea tiene **objetivo**, **rol**, **datos de éxito**, **flujo** y **criterios** (checklist).
 - El **caso de fallo** aparece solo donde hay validación, unicidad o rechazo de rol (32 de 65).
 - Tickets hermanos no duplican el negativo (p. ej. DEMY-13 éxito ↔ DEMY-14 fallo).
-- Marca `[x]` al completar cada criterio.
+- Marca `[x]` al completar cada paso del flujo, resultado de fallo y criterio.
+- En el índice también puedes marcar cada tarea al cerrarla.
 
 ### Resumen
 
@@ -50,82 +51,82 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 ### Índice por épica
 
 - **DEMY-2 · Autenticación y sesión** (5)
-  - [DEMY-13](#demy-13) — Login exitoso con credenciales válidas
-  - [DEMY-14](#demy-14) — Rechazo de login con credenciales inválidas · fallo
-  - [DEMY-15](#demy-15) — Persistencia de sesión con refresh token
-  - [DEMY-16](#demy-16) — Cerrar sesión (logout)
-  - [DEMY-17](#demy-17) — Mostrar/ocultar contraseña en formularios
+  - [ ] [DEMY-13](#demy-13) — Login exitoso con credenciales válidas
+  - [ ] [DEMY-14](#demy-14) — Rechazo de login con credenciales inválidas · fallo
+  - [ ] [DEMY-15](#demy-15) — Persistencia de sesión con refresh token
+  - [ ] [DEMY-16](#demy-16) — Cerrar sesión (logout)
+  - [ ] [DEMY-17](#demy-17) — Mostrar/ocultar contraseña en formularios
 - **DEMY-3 · Usuarios y control de acceso (RBAC)** (3)
-  - [DEMY-18](#demy-18) — Listar usuarios del sistema · fallo
-  - [DEMY-19](#demy-19) — Crear usuario nuevo · fallo
-  - [DEMY-20](#demy-20) — Navegación lateral según rol · fallo
+  - [ ] [DEMY-18](#demy-18) — Listar usuarios del sistema · fallo
+  - [ ] [DEMY-19](#demy-19) — Crear usuario nuevo · fallo
+  - [ ] [DEMY-20](#demy-20) — Navegación lateral según rol · fallo
 - **DEMY-4 · Instituciones educativas** (6)
-  - [DEMY-21](#demy-21) — Listar instituciones educativas
-  - [DEMY-22](#demy-22) — Crear institución educativa · fallo
-  - [DEMY-23](#demy-23) — Editar configuración de institución · fallo
-  - [DEMY-24](#demy-24) — Subir logo de institución · fallo
-  - [DEMY-25](#demy-25) — Editar colores de branding institucional · fallo
-  - [DEMY-26](#demy-26) — Activar y desactivar institución · fallo
+  - [ ] [DEMY-21](#demy-21) — Listar instituciones educativas
+  - [ ] [DEMY-22](#demy-22) — Crear institución educativa · fallo
+  - [ ] [DEMY-23](#demy-23) — Editar configuración de institución · fallo
+  - [ ] [DEMY-24](#demy-24) — Subir logo de institución · fallo
+  - [ ] [DEMY-25](#demy-25) — Editar colores de branding institucional · fallo
+  - [ ] [DEMY-26](#demy-26) — Activar y desactivar institución · fallo
 - **DEMY-5 · Períodos académicos y contexto** (6)
-  - [DEMY-27](#demy-27) — Listar períodos académicos
-  - [DEMY-28](#demy-28) — Crear período académico con quimestres · fallo
-  - [DEMY-29](#demy-29) — Activar período académico
-  - [DEMY-30](#demy-30) — Desactivar período académico
-  - [DEMY-31](#demy-31) — Selector de período en cabecera · fallo
-  - [DEMY-32](#demy-32) — Cambiar período seleccionado por usuario
+  - [ ] [DEMY-27](#demy-27) — Listar períodos académicos
+  - [ ] [DEMY-28](#demy-28) — Crear período académico con quimestres · fallo
+  - [ ] [DEMY-29](#demy-29) — Activar período académico
+  - [ ] [DEMY-30](#demy-30) — Desactivar período académico
+  - [ ] [DEMY-31](#demy-31) — Selector de período en cabecera · fallo
+  - [ ] [DEMY-32](#demy-32) — Cambiar período seleccionado por usuario
 - **DEMY-6 · Transición de período académico** (3)
-  - [DEMY-33](#demy-33) — Ver período activo institucional
-  - [DEMY-34](#demy-34) — Previsualizar transición de período · fallo
-  - [DEMY-35](#demy-35) — Ejecutar transición de año lectivo
+  - [ ] [DEMY-33](#demy-33) — Ver período activo institucional
+  - [ ] [DEMY-34](#demy-34) — Previsualizar transición de período · fallo
+  - [ ] [DEMY-35](#demy-35) — Ejecutar transición de año lectivo
 - **DEMY-7 · Estructura académica** (7)
-  - [DEMY-36](#demy-36) — Listar niveles académicos
-  - [DEMY-37](#demy-37) — Crear nivel académico personalizado · fallo
-  - [DEMY-38](#demy-38) — Crear grado académico · fallo
-  - [DEMY-39](#demy-39) — Crear curso/paralelo · fallo
-  - [DEMY-40](#demy-40) — Editar curso existente
-  - [DEMY-41](#demy-41) — Vista árbol jerárquica
-  - [DEMY-42](#demy-42) — Filtrar árbol por institución y período
+  - [ ] [DEMY-36](#demy-36) — Listar niveles académicos
+  - [ ] [DEMY-37](#demy-37) — Crear nivel académico personalizado · fallo
+  - [ ] [DEMY-38](#demy-38) — Crear grado académico · fallo
+  - [ ] [DEMY-39](#demy-39) — Crear curso/paralelo · fallo
+  - [ ] [DEMY-40](#demy-40) — Editar curso existente
+  - [ ] [DEMY-41](#demy-41) — Vista árbol jerárquica
+  - [ ] [DEMY-42](#demy-42) — Filtrar árbol por institución y período
 - **DEMY-8 · Materias y asignaciones docentes** (6)
-  - [DEMY-43](#demy-43) — Listar materias
-  - [DEMY-44](#demy-44) — Crear materia institucional · fallo
-  - [DEMY-45](#demy-45) — Editar materia existente
-  - [DEMY-46](#demy-46) — Listar asignaciones docentes
-  - [DEMY-47](#demy-47) — Crear asignación docente · fallo
-  - [DEMY-48](#demy-48) — Editar asignación docente
+  - [ ] [DEMY-43](#demy-43) — Listar materias
+  - [ ] [DEMY-44](#demy-44) — Crear materia institucional · fallo
+  - [ ] [DEMY-45](#demy-45) — Editar materia existente
+  - [ ] [DEMY-46](#demy-46) — Listar asignaciones docentes
+  - [ ] [DEMY-47](#demy-47) — Crear asignación docente · fallo
+  - [ ] [DEMY-48](#demy-48) — Editar asignación docente
 - **DEMY-9 · Estudiantes** (7)
-  - [DEMY-49](#demy-49) — Listar estudiantes
-  - [DEMY-50](#demy-50) — Crear estudiante individual · fallo
-  - [DEMY-51](#demy-51) — Editar datos de estudiante
-  - [DEMY-52](#demy-52) — Activar y desactivar estudiante · fallo
-  - [DEMY-53](#demy-53) — Importación masiva CSV exitosa
-  - [DEMY-54](#demy-54) — Validación errores importación CSV · fallo
-  - [DEMY-55](#demy-55) — Ver historial de matrículas del estudiante
+  - [ ] [DEMY-49](#demy-49) — Listar estudiantes
+  - [ ] [DEMY-50](#demy-50) — Crear estudiante individual · fallo
+  - [ ] [DEMY-51](#demy-51) — Editar datos de estudiante
+  - [ ] [DEMY-52](#demy-52) — Activar y desactivar estudiante · fallo
+  - [ ] [DEMY-53](#demy-53) — Importación masiva CSV exitosa
+  - [ ] [DEMY-54](#demy-54) — Validación errores importación CSV · fallo
+  - [ ] [DEMY-55](#demy-55) — Ver historial de matrículas del estudiante
 - **DEMY-10 · Matrículas** (6)
-  - [DEMY-56](#demy-56) — Listar matrículas
-  - [DEMY-57](#demy-57) — Crear matrícula individual · fallo
-  - [DEMY-58](#demy-58) — Excluir estudiantes ya matriculados en período · fallo
-  - [DEMY-59](#demy-59) — Matrícula masiva de estudiantes
-  - [DEMY-60](#demy-60) — Editar estado de matrícula
-  - [DEMY-61](#demy-61) — Consultar mis matrículas (estudiante) · fallo
+  - [ ] [DEMY-56](#demy-56) — Listar matrículas
+  - [ ] [DEMY-57](#demy-57) — Crear matrícula individual · fallo
+  - [ ] [DEMY-58](#demy-58) — Excluir estudiantes ya matriculados en período · fallo
+  - [ ] [DEMY-59](#demy-59) — Matrícula masiva de estudiantes
+  - [ ] [DEMY-60](#demy-60) — Editar estado de matrícula
+  - [ ] [DEMY-61](#demy-61) — Consultar mis matrículas (estudiante) · fallo
 - **DEMY-11 · Evaluación académica** (11)
-  - [DEMY-62](#demy-62) — Dashboard de evaluación académica
-  - [DEMY-63](#demy-63) — Inicializar plantilla Ecuador en institución
-  - [DEMY-64](#demy-64) — Crear esquema de calificación · fallo
-  - [DEMY-65](#demy-65) — Gestionar escalas cualitativas (bandas) · fallo
-  - [DEMY-66](#demy-66) — Crear términos de evaluación con pesos
-  - [DEMY-67](#demy-67) — Validar suma de pesos de términos = 100% · fallo
-  - [DEMY-68](#demy-68) — Reordenar términos de evaluación
-  - [DEMY-69](#demy-69) — Crear categorías de evaluación
-  - [DEMY-70](#demy-70) — Validar suma de pesos de categorías = 100% · fallo
-  - [DEMY-71](#demy-71) — Configuración activa de institución
-  - [DEMY-72](#demy-72) — Configuración plataforma Ecuador (SUPER_ADMIN) · fallo
+  - [ ] [DEMY-62](#demy-62) — Dashboard de evaluación académica
+  - [ ] [DEMY-63](#demy-63) — Inicializar plantilla Ecuador en institución
+  - [ ] [DEMY-64](#demy-64) — Crear esquema de calificación · fallo
+  - [ ] [DEMY-65](#demy-65) — Gestionar escalas cualitativas (bandas) · fallo
+  - [ ] [DEMY-66](#demy-66) — Crear términos de evaluación con pesos
+  - [ ] [DEMY-67](#demy-67) — Validar suma de pesos de términos = 100% · fallo
+  - [ ] [DEMY-68](#demy-68) — Reordenar términos de evaluación
+  - [ ] [DEMY-69](#demy-69) — Crear categorías de evaluación
+  - [ ] [DEMY-70](#demy-70) — Validar suma de pesos de categorías = 100% · fallo
+  - [ ] [DEMY-71](#demy-71) — Configuración activa de institución
+  - [ ] [DEMY-72](#demy-72) — Configuración plataforma Ecuador (SUPER_ADMIN) · fallo
 - **DEMY-12 · UX general y mensajes** (3)
-  - [DEMY-73](#demy-73) — Mensajes de error de API en español · fallo
-  - [DEMY-74](#demy-74) — Selectores con búsqueda en formularios
-  - [DEMY-75](#demy-75) — Selector de alcance institucional en evaluación · fallo
+  - [ ] [DEMY-73](#demy-73) — Mensajes de error de API en español · fallo
+  - [ ] [DEMY-74](#demy-74) — Selectores con búsqueda en formularios
+  - [ ] [DEMY-75](#demy-75) — Selector de alcance institucional en evaluación · fallo
 - **DEMY-76 · Calificaciones y notas** (2)
-  - [DEMY-77](#demy-77) — Módulo Grades fase 1 — evaluaciones, registro y gestión de notas · fallo
-  - [DEMY-78](#demy-78) — Motor de cálculo de notas — Academic Performance (fase 2) · fallo
+  - [ ] [DEMY-77](#demy-77) — Módulo Grades fase 1 — evaluaciones, registro y gestión de notas · fallo
+  - [ ] [DEMY-78](#demy-78) — Motor de cálculo de notas — Academic Performance (fase 2) · fallo
 
 ---
 
@@ -148,11 +149,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Abrir `http://localhost:3000/login`.
-2. Ingresar email y contraseña válidos del seed.
-3. Pulsar **Iniciar sesión**.
-4. Confirmar redirección a `/dashboard`.
-5. Verificar que el menú lateral muestra opciones acordes al rol.
+- [ ] Abrir `http://localhost:3000/login`.
+- [ ] Ingresar email y contraseña válidos del seed.
+- [ ] Pulsar **Iniciar sesión**.
+- [ ] Confirmar redirección a `/dashboard`.
+- [ ] Verificar que el menú lateral muestra opciones acordes al rol.
 
 #### Criterios de aceptación
 
@@ -178,10 +179,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Ir a `/login`.
-2. Ingresar email válido y contraseña incorrecta.
-3. Intentar iniciar sesión.
-4. Repetir con email inexistente.
+- [ ] Ir a `/login`.
+- [ ] Ingresar email válido y contraseña incorrecta.
+- [ ] Intentar iniciar sesión.
+- [ ] Repetir con email inexistente.
 
 #### Caso de fallo
 
@@ -192,9 +193,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Ir a /login sin sesión.
-2. Probar email existente con contraseña incorrecta.
-3. Probar email que no existe.
+- [ ] Ir a /login sin sesión.
+- [ ] Probar email existente con contraseña incorrecta.
+- [ ] Probar email que no existe.
 
 **Resultado esperado**
 
@@ -227,10 +228,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión normalmente.
-2. Navegar por 2-3 secciones del dashboard.
-3. Esperar a que expire el access token (o forzar recarga tras unos minutos).
-4. Realizar una acción que llame a la API (ej. listar estudiantes).
+- [ ] Iniciar sesión normalmente.
+- [ ] Navegar por 2-3 secciones del dashboard.
+- [ ] Esperar a que expire el access token (o forzar recarga tras unos minutos).
+- [ ] Realizar una acción que llame a la API (ej. listar estudiantes).
 
 #### Criterios de aceptación
 
@@ -256,9 +257,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión.
-2. Usar la opción de cerrar sesión en la UI.
-3. Intentar volver a `/dashboard` manualmente en la barra de direcciones.
+- [ ] Iniciar sesión.
+- [ ] Usar la opción de cerrar sesión en la UI.
+- [ ] Intentar volver a `/dashboard` manualmente en la barra de direcciones.
 
 #### Criterios de aceptación
 
@@ -285,10 +286,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Ir a `/login`.
-2. Escribir una contraseña de prueba.
-3. Pulsar el icono de mostrar/ocultar.
-4. Repetir en el formulario de creación de usuario en `/users` o de estudiante en `/students/new`.
+- [ ] Ir a `/login`.
+- [ ] Escribir una contraseña de prueba.
+- [ ] Pulsar el icono de mostrar/ocultar.
+- [ ] Repetir en el formulario de creación de usuario en `/users` o de estudiante en `/students/new`.
 
 #### Criterios de aceptación
 
@@ -316,18 +317,18 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como SUPER_ADMIN (`admin@zerocademy.edu` / `ChangeMe123!`).
-2. Ir a `/users`.
-3. Revisar la tabla Directorio (nombre, correo, rol y estado).
-4. Usar Buscar con un nombre o correo del seed (ej. `admin.demo` o `Ana`). Esperar ~0,5 s (debounce).
-5. Filtrar por Rol (ej. Docente) y comprobar que solo aparecen usuarios de ese rol.
-6. Filtrar por Estado (Activos / Inactivos).
-7. Combinar búsqueda + rol + estado.
-8. Pulsar la cabecera Rol: Super administrador → Representante; segundo clic invierte.
-9. Pulsar la cabecera Estado: activos primero; segundo clic pone inactivos primero.
-10. Si hay más de 10 usuarios, probar paginación y confirmar que el orden se mantiene.
-11. Como ADMIN (`admin.demo@zerocademy.edu`): ver Usuarios, sin cuentas SUPER_ADMIN.
-12. Como TEACHER o STUDENT: no ver Usuarios; al pegar `/users`, acceso denegado.
+- [ ] Iniciar sesión como SUPER_ADMIN (`admin@zerocademy.edu` / `ChangeMe123!`).
+- [ ] Ir a `/users`.
+- [ ] Revisar la tabla Directorio (nombre, correo, rol y estado).
+- [ ] Usar Buscar con un nombre o correo del seed (ej. `admin.demo` o `Ana`). Esperar ~0,5 s (debounce).
+- [ ] Filtrar por Rol (ej. Docente) y comprobar que solo aparecen usuarios de ese rol.
+- [ ] Filtrar por Estado (Activos / Inactivos).
+- [ ] Combinar búsqueda + rol + estado.
+- [ ] Pulsar la cabecera Rol: Super administrador → Representante; segundo clic invierte.
+- [ ] Pulsar la cabecera Estado: activos primero; segundo clic pone inactivos primero.
+- [ ] Si hay más de 10 usuarios, probar paginación y confirmar que el orden se mantiene.
+- [ ] Como ADMIN (`admin.demo@zerocademy.edu`): ver Usuarios, sin cuentas SUPER_ADMIN.
+- [ ] Como TEACHER o STUDENT: no ver Usuarios; al pegar `/users`, acceso denegado.
 
 #### Caso de fallo
 
@@ -339,9 +340,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Listar, filtrar y ordenar usuarios como SUPER_ADMIN.
-2. Abrir /users como ADMIN (debe entrar, sin SUPER_ADMIN).
-3. Abrir /users como TEACHER y como STUDENT.
+- [ ] Listar, filtrar y ordenar usuarios como SUPER_ADMIN.
+- [ ] Abrir /users como ADMIN (debe entrar, sin SUPER_ADMIN).
+- [ ] Abrir /users como TEACHER y como STUDENT.
 
 **Resultado esperado**
 
@@ -380,11 +381,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Ir a `/users` (el formulario de alta está en la misma página; no hay `/users/new`).
-2. Completar email, contraseña, nombre, rol (ej. TEACHER).
-3. Guardar.
-4. En el directorio, usar Buscar con el correo o nombre creado y, si hace falta, el filtro Rol.
-5. Intentar login con las credenciales creadas.
+- [ ] Ir a `/users` (el formulario de alta está en la misma página; no hay `/users/new`).
+- [ ] Completar email, contraseña, nombre, rol (ej. TEACHER).
+- [ ] Guardar.
+- [ ] En el directorio, usar Buscar con el correo o nombre creado y, si hace falta, el filtro Rol.
+- [ ] Intentar login con las credenciales creadas.
 
 #### Caso de fallo
 
@@ -395,8 +396,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear el usuario nuevo.
-2. Repetir el mismo email en el formulario de `/users`.
+- [ ] Crear el usuario nuevo.
+- [ ] Repetir el mismo email en el formulario de `/users`.
 
 **Resultado esperado**
 
@@ -434,10 +435,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión con cada cuenta y anotar el menú de izquierda a derecha/arriba abajo.
-2. Comparar con la lista de Datos de éxito (orden del código).
-3. Como STUDENT pegar /users y /institutions.
-4. Como TEACHER pegar /users y /academic-periods.
+- [ ] Iniciar sesión con cada cuenta y anotar el menú de izquierda a derecha/arriba abajo.
+- [ ] Comparar con la lista de Datos de éxito (orden del código).
+- [ ] Como STUDENT pegar /users y /institutions.
+- [ ] Como TEACHER pegar /users y /academic-periods.
 
 #### Caso de fallo
 
@@ -448,8 +449,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Como STUDENT abrir /users e /institutions en la barra de direcciones.
-2. Como TEACHER abrir /users y /academic-periods.
+- [ ] Como STUDENT abrir /users e /institutions en la barra de direcciones.
+- [ ] Como TEACHER abrir /users y /academic-periods.
 
 **Resultado esperado**
 
@@ -485,9 +486,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Ir a `/institutions`.
-2. Revisar instituciones del seed.
-3. Abrir detalle de una institución.
+- [ ] Ir a `/institutions`.
+- [ ] Revisar instituciones del seed.
+- [ ] Abrir detalle de una institución.
 
 #### Criterios de aceptación
 
@@ -513,11 +514,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Ir a formulario de nueva institución.
-2. Ingresar nombre, código único, email y régimen.
-3. Guardar.
-4. Verificar en listado.
-5. Intentar crear otra con el mismo código (debe fallar).
+- [ ] Ir a formulario de nueva institución.
+- [ ] Ingresar nombre, código único, email y régimen.
+- [ ] Guardar.
+- [ ] Verificar en listado.
+- [ ] Intentar crear otra con el mismo código (debe fallar).
 
 #### Caso de fallo
 
@@ -528,8 +529,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear qa-norte.
-2. Intentar el mismo código o demo-grades.
+- [ ] Crear qa-norte.
+- [ ] Intentar el mismo código o demo-grades.
 
 **Resultado esperado**
 
@@ -561,10 +562,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Abrir institución existente.
-2. Ir a configuración/ajustes.
-3. Modificar teléfono, dirección o régimen.
-4. Guardar y recargar página.
+- [ ] Abrir institución existente.
+- [ ] Ir a configuración/ajustes.
+- [ ] Modificar teléfono, dirección o régimen.
+- [ ] Guardar y recargar página.
 
 #### Caso de fallo
 
@@ -576,8 +577,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Guardar datos coherentes y recargar.
-2. Intentar COSTA con SIERRA_AMAZONIA.
+- [ ] Guardar datos coherentes y recargar.
+- [ ] Intentar COSTA con SIERRA_AMAZONIA.
 
 **Resultado esperado**
 
@@ -608,10 +609,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Abrir configuración de institución.
-2. Subir imagen PNG o JPEG (menor a 5 MB).
-3. Guardar.
-4. Verificar que el logo se muestra en la UI.
+- [ ] Abrir configuración de institución.
+- [ ] Subir imagen PNG o JPEG (menor a 5 MB).
+- [ ] Guardar.
+- [ ] Verificar que el logo se muestra en la UI.
 
 #### Caso de fallo
 
@@ -623,8 +624,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Subir imagen válida y recargar.
-2. Intentar .txt o un archivo > 5 MB.
+- [ ] Subir imagen válida y recargar.
+- [ ] Intentar .txt o un archivo > 5 MB.
 
 **Resultado esperado**
 
@@ -655,10 +656,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Ir a branding de la institución.
-2. Establecer colores hex válidos (#RRGGBB).
-3. Guardar.
-4. Intentar un valor inválido.
+- [ ] Ir a branding de la institución.
+- [ ] Establecer colores hex válidos (#RRGGBB).
+- [ ] Guardar.
+- [ ] Intentar un valor inválido.
 
 #### Caso de fallo
 
@@ -670,8 +671,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Guardar hex válido y recargar.
-2. Escribir un valor que no sea #RRGGBB.
+- [ ] Guardar hex válido y recargar.
+- [ ] Escribir un valor que no sea #RRGGBB.
 
 **Resultado esperado**
 
@@ -702,12 +703,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como SUPER_ADMIN.
-2. Navegar a la gestión de instituciones.
-3. Seleccionar una institución activa y desactivarla.
-4. Intentar realizar una operación académica (ej. crear período, matricular estudiante).
-5. Reactivar la institución.
-6. Verificar que las operaciones académicas vuelven a estar disponibles.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Navegar a la gestión de instituciones.
+- [ ] Seleccionar una institución activa y desactivarla.
+- [ ] Intentar realizar una operación académica (ej. crear período, matricular estudiante).
+- [ ] Reactivar la institución.
+- [ ] Verificar que las operaciones académicas vuelven a estar disponibles.
 
 #### Caso de fallo
 
@@ -718,9 +719,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Desactivar qa-norte.
-2. Intentar crear curso o matricular en esa institución.
-3. Reactivar y repetir la operación.
+- [ ] Desactivar qa-norte.
+- [ ] Intentar crear curso o matricular en esa institución.
+- [ ] Reactivar y repetir la operación.
 
 **Resultado esperado**
 
@@ -756,12 +757,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión con rol ADMIN o SUPER_ADMIN.
-2. Navegar a `/academic-periods`.
-3. Verificar que se muestra la lista de períodos académicos.
-4. Aplicar filtro por régimen académico.
-5. Aplicar filtro por estado (ACTIVE, CLOSED, DRAFT, etc.).
-6. Verificar que los resultados se actualizan correctamente.
+- [ ] Iniciar sesión con rol ADMIN o SUPER_ADMIN.
+- [ ] Navegar a `/academic-periods`.
+- [ ] Verificar que se muestra la lista de períodos académicos.
+- [ ] Aplicar filtro por régimen académico.
+- [ ] Aplicar filtro por estado (ACTIVE, CLOSED, DRAFT, etc.).
+- [ ] Verificar que los resultados se actualizan correctamente.
 
 #### Criterios de aceptación
 
@@ -788,12 +789,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como SUPER_ADMIN.
-2. Navegar al formulario de creación de período académico.
-3. Completar nombre, fechas de inicio y fin del período.
-4. Definir los términos/quimestres con sus fechas.
-5. Guardar el período.
-6. Verificar que aparece en el listado con estado DRAFT.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Navegar al formulario de creación de período académico.
+- [ ] Completar nombre, fechas de inicio y fin del período.
+- [ ] Definir los términos/quimestres con sus fechas.
+- [ ] Guardar el período.
+- [ ] Verificar que aparece en el listado con estado DRAFT.
 
 #### Caso de fallo
 
@@ -806,8 +807,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear el período con fechas coherentes (DRAFT).
-2. Intentar fin anterior a inicio.
+- [ ] Crear el período con fechas coherentes (DRAFT).
+- [ ] Intentar fin anterior a inicio.
 
 **Resultado esperado**
 
@@ -841,11 +842,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener al menos dos períodos en el mismo régimen, uno ACTIVE y otro DRAFT.
-2. Iniciar sesión como SUPER_ADMIN.
-3. Activar el período en estado DRAFT.
-4. Verificar que el período activado pasa a ACTIVE.
-5. Verificar que el período previamente ACTIVE pasa a CLOSED.
+- [ ] Tener al menos dos períodos en el mismo régimen, uno ACTIVE y otro DRAFT.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Activar el período en estado DRAFT.
+- [ ] Verificar que el período activado pasa a ACTIVE.
+- [ ] Verificar que el período previamente ACTIVE pasa a CLOSED.
 
 #### Criterios de aceptación
 
@@ -872,11 +873,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener un período académico en estado ACTIVE.
-2. Iniciar sesión como SUPER_ADMIN.
-3. Ejecutar la acción de desactivar/cerrar el período.
-4. Verificar el cambio de estado a CLOSED.
-5. Verificar que ya no aparece como período activo.
+- [ ] Tener un período académico en estado ACTIVE.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Ejecutar la acción de desactivar/cerrar el período.
+- [ ] Verificar el cambio de estado a CLOSED.
+- [ ] Verificar que ya no aparece como período activo.
 
 #### Criterios de aceptación
 
@@ -902,10 +903,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión con cualquier rol académico.
-2. Observar el selector de período en la cabecera del dashboard.
-3. Verificar que muestra el período efectivo actual.
-4. Verificar que el componente es visible en las páginas principales.
+- [ ] Iniciar sesión con cualquier rol académico.
+- [ ] Observar el selector de período en la cabecera del dashboard.
+- [ ] Verificar que muestra el período efectivo actual.
+- [ ] Verificar que el componente es visible en las páginas principales.
 
 #### Caso de fallo
 
@@ -916,8 +917,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Entrar como ADMIN, TEACHER y STUDENT y mirar la cabecera.
-2. Entrar como SUPER_ADMIN.
+- [ ] Entrar como ADMIN, TEACHER y STUDENT y mirar la cabecera.
+- [ ] Entrar como SUPER_ADMIN.
 
 **Resultado esperado**
 
@@ -949,12 +950,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión con rol ADMIN, TEACHER o STUDENT.
-2. Abrir el selector de período en la cabecera.
-3. Seleccionar un período diferente al actual.
-4. Verificar que se ejecuta PUT context/selection.
-5. Verificar que la UI se actualiza con el nuevo período.
-6. Recargar la página y confirmar que persiste la selección.
+- [ ] Iniciar sesión con rol ADMIN, TEACHER o STUDENT.
+- [ ] Abrir el selector de período en la cabecera.
+- [ ] Seleccionar un período diferente al actual.
+- [ ] Verificar que se ejecuta PUT context/selection.
+- [ ] Verificar que la UI se actualiza con el nuevo período.
+- [ ] Recargar la página y confirmar que persiste la selección.
 
 #### Criterios de aceptación
 
@@ -984,11 +985,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener un período académico ACTIVE en la institución.
-2. Iniciar sesión como ADMIN o SUPER_ADMIN.
-3. Navegar a la sección de transiciones de período.
-4. Verificar la tarjeta que muestra el período activo institucional.
-5. Confirmar que los datos (nombre, fechas, estado) son correctos.
+- [ ] Tener un período académico ACTIVE en la institución.
+- [ ] Iniciar sesión como ADMIN o SUPER_ADMIN.
+- [ ] Navegar a la sección de transiciones de período.
+- [ ] Verificar la tarjeta que muestra el período activo institucional.
+- [ ] Confirmar que los datos (nombre, fechas, estado) son correctos.
 
 #### Criterios de aceptación
 
@@ -1014,12 +1015,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener un período origen ACTIVE con cursos y asignaciones docentes.
-2. Tener un período destino en DRAFT.
-3. Navegar a transiciones de año lectivo.
-4. Seleccionar período origen y destino.
-5. Ejecutar previsualización (preview).
-6. Verificar conteos de cursos y asignaciones a copiar.
+- [ ] Tener un período origen ACTIVE con cursos y asignaciones docentes.
+- [ ] Tener un período destino en DRAFT.
+- [ ] Navegar a transiciones de año lectivo.
+- [ ] Seleccionar período origen y destino.
+- [ ] Ejecutar previsualización (preview).
+- [ ] Verificar conteos de cursos y asignaciones a copiar.
 
 #### Caso de fallo
 
@@ -1032,8 +1033,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Ejecutar preview ACTIVE → DRAFT.
-2. Intentar preview con el mismo período en ambos.
+- [ ] Ejecutar preview ACTIVE → DRAFT.
+- [ ] Intentar preview con el mismo período en ambos.
 
 **Resultado esperado**
 
@@ -1066,13 +1067,13 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Configurar período origen ACTIVE con cursos y asignaciones.
-2. Configurar período destino en DRAFT.
-3. Iniciar sesión como SUPER_ADMIN.
-4. Ejecutar la transición de año lectivo.
-5. Verificar que los cursos se copian al período destino.
-6. Verificar que las asignaciones docentes se copian.
-7. Verificar que el período destino queda ACTIVE y el origen CLOSED.
+- [ ] Configurar período origen ACTIVE con cursos y asignaciones.
+- [ ] Configurar período destino en DRAFT.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Ejecutar la transición de año lectivo.
+- [ ] Verificar que los cursos se copian al período destino.
+- [ ] Verificar que las asignaciones docentes se copian.
+- [ ] Verificar que el período destino queda ACTIVE y el origen CLOSED.
 
 #### Criterios de aceptación
 
@@ -1102,10 +1103,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión como ADMIN o SUPER_ADMIN.
-2. Navegar a `/academic-levels`.
-3. Verificar que se muestra el catálogo de niveles académicos.
-4. Confirmar que se listan niveles predefinidos y personalizados.
+- [ ] Iniciar sesión como ADMIN o SUPER_ADMIN.
+- [ ] Navegar a `/academic-levels`.
+- [ ] Verificar que se muestra el catálogo de niveles académicos.
+- [ ] Confirmar que se listan niveles predefinidos y personalizados.
 
 #### Criterios de aceptación
 
@@ -1131,11 +1132,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como SUPER_ADMIN.
-2. Navegar a `/academic-levels`.
-3. Abrir formulario de creación de nivel.
-4. Completar nombre y datos del nivel personalizado.
-5. Guardar y verificar que aparece en el catálogo.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Navegar a `/academic-levels`.
+- [ ] Abrir formulario de creación de nivel.
+- [ ] Completar nombre y datos del nivel personalizado.
+- [ ] Guardar y verificar que aparece en el catálogo.
 
 #### Caso de fallo
 
@@ -1147,8 +1148,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear QA_NIVEL.
-2. Intentar código EGB.
+- [ ] Crear QA_NIVEL.
+- [ ] Intentar código EGB.
 
 **Resultado esperado**
 
@@ -1179,12 +1180,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener al menos un nivel académico configurado.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/grade-levels`.
-4. Crear un nuevo grado seleccionando el nivel padre.
-5. Completar nombre y orden del grado.
-6. Guardar y verificar en el listado.
+- [ ] Tener al menos un nivel académico configurado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/grade-levels`.
+- [ ] Crear un nuevo grado seleccionando el nivel padre.
+- [ ] Completar nombre y orden del grado.
+- [ ] Guardar y verificar en el listado.
 
 #### Caso de fallo
 
@@ -1196,8 +1197,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear 9VO_QA bajo EGB.
-2. Intentar el código de 8.º existente.
+- [ ] Crear 9VO_QA bajo EGB.
+- [ ] Intentar el código de 8.º existente.
 
 **Resultado esperado**
 
@@ -1228,12 +1229,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener período académico y grado configurados.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/courses`.
-4. Crear nuevo curso seleccionando período y grado.
-5. Definir sección/paralelo y capacidad.
-6. Guardar y verificar en el listado.
+- [ ] Tener período académico y grado configurados.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/courses`.
+- [ ] Crear nuevo curso seleccionando período y grado.
+- [ ] Definir sección/paralelo y capacidad.
+- [ ] Guardar y verificar en el listado.
 
 #### Caso de fallo
 
@@ -1245,8 +1246,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear 8vo C.
-2. Intentar otro 8vo A en el mismo período y grado.
+- [ ] Crear 8vo C.
+- [ ] Intentar otro 8vo A en el mismo período y grado.
 
 **Resultado esperado**
 
@@ -1279,12 +1280,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener al menos un curso creado.
-2. Iniciar sesión como ADMIN.
-3. Navegar al detalle o edición del curso.
-4. Modificar la capacidad máxima.
-5. Modificar la sección/paralelo.
-6. Guardar y verificar los cambios.
+- [ ] Tener al menos un curso creado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar al detalle o edición del curso.
+- [ ] Modificar la capacidad máxima.
+- [ ] Modificar la sección/paralelo.
+- [ ] Guardar y verificar los cambios.
 
 #### Criterios de aceptación
 
@@ -1311,11 +1312,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener niveles, grados y cursos configurados.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/academic-structure`.
-4. Verificar la vista en árbol con la jerarquía completa.
-5. Expandir/colapsar nodos del árbol.
+- [ ] Tener niveles, grados y cursos configurados.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/academic-structure`.
+- [ ] Verificar la vista en árbol con la jerarquía completa.
+- [ ] Expandir/colapsar nodos del árbol.
 
 #### Criterios de aceptación
 
@@ -1342,12 +1343,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener datos en múltiples instituciones y períodos.
-2. Navegar a la página de estructura académica (hierarchy page).
-3. Seleccionar una institución en el selector.
-4. Verificar que el árbol se actualiza.
-5. Seleccionar un período académico.
-6. Verificar que solo se muestran cursos del período seleccionado.
+- [ ] Tener datos en múltiples instituciones y períodos.
+- [ ] Navegar a la página de estructura académica (hierarchy page).
+- [ ] Seleccionar una institución en el selector.
+- [ ] Verificar que el árbol se actualiza.
+- [ ] Seleccionar un período académico.
+- [ ] Verificar que solo se muestran cursos del período seleccionado.
 
 #### Criterios de aceptación
 
@@ -1377,11 +1378,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener materias creadas en la institución.
-2. Iniciar sesión como ADMIN o TEACHER.
-3. Navegar a `/subjects`.
-4. Verificar el listado de materias.
-5. Confirmar que se muestran nombre, código y estado.
+- [ ] Tener materias creadas en la institución.
+- [ ] Iniciar sesión como ADMIN o TEACHER.
+- [ ] Navegar a `/subjects`.
+- [ ] Verificar el listado de materias.
+- [ ] Confirmar que se muestran nombre, código y estado.
 
 #### Criterios de aceptación
 
@@ -1407,11 +1408,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como ADMIN.
-2. Navegar a `/subjects`.
-3. Abrir formulario de creación.
-4. Completar nombre, código y descripción.
-5. Guardar y verificar en el listado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/subjects`.
+- [ ] Abrir formulario de creación.
+- [ ] Completar nombre, código y descripción.
+- [ ] Guardar y verificar en el listado.
 
 #### Caso de fallo
 
@@ -1423,8 +1424,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear QA-ART.
-2. Intentar código MATEMATICA.
+- [ ] Crear QA-ART.
+- [ ] Intentar código MATEMATICA.
 
 **Resultado esperado**
 
@@ -1456,11 +1457,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener al menos una materia creada.
-2. Iniciar sesión como ADMIN.
-3. Abrir edición de la materia.
-4. Modificar nombre o descripción.
-5. Guardar (PATCH) y verificar cambios.
+- [ ] Tener al menos una materia creada.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Abrir edición de la materia.
+- [ ] Modificar nombre o descripción.
+- [ ] Guardar (PATCH) y verificar cambios.
 
 #### Criterios de aceptación
 
@@ -1487,11 +1488,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener asignaciones docentes creadas.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/teacher-assignments`.
-4. Verificar el listado con profesor, materia y curso.
-5. Aplicar filtros si están disponibles.
+- [ ] Tener asignaciones docentes creadas.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/teacher-assignments`.
+- [ ] Verificar el listado con profesor, materia y curso.
+- [ ] Aplicar filtros si están disponibles.
 
 #### Criterios de aceptación
 
@@ -1517,11 +1518,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener profesor, materia y curso configurados.
-2. Iniciar sesión como ADMIN.
-3. Navegar a creación de asignación docente.
-4. Seleccionar profesor, materia y curso.
-5. Guardar y verificar en el listado.
+- [ ] Tener profesor, materia y curso configurados.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a creación de asignación docente.
+- [ ] Seleccionar profesor, materia y curso.
+- [ ] Guardar y verificar en el listado.
 
 #### Caso de fallo
 
@@ -1533,8 +1534,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear una asignación nueva.
-2. Repetir Matemática + 8vo A + 2025-2026 Demo.
+- [ ] Crear una asignación nueva.
+- [ ] Repetir Matemática + 8vo A + 2025-2026 Demo.
 
 **Resultado esperado**
 
@@ -1566,12 +1567,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener una asignación docente existente.
-2. Iniciar sesión como ADMIN.
-3. Abrir edición de la asignación.
-4. Cambiar el profesor asignado.
-5. Guardar y verificar.
-6. Repetir cambiando la materia.
+- [ ] Tener una asignación docente existente.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Abrir edición de la asignación.
+- [ ] Cambiar el profesor asignado.
+- [ ] Guardar y verificar.
+- [ ] Repetir cambiando la materia.
 
 #### Criterios de aceptación
 
@@ -1600,11 +1601,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener estudiantes registrados.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/students`.
-4. Verificar el listado.
-5. Repetir con rol TEACHER.
+- [ ] Tener estudiantes registrados.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/students`.
+- [ ] Verificar el listado.
+- [ ] Repetir con rol TEACHER.
 
 #### Criterios de aceptación
 
@@ -1630,11 +1631,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como ADMIN.
-2. Navegar a `/students/new`.
-3. Completar datos del estudiante (nombre, email, etc.).
-4. Opcionalmente ingresar número de matrícula.
-5. Guardar y verificar en el listado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/students/new`.
+- [ ] Completar datos del estudiante (nombre, email, etc.).
+- [ ] Opcionalmente ingresar número de matrícula.
+- [ ] Guardar y verificar en el listado.
 
 #### Caso de fallo
 
@@ -1646,8 +1647,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear a Pedro QA.
-2. Intentar email o cédula de Ana.
+- [ ] Crear a Pedro QA.
+- [ ] Intentar email o cédula de Ana.
 
 **Resultado esperado**
 
@@ -1680,11 +1681,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener un estudiante registrado.
-2. Iniciar sesión como ADMIN.
-3. Abrir perfil/edición del estudiante.
-4. Modificar nombre, email u otros datos.
-5. Guardar (PATCH) y verificar cambios.
+- [ ] Tener un estudiante registrado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Abrir perfil/edición del estudiante.
+- [ ] Modificar nombre, email u otros datos.
+- [ ] Guardar (PATCH) y verificar cambios.
 
 #### Criterios de aceptación
 
@@ -1710,12 +1711,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener un estudiante activo.
-2. Iniciar sesión como ADMIN.
-3. Desactivar el estudiante mediante endpoint deactivate.
-4. Verificar que el estado cambia a inactivo.
-5. Reactivar mediante endpoint activate.
-6. Verificar que vuelve a estado activo.
+- [ ] Tener un estudiante activo.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Desactivar el estudiante mediante endpoint deactivate.
+- [ ] Verificar que el estado cambia a inactivo.
+- [ ] Reactivar mediante endpoint activate.
+- [ ] Verificar que vuelve a estado activo.
 
 #### Caso de fallo
 
@@ -1726,9 +1727,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Desactivar al estudiante.
-2. Intentar login con su clave.
-3. Reactivar e iniciar sesión.
+- [ ] Desactivar al estudiante.
+- [ ] Intentar login con su clave.
+- [ ] Reactivar e iniciar sesión.
 
 **Resultado esperado**
 
@@ -1764,12 +1765,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Preparar archivo CSV con filas válidas de estudiantes.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/students/bulk-import`.
-4. Subir el archivo CSV.
-5. Ejecutar importación.
-6. Verificar resumen de éxito y estudiantes creados.
+- [ ] Preparar archivo CSV con filas válidas de estudiantes.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/students/bulk-import`.
+- [ ] Subir el archivo CSV.
+- [ ] Ejecutar importación.
+- [ ] Verificar resumen de éxito y estudiantes creados.
 
 #### Criterios de aceptación
 
@@ -1795,11 +1796,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Preparar CSV con filas válidas e inválidas (email mal formado, campos vacíos, duplicados).
-2. Iniciar sesión como ADMIN.
-3. Subir CSV en `/students/bulk-import`.
-4. Ejecutar importación.
-5. Verificar resumen con filas válidas importadas y errores detallados.
+- [ ] Preparar CSV con filas válidas e inválidas (email mal formado, campos vacíos, duplicados).
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Subir CSV en `/students/bulk-import`.
+- [ ] Ejecutar importación.
+- [ ] Verificar resumen con filas válidas importadas y errores detallados.
 
 #### Caso de fallo
 
@@ -1812,8 +1813,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Subir el CSV inválido en /students/bulk-import.
-2. Revisar failedCount y errors por fila.
+- [ ] Subir el CSV inválido en /students/bulk-import.
+- [ ] Revisar failedCount y errors por fila.
 
 **Resultado esperado**
 
@@ -1847,11 +1848,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener estudiante con matrículas en varios períodos.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/students/[id]/enrollments`.
-4. Verificar historial con período, curso y estado.
-5. Repetir con rol TEACHER.
+- [ ] Tener estudiante con matrículas en varios períodos.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/students/[id]/enrollments`.
+- [ ] Verificar historial con período, curso y estado.
+- [ ] Repetir con rol TEACHER.
 
 #### Criterios de aceptación
 
@@ -1880,11 +1881,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener matrículas creadas en el período activo.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/enrollments`.
-4. Verificar listado con estudiante, curso y estado.
-5. Aplicar filtros si están disponibles.
+- [ ] Tener matrículas creadas en el período activo.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/enrollments`.
+- [ ] Verificar listado con estudiante, curso y estado.
+- [ ] Aplicar filtros si están disponibles.
 
 #### Criterios de aceptación
 
@@ -1910,12 +1911,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener estudiante y curso disponibles.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/enrollments/new`.
-4. Seleccionar estudiante y curso.
-5. Guardar matrícula.
-6. Verificar en el listado.
+- [ ] Tener estudiante y curso disponibles.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/enrollments/new`.
+- [ ] Seleccionar estudiante y curso.
+- [ ] Guardar matrícula.
+- [ ] Verificar en el listado.
 
 #### Caso de fallo
 
@@ -1927,8 +1928,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Matricular un estudiante sin fila en ese curso+período.
-2. Intentar matricular a Ana en 8vo A actual.
+- [ ] Matricular un estudiante sin fila en ese curso+período.
+- [ ] Intentar matricular a Ana en 8vo A actual.
 
 **Resultado esperado**
 
@@ -1959,11 +1960,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener estudiante con matrícula ACTIVE en el período.
-2. Iniciar sesión como ADMIN.
-3. Abrir formulario de nueva matrícula.
-4. Abrir selector de estudiantes.
-5. Verificar que el estudiante ya matriculado no aparece.
+- [ ] Tener estudiante con matrícula ACTIVE en el período.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Abrir formulario de nueva matrícula.
+- [ ] Abrir selector de estudiantes.
+- [ ] Verificar que el estudiante ya matriculado no aparece.
 
 #### Caso de fallo
 
@@ -1975,8 +1976,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Abrir /enrollments/new para 8vo A / 2025-2026 Demo.
-2. Buscar Ana y Carla en el selector.
+- [ ] Abrir /enrollments/new para 8vo A / 2025-2026 Demo.
+- [ ] Buscar Ana y Carla en el selector.
 
 **Resultado esperado**
 
@@ -2009,12 +2010,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener múltiples estudiantes sin matrícula y un curso disponible.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/enrollments/bulk`.
-4. Seleccionar curso y estudiantes.
-5. Ejecutar matrícula masiva.
-6. Verificar resumen y matrículas creadas.
+- [ ] Tener múltiples estudiantes sin matrícula y un curso disponible.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/enrollments/bulk`.
+- [ ] Seleccionar curso y estudiantes.
+- [ ] Ejecutar matrícula masiva.
+- [ ] Verificar resumen y matrículas creadas.
 
 #### Criterios de aceptación
 
@@ -2041,12 +2042,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener matrícula en estado ACTIVE.
-2. Iniciar sesión como ADMIN.
-3. Abrir edición de la matrícula.
-4. Cambiar estado a WITHDRAWN.
-5. Guardar y verificar.
-6. Repetir cambiando a COMPLETED.
+- [ ] Tener matrícula en estado ACTIVE.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Abrir edición de la matrícula.
+- [ ] Cambiar estado a WITHDRAWN.
+- [ ] Guardar y verificar.
+- [ ] Repetir cambiando a COMPLETED.
 
 #### Criterios de aceptación
 
@@ -2072,11 +2073,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener estudiante con matrículas en el período activo.
-2. Iniciar sesión como STUDENT.
-3. Navegar a `/my-enrollments`.
-4. Verificar listado de matrículas propias.
-5. Confirmar que solo ve sus matrículas, no las de otros.
+- [ ] Tener estudiante con matrículas en el período activo.
+- [ ] Iniciar sesión como STUDENT.
+- [ ] Navegar a `/my-enrollments`.
+- [ ] Verificar listado de matrículas propias.
+- [ ] Confirmar que solo ve sus matrículas, no las de otros.
 
 #### Caso de fallo
 
@@ -2087,8 +2088,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Entrar como Ana a Mis matrículas.
-2. Confirmar que Luis no aparece; si hay id ajeno, abrirlo por URL.
+- [ ] Entrar como Ana a Mis matrículas.
+- [ ] Confirmar que Luis no aparece; si hay id ajeno, abrirlo por URL.
 
 **Resultado esperado**
 
@@ -2122,10 +2123,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión como ADMIN.
-2. Navegar a `/academic-evaluation`.
-3. Verificar que se muestra el dashboard con resumen de configuración.
-4. Confirmar enlaces a secciones de configuración.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/academic-evaluation`.
+- [ ] Verificar que se muestra el dashboard con resumen de configuración.
+- [ ] Confirmar enlaces a secciones de configuración.
 
 #### Criterios de aceptación
 
@@ -2151,11 +2152,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener institución sin configuración de evaluación.
-2. Iniciar sesión como ADMIN.
-3. Navegar al dashboard de evaluación académica.
-4. Pulsar botón "Inicializar plantilla Ecuador".
-5. Verificar que se crean esquema, términos y categorías por defecto.
+- [ ] Tener institución sin configuración de evaluación.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar al dashboard de evaluación académica.
+- [ ] Pulsar botón "Inicializar plantilla Ecuador".
+- [ ] Verificar que se crean esquema, términos y categorías por defecto.
 
 #### Criterios de aceptación
 
@@ -2182,11 +2183,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como ADMIN.
-2. Navegar a `/grading-schemes`.
-3. Crear nuevo esquema de calificación.
-4. Definir escala numérica 0-10.
-5. Guardar y verificar en el listado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/grading-schemes`.
+- [ ] Crear nuevo esquema de calificación.
+- [ ] Definir escala numérica 0-10.
+- [ ] Guardar y verificar en el listado.
 
 #### Caso de fallo
 
@@ -2198,8 +2199,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear esquema 0-10.
-2. Intentar min > max.
+- [ ] Crear esquema 0-10.
+- [ ] Intentar min > max.
 
 **Resultado esperado**
 
@@ -2230,11 +2231,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Tener esquema de calificación creado.
-2. Configurar bandas DAR, AAR, PAAR y NAAR con rangos numéricos.
-3. Intentar crear bandas con rangos solapados.
-4. Verificar que se rechaza el solapamiento.
-5. Guardar configuración válida.
+- [ ] Tener esquema de calificación creado.
+- [ ] Configurar bandas DAR, AAR, PAAR y NAAR con rangos numéricos.
+- [ ] Intentar crear bandas con rangos solapados.
+- [ ] Verificar que se rechaza el solapamiento.
+- [ ] Guardar configuración válida.
 
 #### Caso de fallo
 
@@ -2246,8 +2247,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Guardar bandas sin solape.
-2. Intentar AAR 7-9 junto a DAR 8-10.
+- [ ] Guardar bandas sin solape.
+- [ ] Intentar AAR 7-9 junto a DAR 8-10.
 
 **Resultado esperado**
 
@@ -2280,12 +2281,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión como ADMIN.
-2. Navegar a `/evaluation-terms`.
-3. Crear término de evaluación (ej. Primer Quimestre).
-4. Asignar peso porcentual al término.
-5. Crear segundo término con peso complementario.
-6. Guardar y verificar en el listado.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/evaluation-terms`.
+- [ ] Crear término de evaluación (ej. Primer Quimestre).
+- [ ] Asignar peso porcentual al término.
+- [ ] Crear segundo término con peso complementario.
+- [ ] Guardar y verificar en el listado.
 
 #### Criterios de aceptación
 
@@ -2311,11 +2312,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Crear términos con pesos que sumen menos de 100%.
-2. Intentar guardar configuración.
-3. Verificar mensaje de error.
-4. Ajustar pesos para sumar exactamente 100%.
-5. Verificar que se guarda correctamente.
+- [ ] Crear términos con pesos que sumen menos de 100%.
+- [ ] Intentar guardar configuración.
+- [ ] Verificar mensaje de error.
+- [ ] Ajustar pesos para sumar exactamente 100%.
+- [ ] Verificar que se guarda correctamente.
 
 #### Caso de fallo
 
@@ -2327,8 +2328,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Poner 40 y 40 e intentar guardar.
-2. Corregir a 50/50.
+- [ ] Poner 40 y 40 e intentar guardar.
+- [ ] Corregir a 50/50.
 
 **Resultado esperado**
 
@@ -2360,12 +2361,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener al menos 3 términos de evaluación creados.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/evaluation-terms`.
-4. Reordenar términos arrastrando o con botones up/down.
-5. Guardar y verificar nuevo orden.
-6. Recargar página y confirmar persistencia.
+- [ ] Tener al menos 3 términos de evaluación creados.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/evaluation-terms`.
+- [ ] Reordenar términos arrastrando o con botones up/down.
+- [ ] Guardar y verificar nuevo orden.
+- [ ] Recargar página y confirmar persistencia.
 
 #### Criterios de aceptación
 
@@ -2392,12 +2393,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Iniciar sesión como ADMIN.
-2. Navegar a `/assessment-categories`.
-3. Crear categoría TAI (Trabajo Autónomo e Interactivo).
-4. Crear categoría AGA (Actividades Grupales de Aprendizaje).
-5. Crear categoría AEA (Actividades de Evaluación Académica).
-6. Asignar pesos a cada categoría.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/assessment-categories`.
+- [ ] Crear categoría TAI (Trabajo Autónomo e Interactivo).
+- [ ] Crear categoría AGA (Actividades Grupales de Aprendizaje).
+- [ ] Crear categoría AEA (Actividades de Evaluación Académica).
+- [ ] Asignar pesos a cada categoría.
 
 #### Criterios de aceptación
 
@@ -2423,11 +2424,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Crear categorías con pesos que no sumen 100%.
-2. Observar la barra de progreso de peso.
-3. Verificar indicador visual de suma incorrecta.
-4. Ajustar pesos hasta sumar 100%.
-5. Verificar que la barra muestra 100% en verde.
+- [ ] Crear categorías con pesos que no sumen 100%.
+- [ ] Observar la barra de progreso de peso.
+- [ ] Verificar indicador visual de suma incorrecta.
+- [ ] Ajustar pesos hasta sumar 100%.
+- [ ] Verificar que la barra muestra 100% en verde.
 
 #### Caso de fallo
 
@@ -2439,8 +2440,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Dejar suma 60 e intentar guardar.
-2. Ajustar a 100%.
+- [ ] Dejar suma 60 e intentar guardar.
+- [ ] Ajustar a 100%.
 
 **Resultado esperado**
 
@@ -2473,12 +2474,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Tener esquema de calificación y términos configurados.
-2. Iniciar sesión como ADMIN.
-3. Navegar a `/configuration`.
-4. Seleccionar esquema de calificación activo.
-5. Configurar reglas de redondeo.
-6. Guardar y verificar configuración activa.
+- [ ] Tener esquema de calificación y términos configurados.
+- [ ] Iniciar sesión como ADMIN.
+- [ ] Navegar a `/configuration`.
+- [ ] Seleccionar esquema de calificación activo.
+- [ ] Configurar reglas de redondeo.
+- [ ] Guardar y verificar configuración activa.
 
 #### Criterios de aceptación
 
@@ -2505,11 +2506,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como SUPER_ADMIN.
-2. Navegar a `/academic-evaluation/platform`.
-3. Verificar plantillas y defaults de plataforma para Ecuador.
-4. Modificar configuración de plataforma si aplica.
-5. Verificar que instituciones pueden heredar estos defaults.
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Navegar a `/academic-evaluation/platform`.
+- [ ] Verificar plantillas y defaults de plataforma para Ecuador.
+- [ ] Modificar configuración de plataforma si aplica.
+- [ ] Verificar que instituciones pueden heredar estos defaults.
 
 #### Caso de fallo
 
@@ -2520,8 +2521,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Como SUPER_ADMIN ver defaults de plataforma.
-2. Como ADMIN abrir la misma ruta.
+- [ ] Como SUPER_ADMIN ver defaults de plataforma.
+- [ ] Como ADMIN abrir la misma ruta.
 
 **Resultado esperado**
 
@@ -2555,10 +2556,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Abrir un formulario de creación (ej. estudiante, materia).
-2. Provocar un error de validación del backend (email duplicado, campo inválido).
-3. Verificar que el mensaje de error aparece en español.
-4. Repetir en al menos 3 formularios diferentes.
+- [ ] Abrir un formulario de creación (ej. estudiante, materia).
+- [ ] Provocar un error de validación del backend (email duplicado, campo inválido).
+- [ ] Verificar que el mensaje de error aparece en español.
+- [ ] Repetir en al menos 3 formularios diferentes.
 
 #### Caso de fallo
 
@@ -2571,9 +2572,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Provoca duplicado de estudiante.
-2. Provoca código de materia duplicado.
-3. Provoca 401 en login.
+- [ ] Provoca duplicado de estudiante.
+- [ ] Provoca código de materia duplicado.
+- [ ] Provoca 401 en login.
 
 **Resultado esperado**
 
@@ -2605,11 +2606,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de prueba
 
-1. Abrir formulario con selector de muchas opciones (ej. estudiante, profesor, curso).
-2. Escribir texto en el campo de búsqueda del selector.
-3. Verificar que las opciones se filtran en tiempo real.
-4. Seleccionar una opción filtrada.
-5. Repetir en al menos 3 formularios.
+- [ ] Abrir formulario con selector de muchas opciones (ej. estudiante, profesor, curso).
+- [ ] Escribir texto en el campo de búsqueda del selector.
+- [ ] Verificar que las opciones se filtran en tiempo real.
+- [ ] Seleccionar una opción filtrada.
+- [ ] Repetir en al menos 3 formularios.
 
 #### Criterios de aceptación
 
@@ -2636,12 +2637,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como SUPER_ADMIN.
-2. Navegar a pantalla de evaluación académica.
-3. Verificar selector de alcance institucional.
-4. Cambiar entre alcance de plataforma e institución.
-5. Verificar que la configuración mostrada cambia según el alcance.
-6. Repetir con rol ADMIN (solo alcance institución).
+- [ ] Iniciar sesión como SUPER_ADMIN.
+- [ ] Navegar a pantalla de evaluación académica.
+- [ ] Verificar selector de alcance institucional.
+- [ ] Cambiar entre alcance de plataforma e institución.
+- [ ] Verificar que la configuración mostrada cambia según el alcance.
+- [ ] Repetir con rol ADMIN (solo alcance institución).
 
 #### Caso de fallo
 
@@ -2652,8 +2653,8 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Como SUPER_ADMIN cambiar alcance.
-2. Como ADMIN abrir evaluación.
+- [ ] Como SUPER_ADMIN cambiar alcance.
+- [ ] Como ADMIN abrir evaluación.
 
 **Resultado esperado**
 
@@ -2687,12 +2688,12 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Iniciar sesión como teacher.demo@zerocademy.edu.
-2. Ir a /grades/assessments/new y crear una evaluación en Matemática 8vo A.
-3. Abrir /grades/entry y guardar notas en lote para matrículas ACTIVE.
-4. Intentar una nota mayor al maxScore o con más decimales de los permitidos.
-5. Iniciar como student1.demo@zerocademy.edu y abrir /grades.
-6. Iniciar como admin.demo@zerocademy.edu y confirmar lectura sin mutación.
+- [ ] Iniciar sesión como teacher.demo@zerocademy.edu.
+- [ ] Ir a /grades/assessments/new y crear una evaluación en Matemática 8vo A.
+- [ ] Abrir /grades/entry y guardar notas en lote para matrículas ACTIVE.
+- [ ] Intentar una nota mayor al maxScore o con más decimales de los permitidos.
+- [ ] Iniciar como student1.demo@zerocademy.edu y abrir /grades.
+- [ ] Iniciar como admin.demo@zerocademy.edu y confirmar lectura sin mutación.
 
 #### Caso de fallo
 
@@ -2705,9 +2706,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Crear Quiz QA y guardar 8.5 / 7.0.
-2. Intentar 11 o demasiados decimales.
-3. Entrar como Ana y como admin.demo.
+- [ ] Crear Quiz QA y guardar 8.5 / 7.0.
+- [ ] Intentar 11 o demasiados decimales.
+- [ ] Entrar como Ana y como admin.demo.
 
 **Resultado esperado**
 
@@ -2741,11 +2742,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Flujo de éxito
 
-1. Como student1.demo abrir Rendimiento (/academic-performance) y anotar un promedio.
-2. Como teacher.demo revisar promedios de 8vo A.
-3. Como admin.demo abrir rendimiento institucional.
-4. Como docente cambiar una nota y recargar rendimiento.
-5. Confirmar que STUDENT no accede a endpoints de curso/institución.
+- [ ] Como student1.demo abrir Rendimiento (/academic-performance) y anotar un promedio.
+- [ ] Como teacher.demo revisar promedios de 8vo A.
+- [ ] Como admin.demo abrir rendimiento institucional.
+- [ ] Como docente cambiar una nota y recargar rendimiento.
+- [ ] Confirmar que STUDENT no accede a endpoints de curso/institución.
 
 #### Caso de fallo
 
@@ -2758,9 +2759,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Pasos**
 
-1. Como Ana anotar promedio de Matemática.
-2. Como docente cambiar 8.5 → 9.0 y recargar rendimiento.
-3. Como Ana abrir URL de rendimiento de curso/institución.
+- [ ] Como Ana anotar promedio de Matemática.
+- [ ] Como docente cambiar 8.5 → 9.0 y recargar rendimiento.
+- [ ] Como Ana abrir URL de rendimiento de curso/institución.
 
 **Resultado esperado**
 
