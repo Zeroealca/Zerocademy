@@ -23,6 +23,21 @@ export class BulkImportDuplicateWarningDto {
 }
 
 export class BulkImportResultDto {
+  @ApiProperty({ type: 'array', items: { type: 'object' } })
+  rows: {
+    row: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    nationalId: string;
+    birthDate?: string;
+    gender?: string;
+    phone?: string;
+    address?: string;
+    emergencyContact?: string;
+    status: 'imported' | 'skipped' | 'failed';
+    message?: string;
+  }[];
   @ApiProperty()
   importedCount: number;
 

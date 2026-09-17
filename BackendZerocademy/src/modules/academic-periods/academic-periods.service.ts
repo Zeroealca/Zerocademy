@@ -327,7 +327,7 @@ export class AcademicPeriodsService {
         include: academicPeriodWithTermsInclude,
       });
 
-      if (period) {
+      if (period && period.status === AcademicPeriodStatus.ACTIVE && period.isActive) {
         try {
           await assertActorCanAccessPeriod(this.prisma, actor, period);
           selectedPeriod = toAcademicPeriodResponseDto(period, true);
@@ -349,12 +349,10 @@ export class AcademicPeriodsService {
       selectedPeriod = null;
     }
 
-    const effectivePeriod =
-      selectedPeriod ??
-      (await this.resolveDefaultPeriod(actor, institutionId, activeByRegime));
+    const effectivePeriod = await this.resolveDefaultPeriod(actor, institutionId, activeByRegime);
 
     return {
-      selectedPeriod,
+      selectedPeriod: null,
       effectivePeriod,
       activeByRegime,
       institutionId,
@@ -374,6 +372,12 @@ export class AcademicPeriodsService {
 
     const period = await this.findPeriodOrThrow(dto.academicPeriodId, true);
     await assertActorCanAccessPeriod(this.prisma, actor, period);
+
+    if (period.status !== AcademicPeriodStatus.ACTIVE || !period.isActive) {
+      throw new BadRequestException(
+        'Solo se puede seleccionar un periodo lectivo activo como contexto general',
+      );
+    }
 
     await this.prisma.user.update({
       where: { id: actor.id },
@@ -410,7 +414,7 @@ export class AcademicPeriodsService {
           where: { id: institution.activeAcademicPeriodId },
           include: academicPeriodWithTermsInclude,
         });
-        if (period) {
+        if (period && period.status === AcademicPeriodStatus.ACTIVE && period.isActive) {
           return toAcademicPeriodResponseDto(period, true);
         }
       }

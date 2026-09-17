@@ -1,7 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class BulkImportStudentsDto {
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  dryRun?: boolean;
   @ApiProperty({
     description:
       'CSV rows: email,password,firstName,lastName,nationalId,birthDate,gender,phone,address,emergencyContact; (optional fields may be empty). Header row is optional.',

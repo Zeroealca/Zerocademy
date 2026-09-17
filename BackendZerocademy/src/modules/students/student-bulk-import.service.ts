@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EnrollmentStatus, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AppConfig } from '../../config/configuration';
-import { resolveActorInstitutionId } from '../../common/rbac/academic-scope.util';
+import { resolveActorInstitutionId, assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { ProfileProvisioningService } from '../../common/rbac/profile-provisioning.service';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -62,6 +62,8 @@ export class StudentBulkImportService {
     const institutionId =
       course.institutionId ??
       (await resolveActorInstitutionId(this.prisma, actor));
+    if (!institutionId) throw new BadRequestException('El curso no tiene una institución asignada.');
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
 
     const { rows, failures: parseFailures } = parseStudentCsvContent(
       dto.csvContent,
@@ -69,9 +71,10 @@ export class StudentBulkImportService {
     const duplicateFailures = findDuplicateCsvRows(rows);
 
     const result: BulkImportResultDto = {
+      rows: [],
       importedCount: 0,
       skippedCount: 0,
-      failedCount: parseFailures.length + duplicateFailures.length,
+      failedCount: new Set([...parseFailures, ...duplicateFailures].map((failure) => failure.rowNumber)).size,
       errors: [
         ...parseFailures.map((failure) => ({
           row: failure.rowNumber,
@@ -93,8 +96,7 @@ export class StudentBulkImportService {
       if (
         result.errors.some(
           (error) =>
-            error.row === row.rowNumber &&
-            !error.message.includes('Duplicate'),
+            error.row === row.rowNumber,
         )
       ) {
         continue;
@@ -107,12 +109,18 @@ export class StudentBulkImportService {
           courseId: dto.courseId,
           academicPeriodId: dto.academicPeriodId,
           enrollmentDate,
+          dryRun: dto.dryRun === true,
         });
 
         if (outcome === 'imported') {
           result.importedCount += 1;
         } else if (outcome === 'skipped') {
           result.skippedCount += 1;
+          result.duplicateWarnings.push({
+            row: row.rowNumber,
+            nationalId: row.nationalId,
+            message: 'El estudiante ya está matriculado en este curso y período; la fila se omite.',
+          });
         }
       } catch (error) {
         result.failedCount += 1;
@@ -135,7 +143,7 @@ export class StudentBulkImportService {
     this.logger.log({
       context: STUDENT_BULK_IMPORT_CONTEXT,
       event: 'BULK_IMPORT_COMPLETED',
-      message: 'Student CSV import finished',
+      message: dto.dryRun ? 'Student CSV preview finished' : 'Student CSV import finished',
       metadata: {
         actorId: actor.id,
         courseId: dto.courseId,
@@ -146,6 +154,30 @@ export class StudentBulkImportService {
       },
     });
 
+    const rowNumbers = new Set([
+      ...rows.map((row) => row.rowNumber),
+      ...result.errors.map((error) => error.row),
+    ]);
+    const parsedRows = new Map(rows.map((row) => [row.rowNumber, row]));
+    for (const rowNumber of [...rowNumbers].sort((a, b) => a - b)) {
+      const row = parsedRows.get(rowNumber);
+      const errors = result.errors.filter((error) => error.row === rowNumber);
+      const warning = result.duplicateWarnings.find((warning) => warning.row === rowNumber);
+      result.rows.push({
+        row: rowNumber,
+        email: row?.email ?? '',
+        firstName: row?.firstName ?? '',
+        lastName: row?.lastName ?? '',
+        nationalId: row?.nationalId ?? '',
+        birthDate: row?.birthDate,
+        gender: row?.gender,
+        phone: row?.phone,
+        address: row?.address,
+        emergencyContact: row?.emergencyContact,
+        status: errors.length ? 'failed' : warning ? 'skipped' : 'imported',
+        message: errors.length ? errors.map((error) => error.message).join('; ') : warning?.message,
+      });
+    }
     return result;
   }
 
@@ -170,8 +202,9 @@ export class StudentBulkImportService {
     courseId: string;
     academicPeriodId: string;
     enrollmentDate: Date;
+    dryRun: boolean;
   }): Promise<'imported' | 'skipped'> {
-    const { row, institutionId, courseId, academicPeriodId, enrollmentDate } =
+    const { row, institutionId, courseId, academicPeriodId, enrollmentDate, dryRun } =
       params;
 
     const existingNational = await this.prisma.studentProfile.findFirst({
@@ -193,6 +226,8 @@ export class StudentBulkImportService {
       if (enrollmentExists) {
         return 'skipped';
       }
+
+      if (dryRun) return 'imported';
 
       await this.prisma.enrollment.create({
         data: {
@@ -231,6 +266,8 @@ export class StudentBulkImportService {
         return 'skipped';
       }
 
+      if (dryRun) return 'imported';
+
       await this.prisma.enrollment.create({
         data: {
           studentId: existingUser.studentProfile.id,
@@ -244,6 +281,7 @@ export class StudentBulkImportService {
       return 'imported';
     }
 
+    if (dryRun) return 'imported';
     const passwordHash = await this.hashPassword(row.password);
 
     await this.prisma.$transaction(async (tx) => {

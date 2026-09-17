@@ -137,11 +137,11 @@ export class TeacherAssignmentsService {
     await assertActorCanAccessInstitution(this.prisma, actor, existing.institutionId);
 
     const keys = {
-      institutionId: dto.institutionId,
-      teacherId: dto.teacherId ?? existing.teacherId,
+      institutionId: existing.institutionId,
+      teacherId: existing.teacherId,
       subjectId: dto.subjectId ?? existing.subjectId,
       courseId: dto.courseId ?? existing.courseId,
-      academicPeriodId: dto.academicPeriodId ?? existing.academicPeriodId,
+      academicPeriodId: existing.academicPeriodId,
     };
 
     const { institutionId } = await this.validateAssignmentKeys(keys, actor, id);
