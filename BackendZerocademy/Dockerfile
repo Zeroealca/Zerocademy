@@ -43,8 +43,11 @@ CMD []
 # -----------------------------------------------------------------------------
 FROM deps AS builder
 COPY BackendZerocademy ./BackendZerocademy
-RUN npx prisma generate --schema=BackendZerocademy/prisma/schema.prisma \
-  && npm run build -w backend-zerocademy
+# Host incremental caches must not skip JS emit inside the image.
+RUN rm -f BackendZerocademy/tsconfig.build.tsbuildinfo BackendZerocademy/tsconfig.tsbuildinfo \
+  && npx prisma generate --schema=BackendZerocademy/prisma/schema.prisma \
+  && npm run build -w backend-zerocademy \
+  && test -f BackendZerocademy/dist/main.js
 
 # -----------------------------------------------------------------------------
 # Production runner — minimal runtime without devDependencies tooling
