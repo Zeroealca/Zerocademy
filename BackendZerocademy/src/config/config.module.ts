@@ -6,7 +6,7 @@ import { envValidationSchema } from './env.validation';
 
 /** Backend package root — works from src/ (dev) and dist/ (prod). */
 const backendRoot = join(__dirname, '..', '..');
-console.log(backendRoot);
+
 @Module({
   imports: [
     NestConfigModule.forRoot({
@@ -14,6 +14,9 @@ console.log(backendRoot);
       envFilePath: [
         join(process.cwd(), '.env.local'),
         join(process.cwd(), '.env'),
+        // Prefer package-local .env when cwd is the monorepo root (Docker).
+        join(backendRoot, '.env.local'),
+        join(backendRoot, '.env'),
       ],
       load: [configuration],
       validationSchema: envValidationSchema,

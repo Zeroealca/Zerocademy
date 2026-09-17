@@ -28,6 +28,13 @@ fi
 
 PRISMA_SCHEMA="BackendZerocademy/prisma/schema.prisma"
 
+# Prisma schema requires DATABASE_URL_UNPOOLED (directUrl). Fall back to DATABASE_URL
+# when only one URL is configured (local Docker). Prefer an unpooled Neon URL in prod.
+if [ -z "${DATABASE_URL_UNPOOLED:-}" ] && [ -n "${DATABASE_URL:-}" ]; then
+  export DATABASE_URL_UNPOOLED="$DATABASE_URL"
+  echo "DATABASE_URL_UNPOOLED unset; using DATABASE_URL for Prisma CLI."
+fi
+
 echo "Running prisma generate..."
 npx prisma generate --schema="$PRISMA_SCHEMA"
 

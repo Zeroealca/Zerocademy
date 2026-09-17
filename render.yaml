@@ -28,8 +28,10 @@ services:
       # Neon direct URL (no -pooler) — required for Prisma migrate
       - key: DATABASE_URL_UNPOOLED
         sync: false
+      # Must be at least 16 characters
       - key: JWT_SECRET
         generateValue: true
+      # Must be at least 16 characters
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: JWT_ACCESS_EXPIRES_IN
