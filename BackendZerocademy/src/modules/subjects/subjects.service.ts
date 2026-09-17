@@ -154,8 +154,17 @@ export class SubjectsService {
     return toSubjectResponseDto(subject);
   }
 
-  async update(id: string, dto: UpdateSubjectDto): Promise<SubjectResponseDto> {
+  async update(id: string, dto: UpdateSubjectDto, actor: AuthenticatedUser): Promise<SubjectResponseDto> {
     const existing = await this.findSubjectOrThrow(id);
+    if (actor.role === Role.ADMIN) {
+      if (existing.isSystem || !existing.institutionId || dto.isSystem === true) {
+        throw new ForbiddenException('Solo el super administrador puede editar materias del catálogo global.');
+      }
+      await assertActorCanAccessInstitution(this.prisma, actor, existing.institutionId);
+      if (dto.institutionId && dto.institutionId !== existing.institutionId) {
+        throw new ForbiddenException('No se puede cambiar la institución de la materia.');
+      }
+    }
     const isSystem = dto.isSystem ?? existing.isSystem;
     const gradeLevelIds = dto.gradeLevelIds;
 
@@ -170,6 +179,7 @@ export class SubjectsService {
         existing.institutionId,
         id,
       );
+      if (existing.institutionId) await assertUniqueSubjectCode(this.prisma, dto.code, null, id);
     }
 
     if (gradeLevelIds) {
@@ -289,9 +299,13 @@ export class SubjectsService {
 
   private buildListWhere(query: ListSubjectsQueryDto): Prisma.SubjectWhereInput {
     const where: Prisma.SubjectWhereInput = {};
+    const scope: Prisma.SubjectWhereInput[] = [];
 
     if (query.institutionId) {
-      where.institutionId = query.institutionId;
+      scope.push({ OR: [
+        { institutionId: query.institutionId },
+        { institutionId: null, isSystem: true },
+      ] });
     }
 
     if (query.isActive !== undefined) {
@@ -303,10 +317,13 @@ export class SubjectsService {
     }
 
     if (query.gradeLevelId) {
-      where.gradeLevelLinks = {
-        some: { gradeLevelId: query.gradeLevelId },
-      };
+      scope.push({ OR: [
+        { isSystem: true },
+        { gradeLevelLinks: { some: { gradeLevelId: query.gradeLevelId } } },
+      ] });
     }
+
+    if (scope.length) where.AND = scope;
 
     if (query.search) {
       where.OR = [

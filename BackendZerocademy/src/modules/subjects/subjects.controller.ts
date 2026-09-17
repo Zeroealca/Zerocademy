@@ -83,14 +83,15 @@ export class SubjectsController {
   }
 
   @Patch(':id')
-  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
+  @ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN)
   @ApiOperation({ summary: 'Update subject' })
   @ApiOkResponse({ type: SubjectResponseDto })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSubjectDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<SubjectResponseDto> {
-    return this.subjectsService.update(id, dto);
+    return this.subjectsService.update(id, dto, actor);
   }
 
   @Post(':id/activate')
