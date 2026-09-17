@@ -23,6 +23,7 @@ interface SubjectsTableProps {
   isLoading: boolean;
   isError: boolean;
   canManage: boolean;
+  canEdit?: boolean;
   onRetry: () => void;
   onPageChange: (page: number) => void;
   onToggleActive: (subject: Subject) => void;
@@ -34,6 +35,7 @@ export function SubjectsTable({
   isLoading,
   isError,
   canManage,
+  canEdit = false,
   onRetry,
   onPageChange,
   onToggleActive,
@@ -74,7 +76,7 @@ export function SubjectsTable({
                     <th className="px-4 py-3 font-medium">Grados</th>
                     <th className="px-4 py-3 font-medium">Ámbito</th>
                     <th className="px-4 py-3 font-medium">Estado</th>
-                    {canManage ? <th className="px-4 py-3 font-medium text-right">
+                    {canManage || canEdit ? <th className="px-4 py-3 font-medium text-right">
                       Acciones
                     </th> : null}
                   </tr>
@@ -83,7 +85,7 @@ export function SubjectsTable({
                   {subjects.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={canManage ? 6 : 5}
+                        colSpan={canManage || canEdit ? 6 : 5}
                         className="px-4 py-8 text-center text-muted-foreground"
                       >
                         No se encontraron materias.
@@ -130,7 +132,7 @@ export function SubjectsTable({
                             }
                           </Badge>
                         </td>
-                        {canManage ? <td className="px-4 py-3 text-right">
+                        {canManage || canEdit ? <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             {canManage ? (
                               <Button
@@ -141,7 +143,7 @@ export function SubjectsTable({
                                 {subject.isActive ? "Desactivar" : "Activar"}
                               </Button>
                             ) : null}
-                            {canManage ? (
+                            {canManage || (canEdit && !subject.isSystem && subject.institutionId) ? (
                               <Button asChild variant="outline" size="sm">
                                 <Link href={`/subjects/${subject.id}/edit`}>
                                   Editar

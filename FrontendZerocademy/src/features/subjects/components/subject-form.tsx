@@ -163,6 +163,30 @@ export function SubjectForm({
                 name="gradeLevelIds"
                 control={control}
                 render={({ field }) => (
+                  <>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-border"
+                        checked={grades.length > 0 && grades.every((grade) => field.value?.includes(grade.id))}
+                        ref={(element) => {
+                          if (element) {
+                            element.indeterminate = grades.some((grade) => field.value?.includes(grade.id)) &&
+                              !grades.every((grade) => field.value?.includes(grade.id));
+                          }
+                        }}
+                        disabled={disabled || isSubmitting || gradesLoading || grades.length === 0}
+                        onChange={(event) => {
+                          const next = new Set(field.value ?? []);
+                          grades.forEach((grade) => {
+                            if (event.target.checked) next.add(grade.id);
+                            else next.delete(grade.id);
+                          });
+                          field.onChange([...next]);
+                        }}
+                      />
+                      Seleccionar todos
+                    </label>
                   <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
                     {gradesLoading ? (
                       <p className="text-sm text-muted-foreground">
@@ -204,6 +228,7 @@ export function SubjectForm({
                       })
                     )}
                   </div>
+                  </>
                 )}
               />
             </div>

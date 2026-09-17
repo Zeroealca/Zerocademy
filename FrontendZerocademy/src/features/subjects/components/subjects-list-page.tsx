@@ -91,6 +91,7 @@ export function SubjectsListPage() {
         isLoading={isLoading}
         isError={isError}
         canManage={canManage}
+        canEdit={currentUser?.role === "ADMIN"}
         onRetry={() => refetch()}
         onPageChange={(page) => setFilters((prev) => ({ ...prev, page }))}
         onToggleActive={handleToggleActive}

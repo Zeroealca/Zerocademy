@@ -82,7 +82,7 @@ export function EnrollmentForm({
     name: "academicPeriodId" as keyof CreateEnrollmentInput,
   }) as string | undefined;
 
-  const { data: periodsData } = useInstitutionAcademicPeriods();
+  const { data: periodsData } = useInstitutionAcademicPeriods({ page: 1, limit: 100, status: "ACTIVE" });
   const { data: coursesData } = useCourses({
     page: 1,
     limit: 100,
@@ -102,6 +102,10 @@ export function EnrollmentForm({
   }, [academicPeriodId, form, isCreate]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
+    if (isCreate && !periodsData?.data.some((period) => period.id === (values as CreateEnrollmentInput).academicPeriodId)) {
+      form.setError("academicPeriodId", { message: "Selecciona un periodo lectivo activo." });
+      return;
+    }
     try {
       if (isCreate) {
         await (onSubmit as (v: CreateEnrollmentInput) => Promise<void>)(

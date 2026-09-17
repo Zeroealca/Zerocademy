@@ -62,7 +62,10 @@ export function EditTeacherAssignmentPage({
   }
 
   const handleSubmit = async (values: CreateTeacherAssignmentInput) => {
-    await updateAssignment.mutateAsync({ id, payload: values });
+    await updateAssignment.mutateAsync({ id, payload: {
+      courseId: values.courseId,
+      subjectId: values.subjectId,
+    } });
     router.push("/teacher-assignments");
   };
 
@@ -77,6 +80,8 @@ export function EditTeacherAssignmentPage({
         <Link href="/teacher-assignments">← Volver al listado</Link>
       </Button>
       <TeacherAssignmentForm
+        mode="edit"
+        assignment={assignment}
         title="Editar asignación docente"
         description={`Actualiza la asignación «${label}».`}
         submitLabel="Guardar cambios"

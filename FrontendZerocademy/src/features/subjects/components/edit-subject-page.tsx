@@ -12,6 +12,7 @@ import { useSubject } from "@/features/subjects/hooks/use-subject";
 import type { CreateSubjectInput } from "@/features/subjects/schemas/subject.schema";
 import {
   canManagePlatformCatalog,
+  canCreateSubjects,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -26,12 +27,12 @@ export function EditSubjectPage({ subjectId }: EditSubjectPageProps) {
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
 
-  if (!canManagePlatformCatalog(currentUser?.role)) {
+  if (!canCreateSubjects(currentUser?.role)) {
     return (
       <AccessDenied
         href="/subjects"
         label="Volver al listado"
-        message="Solo el super administrador puede editar materias."
+        message="Solo administradores pueden editar materias."
       />
     );
   }
@@ -73,6 +74,10 @@ export function EditSubjectPage({ subjectId }: EditSubjectPageProps) {
     );
   }
 
+  if (currentUser?.role === "ADMIN" && (subject.isSystem || !subject.institutionId)) {
+    return <AccessDenied href="/subjects" label="Volver al listado" message="Solo el super administrador puede editar materias del catálogo global." />;
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
@@ -90,8 +95,9 @@ export function EditSubjectPage({ subjectId }: EditSubjectPageProps) {
           gradeLevelIds: subject.gradeLevels?.map((grade) => grade.id) ?? [],
         }}
         onSubmit={handleSubmit}
+        allowSystemSubject={canManagePlatformCatalog(currentUser?.role)}
       />
-      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+      {canManagePlatformCatalog(currentUser?.role) ? <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
         <p className="text-sm font-medium text-destructive">Zona de peligro</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Elimina la materia solo si no tiene asignaciones docentes.
@@ -105,7 +111,7 @@ export function EditSubjectPage({ subjectId }: EditSubjectPageProps) {
         >
           Eliminar materia
         </Button>
-      </div>
+      </div> : null}
     </div>
   );
 }

@@ -42,7 +42,7 @@ export function CourseForm({
   disabled = false,
 }: CourseFormProps) {
   const { data: periodsData, isLoading: periodsLoading } =
-    useInstitutionAcademicPeriods();
+    useInstitutionAcademicPeriods({ page: 1, limit: 100, status: "ACTIVE" });
   const { data: gradesData, isLoading: gradesLoading } = useGradeLevels({
     page: 1,
     limit: 100,
@@ -70,6 +70,10 @@ export function CourseForm({
   const grades = gradesData?.data ?? [];
 
   const handleFormSubmit = handleSubmit(async (values) => {
+    if (!periods.some((period) => period.id === values.academicPeriodId)) {
+      setError("academicPeriodId", { message: "Selecciona un periodo lectivo activo." });
+      return;
+    }
     try {
       const payload: CreateCourseInput = {
         name: values.name,
@@ -120,7 +124,7 @@ export function CourseForm({
                   <option value="">
                     {periodsLoading ? "Cargando períodos…" : "Selecciona un período"}
                   </option>
-                  {isSelectValueMissing(
+                  {periodsLoading && isSelectValueMissing(
                     field.value,
                     periods.map((period) => period.id),
                   ) ? (

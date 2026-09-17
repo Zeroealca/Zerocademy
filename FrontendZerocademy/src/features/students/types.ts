@@ -70,6 +70,7 @@ export type UpdateStudentInput = Partial<{
 }>;
 
 export interface BulkImportStudentsInput {
+  dryRun?: boolean;
   csvContent: string;
   courseId: string;
   academicPeriodId: string;
@@ -88,6 +89,20 @@ export interface BulkImportDuplicateWarning {
 }
 
 export interface BulkImportResult {
+  rows?: {
+    row: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    nationalId: string;
+    birthDate?: string;
+    gender?: string;
+    phone?: string;
+    address?: string;
+    emergencyContact?: string;
+    status: "imported" | "skipped" | "failed";
+    message?: string;
+  }[];
   importedCount: number;
   skippedCount: number;
   failedCount: number;

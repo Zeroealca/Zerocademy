@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useCourses } from "@/features/courses/hooks/use-courses";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -23,19 +24,27 @@ const DEFAULT_FILTERS: EnrollmentsFilters = { page: 1, limit: 10 };
 export function EnrollmentsListPage() {
   const currentUser = useAuthStore((state) => state.user);
   const effectivePeriodId = useEffectiveAcademicPeriodId();
+  const lastEffectivePeriodId = useRef<string | undefined>(undefined);
   const [filters, setFilters] = useState<EnrollmentsFilters>(DEFAULT_FILTERS);
   const { data, isLoading, isError, refetch } = useEnrollments(filters);
   const { data: periodsData } = useInstitutionAcademicPeriods();
+  const { data: coursesData, isLoading: coursesLoading, isError: coursesError } = useCourses({
+    page: 1,
+    limit: 100,
+    academicPeriodId: filters.academicPeriodId,
+  });
 
   useEffect(() => {
-    if (effectivePeriodId && filters.academicPeriodId !== effectivePeriodId) {
+    if (lastEffectivePeriodId.current !== effectivePeriodId) {
+      lastEffectivePeriodId.current = effectivePeriodId;
       setFilters((prev) => ({
         ...prev,
         academicPeriodId: effectivePeriodId,
+        courseId: undefined,
         page: 1,
       }));
     }
-  }, [effectivePeriodId, filters.academicPeriodId]);
+  }, [effectivePeriodId]);
 
   if (!canViewEnrollments(currentUser?.role)) {
     return <AccessDenied />;
@@ -64,7 +73,7 @@ export function EnrollmentsListPage() {
         ) : null}
       </header>
 
-      <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-2">
+      <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="academicPeriodId">Período</Label>
           <Select
@@ -74,6 +83,7 @@ export function EnrollmentsListPage() {
               setFilters((prev) => ({
                 ...prev,
                 academicPeriodId: e.target.value || undefined,
+                courseId: undefined,
                 page: 1,
               }))
             }
@@ -83,6 +93,24 @@ export function EnrollmentsListPage() {
               <option key={period.id} value={period.id}>
                 {formatAcademicPeriodOptionLabel(period)}
               </option>
+            ))}
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="enrollmentCourseFilter">Curso / paralelo</Label>
+          <Select
+            id="enrollmentCourseFilter"
+            value={filters.courseId ?? ""}
+            disabled={coursesLoading || coursesError}
+            onChange={(event) => setFilters((prev) => ({
+              ...prev,
+              courseId: event.target.value || undefined,
+              page: 1,
+            }))}
+          >
+            <option value="">{coursesLoading ? "Cargando cursos..." : coursesError ? "No se pudieron cargar los cursos" : "Todos los cursos"}</option>
+            {(coursesData?.data ?? []).map((course) => (
+              <option key={course.id} value={course.id}>{course.name} ({course.section})</option>
             ))}
           </Select>
         </div>

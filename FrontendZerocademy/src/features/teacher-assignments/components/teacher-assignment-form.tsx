@@ -38,6 +38,8 @@ export function assignmentToFormValues(
 }
 
 interface TeacherAssignmentFormProps {
+  mode?: "create" | "edit";
+  assignment?: TeacherAssignment;
   title: string;
   description: string;
   submitLabel: string;
@@ -47,6 +49,8 @@ interface TeacherAssignmentFormProps {
 }
 
 export function TeacherAssignmentForm({
+  mode,
+  assignment,
   title,
   description,
   submitLabel,
@@ -54,6 +58,7 @@ export function TeacherAssignmentForm({
   onSubmit,
   disabled = false,
 }: TeacherAssignmentFormProps) {
+  const isEditing = mode === "edit" || Boolean(assignment) || Boolean(defaultValues);
   const { data: institutionsData, isLoading: institutionsLoading, isError: institutionsError } =
     useInstitutions({ page: 1, limit: 100 });
   const {
@@ -76,6 +81,7 @@ export function TeacherAssignmentForm({
   const selectedInstitution = institutionsData?.data.find((institution) => institution.id === institutionId);
   const { data: periodsData, isLoading: periodsLoading } = useAcademicPeriods({
     page: 1, limit: 100,
+    status: isEditing ? undefined : "ACTIVE",
     institutionId: institutionId || undefined,
     regime: selectedInstitution?.regime ?? undefined,
   });
@@ -104,7 +110,7 @@ export function TeacherAssignmentForm({
 
   const selectedCourse = coursesData?.data.find((course) => course.id === courseId);
 
-  const { data: subjectsData, isLoading: subjectsLoading } = useSubjects({
+  const { data: subjectsData, isLoading: subjectsLoading, isError: subjectsError } = useSubjects({
     page: 1,
     limit: 100,
     isActive: true,
@@ -120,6 +126,10 @@ export function TeacherAssignmentForm({
   const subjects = subjectsData?.data ?? [];
 
   const handleFormSubmit = handleSubmit(async (values) => {
+    if (!isEditing && !periods.some((period) => period.id === values.academicPeriodId)) {
+      setError("academicPeriodId", { message: "Selecciona un periodo lectivo activo." });
+      return;
+    }
     try {
       await onSubmit(values);
     } catch (error) {
@@ -149,6 +159,11 @@ export function TeacherAssignmentForm({
         <form onSubmit={handleFormSubmit} className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="assignmentInstitutionId">Institución *</Label>
+            {isEditing ? (
+              <p id="assignmentInstitutionId" className="py-2 text-sm">
+                {selectedInstitution?.name ?? institutionId}
+              </p>
+            ) : (
             <Controller name="institutionId" control={control} render={({ field }) => (
               <Select id="assignmentInstitutionId" value={field.value} onBlur={field.onBlur}
                 disabled={disabled || institutionsLoading || institutionsError}
@@ -165,10 +180,16 @@ export function TeacherAssignmentForm({
                 ))}
               </Select>
             )} />
+            )}
             {errors.institutionId ? <p className="text-sm text-destructive">{errors.institutionId.message}</p> : null}
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="academicPeriodId">Período académico *</Label>
+            {isEditing ? (
+              <p id="academicPeriodId" className="py-2 text-sm">
+                {assignment?.academicPeriodName ?? periods.find((period) => period.id === academicPeriodId)?.name ?? academicPeriodId}
+              </p>
+            ) : (
             <Controller
               name="academicPeriodId"
               control={control}
@@ -193,6 +214,7 @@ export function TeacherAssignmentForm({
                 </Select>
               )}
             />
+            )}
             {errors.academicPeriodId ? (
               <p className="text-sm text-destructive">
                 {errors.academicPeriodId.message}
@@ -202,6 +224,12 @@ export function TeacherAssignmentForm({
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="teacherId">Docente *</Label>
+            {isEditing ? (
+              <p id="teacherId" className="py-2 text-sm">
+                {assignment ? `${assignment.teacherFirstName} ${assignment.teacherLastName}` :
+                  teachers.filter((teacher) => teacher.profileId === defaultValues?.teacherId).map((teacher) => `${teacher.firstName} ${teacher.lastName}`).join("") || defaultValues?.teacherId}
+              </p>
+            ) : (
             <Controller
               name="teacherId"
               control={control}
@@ -223,6 +251,7 @@ export function TeacherAssignmentForm({
                 </Select>
               )}
             />
+            )}
             {errors.teacherId ? (
               <p className="text-sm text-destructive">{errors.teacherId.message}</p>
             ) : null}
@@ -286,7 +315,7 @@ export function TeacherAssignmentForm({
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  disabled={disabled || !courseId || subjectsLoading}
+                  disabled={disabled || !courseId || subjectsLoading || subjectsError}
                 >
                   <option value="">
                     {courseId ? "Seleccionar materia" : "Primero elige un curso"}
@@ -301,6 +330,11 @@ export function TeacherAssignmentForm({
             />
             {errors.subjectId ? (
               <p className="text-sm text-destructive">{errors.subjectId.message}</p>
+            ) : null}
+            {subjectsError ? (
+              <p className="text-sm text-destructive">No se pudieron cargar las materias.</p>
+            ) : courseId && !subjectsLoading && subjects.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay materias activas disponibles para este grado e institución.</p>
             ) : null}
           </div>
 

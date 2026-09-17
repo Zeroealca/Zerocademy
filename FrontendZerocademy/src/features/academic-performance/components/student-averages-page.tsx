@@ -10,6 +10,7 @@ import { ScoreBadge } from "@/features/academic-performance/components/score-bad
 import { useStudentPerformanceSummary } from "@/features/academic-performance/hooks/use-academic-performance";
 import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
 import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { canViewAcademicPerformanceStudent } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -52,7 +53,7 @@ export function StudentAveragesPage() {
           <option value="">Selecciona un período</option>
           {(periodsData?.data ?? []).map((period) => (
             <option key={period.id} value={period.id}>
-              {period.name}
+              {formatAcademicPeriodOptionLabel(period)}
             </option>
           ))}
         </Select>
