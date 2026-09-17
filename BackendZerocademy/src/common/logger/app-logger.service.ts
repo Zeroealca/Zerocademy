@@ -7,8 +7,11 @@ export interface StructuredLogPayload {
   email?: string;
   ip?: string;
   message: string;
+  /** Error stack when logging failures — kept out of metadata for easier grep in hosts. */
+  stack?: string;
   metadata?: Record<string, unknown>;
 }
+
 
 const SENSITIVE_KEYS = new Set([
   'password',
@@ -52,6 +55,7 @@ export class AppLoggerService implements LoggerService {
       email: payload.email,
       ip: payload.ip,
       message: payload.message,
+      stack: payload.stack,
       metadata: this.sanitizeMetadata(payload.metadata),
     };
 

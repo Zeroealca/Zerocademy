@@ -82,21 +82,39 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokens = await this.issueTokensForUser(user);
+    try {
+      const tokens = await this.issueTokensForUser(user);
 
-    this.logger.log({
-      context: AUTH_CONTEXT,
-      event: 'LOGIN_SUCCESS',
-      userId: user.id,
-      email: user.email,
-      ip,
-      message: 'User authenticated successfully',
-    });
+      this.logger.log({
+        context: AUTH_CONTEXT,
+        event: 'LOGIN_SUCCESS',
+        userId: user.id,
+        email: user.email,
+        ip,
+        message: 'User authenticated successfully',
+      });
 
-    return {
-      ...tokens,
-      user: toAuthUserResponseDto(user),
-    };
+      return {
+        ...tokens,
+        user: toAuthUserResponseDto(user),
+      };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error({
+        context: AUTH_CONTEXT,
+        event: 'LOGIN_ERROR',
+        email: dto.email,
+        userId: user.id,
+        ip,
+        message: err.message,
+        stack: err.stack,
+        metadata: {
+          errorName: err.name,
+          phase: 'issue_tokens',
+        },
+      });
+      throw error;
+    }
   }
 
   async refresh(
