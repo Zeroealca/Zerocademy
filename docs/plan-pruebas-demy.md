@@ -22,13 +22,13 @@ npm run prisma:seed -w backend-zerocademy
 
 ### Cuentas del seed
 
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| SUPER_ADMIN | `admin@zerocademy.edu` | `ChangeMe123!` |
-| ADMIN | `admin.demo@zerocademy.edu` | `DemoAdmin123!` |
-| TEACHER | `teacher.demo@zerocademy.edu` | `DemoTeacher123!` |
-| STUDENT | `student1.demo@zerocademy.edu` | `DemoStudent123!` |
-| REPRESENTATIVE | `rep.demo@zerocademy.edu` | `DemoRep123!` |
+| Rol            | Email                          | Contraseña        |
+| -------------- | ------------------------------ | ----------------- |
+| SUPER_ADMIN    | `admin@zerocademy.edu`         | `ChangeMe123!`    |
+| ADMIN          | `admin.demo@zerocademy.edu`    | `DemoAdmin123!`   |
+| TEACHER        | `teacher.demo@zerocademy.edu`  | `DemoTeacher123!` |
+| STUDENT        | `student1.demo@zerocademy.edu` | `DemoStudent123!` |
+| REPRESENTATIVE | `rep.demo@zerocademy.edu`      | `DemoRep123!`     |
 
 Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStudent123!`
 
@@ -156,10 +156,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] El login redirige al dashboard sin errores.
-- [ ] El nombre/rol del usuario aparece en la interfaz.
-- [ ] Las peticiones subsiguientes incluyen token Bearer (sin 401).
-- [ ] No se muestran mensajes de error en pantalla.
+- [x] El login redirige al dashboard sin errores.
+- [x] El nombre/rol del usuario aparece en la interfaz.
+- [x] Las peticiones subsiguientes incluyen token Bearer (sin 401).
+- [x] No se muestran mensajes de error en pantalla.
 
 ---
 
@@ -198,16 +198,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Permanece en /login; no hay token en el navegador.
-- [ ] Mensaje genérico en español (no indica si el email existe).
-- [ ] API 401.
+- [x] Permanece en /login; no hay token en el navegador.
+- [x] Mensaje genérico en español (no indica si el email existe).
+- [x] API 401.
 
 #### Criterios de aceptación
 
-- [ ] La API responde 401 con mensaje genérico (no revela si el email existe).
-- [ ] El usuario permanece en la pantalla de login.
-- [ ] Se muestra mensaje de error en español en la UI.
-- [ ] No se guarda sesión ni token en el navegador.
+- [x] La API responde 401 con mensaje genérico (no revela si el email existe).
+- [x] El usuario permanece en la pantalla de login.
+- [x] Se muestra mensaje de error en español en la UI.
+- [x] No se guarda sesión ni token en el navegador.
 
 ---
 
@@ -234,9 +234,9 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] La app renueva el token vía `POST /v1/auth/refresh` sin intervención del usuario.
-- [ ] No aparece pantalla de login mientras el refresh token sea válido.
-- [ ] Las listas y formularios cargan datos correctamente tras la renovación.
+- [x] La app renueva el token vía `POST /v1/auth/refresh` sin intervención del usuario.
+- [x] No aparece pantalla de login mientras el refresh token sea válido.
+- [x] Las listas y formularios cargan datos correctamente tras la renovación.
 
 ---
 
@@ -262,10 +262,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] Tras logout se redirige a `/login`.
-- [ ] `POST /v1/auth/logout` revoca el refresh token.
-- [ ] Rutas protegidas redirigen a login.
-- [ ] Un refresh con el token anterior falla con 401.
+- [x] Tras logout se redirige a `/login`.
+- [x] `POST /v1/auth/logout` revoca el refresh token.
+- [x] Rutas protegidas redirigen a login.
+- [x] Un refresh con el token anterior falla con 401.
 
 ---
 
@@ -292,10 +292,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] El campo alterna entre tipo `password` y `text`.
-- [ ] El icono cambia de estado (ojo abierto/cerrado).
-- [ ] El valor escrito no se pierde al alternar.
-- [ ] Funciona en login y al menos un formulario de creación.
+- [x] El campo alterna entre tipo `password` y `text`.
+- [x] El icono cambia de estado (ojo abierto/cerrado).
+- [x] El valor escrito no se pierde al alternar.
+- [x] Funciona en login y al menos un formulario de creación.
 
 ---
 
@@ -345,23 +345,23 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Buscar, Rol y Estado reducen el directorio; cabeceras Rol/Estado ordenan; vacío muestra «No se encontraron usuarios.»
-- [ ] ADMIN ve Usuarios pero no cuentas SUPER_ADMIN.
-- [ ] TEACHER y STUDENT no ven Usuarios; al pegar /users: acceso denegado.
+- [x] Buscar, Rol y Estado reducen el directorio; cabeceras Rol/Estado ordenan; vacío muestra «No se encontraron usuarios.»
+- [x] ADMIN ve Usuarios pero no cuentas SUPER_ADMIN.
+- [x] TEACHER y STUDENT no ven Usuarios; al pegar /users: acceso denegado.
 
 #### Criterios de aceptación
 
-- [ ] La ruta `/users` es accesible para SUPER_ADMIN y ADMIN.
-- [ ] Se muestran usuarios del seed con nombre, correo, rol y estado correctos.
-- [ ] Buscar filtra por nombre o correo (sin distinguir mayúsculas; debounce ~500 ms).
-- [ ] El filtro Rol deja solo usuarios de ese rol.
-- [ ] El filtro Estado deja solo activos o inactivos.
-- [ ] La cabecera Rol ordena el directorio (y un segundo clic invierte).
-- [ ] La cabecera Estado ordena activos/inactivos (y un segundo clic invierte).
-- [ ] El orden se aplica a todo el listado, no solo a la página visible.
-- [ ] ADMIN no ve ni puede filtrar cuentas SUPER_ADMIN.
-- [ ] TEACHER/STUDENT no ven el ítem en el menú ni acceden a la ruta.
-- [ ] La lista carga sin error 403/401 para roles permitidos.
+- [x] La ruta `/users` es accesible para SUPER_ADMIN y ADMIN.
+- [x] Se muestran usuarios del seed con nombre, correo, rol y estado correctos.
+- [x] Buscar filtra por nombre o correo (sin distinguir mayúsculas; debounce ~500 ms).
+- [x] El filtro Rol deja solo usuarios de ese rol.
+- [x] El filtro Estado deja solo activos o inactivos.
+- [x] La cabecera Rol ordena el directorio (y un segundo clic invierte).
+- [x] La cabecera Estado ordena activos/inactivos (y un segundo clic invierte).
+- [x] El orden se aplica a todo el listado, no solo a la página visible.
+- [x] ADMIN no ve ni puede filtrar cuentas SUPER_ADMIN.
+- [x] TEACHER/STUDENT no ven el ítem en el menú ni acceden a la ruta.
+- [x] La lista carga sin error 403/401 para roles permitidos.
 
 ---
 
@@ -400,16 +400,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] El primero se crea y puede iniciar sesión.
-- [ ] Duplicado: «Este correo ya está registrado.», no hay segunda fila.
+- [x] El primero se crea y puede iniciar sesión.
+- [x] Duplicado: «Este correo ya está registrado.», no hay segunda fila.
 
 #### Criterios de aceptación
 
-- [ ] El usuario se crea y aparece en la lista.
-- [ ] Se puede localizar con Buscar y/o el filtro Rol.
-- [ ] Validaciones de email duplicado muestran «Este correo ya está registrado.»
-- [ ] El nuevo usuario puede iniciar sesión.
-- [ ] El menú lateral refleja el rol asignado.
+- [x] El usuario se crea y aparece en la lista.
+- [x] Se puede localizar con Buscar y/o el filtro Rol.
+- [x] Validaciones de email duplicado muestran «Este correo ya está registrado.»
+- [x] El nuevo usuario puede iniciar sesión.
+- [x] El menú lateral refleja el rol asignado.
 
 ---
 
@@ -453,16 +453,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Esas rutas no están en su menú.
-- [ ] Al forzar la URL: acceso denegado o redirección, sin listados de otros roles.
+- [x] Esas rutas no están en su menú.
+- [x] Al forzar la URL: acceso denegado o redirección, sin listados de otros roles.
 
 #### Criterios de aceptación
 
-- [ ] El único ítem común a todos los roles es Resumen.
-- [ ] SUPER_ADMIN, ADMIN, TEACHER y STUDENT coinciden con las listas de Datos de éxito.
-- [ ] TEACHER no ve Instituciones ni Usuarios.
-- [ ] STUDENT no ve Cursos, Estudiantes, Matrículas (admin), Instituciones ni Usuarios.
-- [ ] Rutas no autorizadas: denegado o redirect, sin datos ajenos.
+- [x] El único ítem común a todos los roles es Resumen.
+- [x] SUPER_ADMIN, ADMIN, TEACHER y STUDENT coinciden con las listas de Datos de éxito.
+- [x] TEACHER no ve Instituciones ni Usuarios.
+- [x] STUDENT no ve Cursos, Estudiantes, Matrículas (admin), Instituciones ni Usuarios.
+- [x] Rutas no autorizadas: denegado o redirect, sin datos ajenos.
 
 ---
 
@@ -491,10 +491,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] Se listan instituciones con nombre, código y estado.
-- [ ] El detalle muestra datos de contacto y régimen.
-- [ ] La paginación funciona si hay muchos registros.
-- [ ] Textos de la UI en español.
+- [x] Se listan instituciones con nombre, código y estado.
+- [x] El detalle muestra datos de contacto y régimen.
+- [x] La paginación funciona si hay muchos registros.
+- [x] Textos de la UI en español.
 
 ---
 
@@ -533,16 +533,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] La primera aparece en el listado.
-- [ ] Código duplicado: error en español.
-- [ ] ADMIN no puede crear instituciones.
+- [x] La primera aparece en el listado.
+- [x] Código duplicado: error en español.
+- [x] ADMIN no puede crear instituciones.
 
 #### Criterios de aceptación
 
-- [ ] La institución se crea correctamente.
-- [ ] Código duplicado muestra error claro en español.
-- [ ] Solo SUPER_ADMIN puede crear.
-- [ ] Aparece en el listado de instituciones.
+- [x] La institución se crea correctamente.
+- [x] Código duplicado muestra error claro en español.
+- [x] Solo SUPER_ADMIN puede crear.
+- [x] Aparece en el listado de instituciones.
 
 ---
 
@@ -581,15 +581,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Datos coherentes persisten.
-- [ ] Combinación inválida: error en español, no se guarda.
+- [x] Datos coherentes persisten.
+- [x] Combinación inválida: error en español, no se guarda.
 
 #### Criterios de aceptación
 
-- [ ] Los cambios persisten tras recargar.
-- [ ] Validación de consistencia región/régimen muestra error si aplica.
-- [ ] La API responde 200 al guardar.
-- [ ] Mensajes de éxito en español.
+- [x] Los cambios persisten tras recargar.
+- [x] Validación de consistencia región/régimen muestra error si aplica.
+- [x] La API responde 200 al guardar.
+- [x] Mensajes de éxito en español.
 
 ---
 
@@ -628,15 +628,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Logo válido se ve en la UI.
-- [ ] Formato o tamaño inválido: error en español; el logo anterior no se pierde.
+- [x] Logo válido se ve en la UI.
+- [x] Formato o tamaño inválido: error en español; el logo anterior no se pierde.
 
 #### Criterios de aceptación
 
-- [ ] Imagen válida se sube correctamente.
-- [ ] Archivos mayores a 5 MB o formatos inválidos muestran error.
-- [ ] El logo se visualiza tras guardar.
-- [ ] La vista previa se actualiza correctamente.
+- [x] Imagen válida se sube correctamente.
+- [x] Archivos mayores a 5 MB o formatos inválidos muestran error.
+- [x] El logo se visualiza tras guardar.
+- [x] La vista previa se actualiza correctamente.
 
 ---
 
@@ -675,15 +675,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Hex válido persiste.
-- [ ] Formato inválido: validación en español.
+- [x] Hex válido persiste.
+- [x] Formato inválido: validación en español.
 
 #### Criterios de aceptación
 
-- [ ] Colores válidos se guardan correctamente.
-- [ ] Formato inválido muestra validación en español.
-- [ ] Los cambios persisten al recargar.
-- [ ] La API responde correctamente al guardar.
+- [x] Colores válidos se guardan correctamente.
+- [x] Formato inválido muestra validación en español.
+- [x] Los cambios persisten al recargar.
+- [x] La API responde correctamente al guardar.
 
 ---
 
@@ -724,16 +724,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Inactiva: operación bloqueada y mensaje claro.
-- [ ] Tras reactivar, la operación se permite.
+- [x] Inactiva: operación bloqueada y mensaje claro.
+- [x] Tras reactivar, la operación se permite.
 
 #### Criterios de aceptación
 
-- [ ] SUPER_ADMIN puede desactivar una institución activa
-- [ ] SUPER_ADMIN puede reactivar una institución inactiva
-- [ ] Las operaciones académicas están bloqueadas cuando la institución está inactiva
-- [ ] Se muestra mensaje claro al usuario cuando la institución está inactiva
-- [ ] El estado de la institución se refleja correctamente en la UI
+- [x] SUPER_ADMIN puede desactivar una institución activa
+- [x] SUPER_ADMIN puede reactivar una institución inactiva
+- [x] Las operaciones académicas están bloqueadas cuando la institución está inactiva
+- [x] Se muestra mensaje claro al usuario cuando la institución está inactiva
+- [x] El estado de la institución se refleja correctamente en la UI
 
 ---
 
@@ -765,11 +765,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] La ruta `/academic-periods` muestra el listado de períodos
-- [ ] Filtro por régimen funciona correctamente
-- [ ] Filtro por estado funciona correctamente
-- [ ] Los filtros pueden combinarse
-- [ ] Se muestra información relevante de cada período (nombre, fechas, estado)
+- [x] La ruta `/academic-periods` muestra el listado de períodos
+- [x] Filtro por régimen funciona correctamente
+- [x] Filtro por estado funciona correctamente
+- [x] Los filtros pueden combinarse
+- [x] Se muestra información relevante de cada período (nombre, fechas, estado)
 
 ---
 
@@ -811,16 +811,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Período válido en DRAFT con dos términos.
-- [ ] Fechas invertidas: error en español.
+- [x] Período válido en DRAFT con dos términos.
+- [x] Fechas invertidas: error en español.
 
 #### Criterios de aceptación
 
-- [ ] SUPER_ADMIN puede acceder al formulario de creación
-- [ ] Se pueden definir fechas del período académico
-- [ ] Se pueden crear términos/quimestres con fechas
-- [ ] El período se guarda correctamente
-- [ ] Los términos quedan asociados al período creado
+- [x] SUPER_ADMIN puede acceder al formulario de creación
+- [x] Se pueden definir fechas del período académico
+- [x] Se pueden crear términos/quimestres con fechas
+- [x] El período se guarda correctamente
+- [x] Los términos quedan asociados al período creado
 
 ---
 
@@ -849,10 +849,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] El período seleccionado pasa a estado ACTIVE
-- [ ] Otros períodos ACTIVE del mismo régimen pasan a CLOSED
-- [ ] Solo un período ACTIVE por régimen a la vez
-- [ ] La UI refleja los cambios de estado inmediatamente
+- [x] El período seleccionado pasa a estado ACTIVE
+- [x] Otros períodos ACTIVE del mismo régimen pasan a CLOSED
+- [x] Solo un período ACTIVE por régimen a la vez
+- [x] La UI refleja los cambios de estado inmediatamente
 
 ---
 
@@ -880,10 +880,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] El período pasa a estado CLOSED al desactivarse
-- [ ] No queda disponible como período activo
-- [ ] Se confirma la acción antes de cerrar (si aplica)
-- [ ] El listado refleja el nuevo estado
+- [x] El período pasa a estado CLOSED al desactivarse
+- [x] No queda disponible como período activo
+- [x] Se confirma la acción antes de cerrar (si aplica)
+- [x] El listado refleja el nuevo estado
 
 ---
 
@@ -921,15 +921,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] ADMIN/TEACHER/STUDENT muestran 2025-2026 Demo.
-- [ ] SUPER_ADMIN no usa selector de período de colegio.
+- [x] ADMIN/TEACHER/STUDENT muestran 2025-2026 Demo.
+- [x] SUPER_ADMIN no usa selector de período de colegio.
 
 #### Criterios de aceptación
 
-- [ ] El selector de período aparece en la cabecera
-- [ ] Muestra el nombre del período efectivo
-- [ ] Es visible para ADMIN, TEACHER y STUDENT
-- [ ] El período mostrado coincide con el contexto del usuario
+- [x] El selector de período aparece en la cabecera
+- [x] Muestra el nombre del período efectivo
+- [x] Es visible para ADMIN, TEACHER y STUDENT
+- [x] El período mostrado coincide con el contexto del usuario
 
 ---
 
@@ -958,11 +958,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] El usuario puede cambiar el período desde el selector
-- [ ] Se envía PUT context/selection al cambiar
-- [ ] La UI refleja el período seleccionado
-- [ ] La selección persiste tras recargar
-- [ ] Solo se muestran períodos disponibles para el usuario
+- [x] El usuario puede cambiar el período desde el selector
+- [x] Se envía PUT context/selection al cambiar
+- [x] La UI refleja el período seleccionado
+- [x] La selección persiste tras recargar
+- [x] Solo se muestran períodos disponibles para el usuario
 
 ---
 
@@ -992,10 +992,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] Se muestra tarjeta con el período activo institucional
-- [ ] La información del período es correcta
-- [ ] La tarjeta es visible en la pantalla de transiciones
-- [ ] Se distingue claramente del período destino
+- [x] Se muestra tarjeta con el período activo institucional
+- [x] La información del período es correcta
+- [x] La tarjeta es visible en la pantalla de transiciones
+- [x] Se distingue claramente del período destino
 
 ---
 
@@ -1037,15 +1037,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] Preview muestra conteos sin escribir cambios.
-- [ ] Misma origen/destino: error, sin copiar.
+- [x] Preview muestra conteos sin escribir cambios.
+- [x] Misma origen/destino: error, sin copiar.
 
 #### Criterios de aceptación
 
-- [ ] El preview muestra cantidad de cursos a copiar
-- [ ] El preview muestra cantidad de asignaciones docentes a copiar
-- [ ] Los conteos coinciden con los datos reales del período origen
-- [ ] No se realizan cambios hasta confirmar la transición
+- [x] El preview muestra cantidad de cursos a copiar
+- [x] El preview muestra cantidad de asignaciones docentes a copiar
+- [x] Los conteos coinciden con los datos reales del período origen
+- [x] No se realizan cambios hasta confirmar la transición
 
 ---
 
@@ -1076,11 +1076,11 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] Los cursos del período origen se copian al destino
-- [ ] Las asignaciones docentes se copian correctamente
-- [ ] El período destino pasa a ACTIVE
-- [ ] El período origen pasa a CLOSED
-- [ ] Se muestra confirmación de éxito con resumen de la operación
+- [x] Los cursos del período origen se copian al destino
+- [x] Las asignaciones docentes se copian correctamente
+- [x] El período destino pasa a ACTIVE
+- [x] El período origen pasa a CLOSED
+- [x] Se muestra confirmación de éxito con resumen de la operación
 
 ---
 
@@ -1109,10 +1109,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] La ruta `/academic-levels` muestra el catálogo
-- [ ] Se listan todos los niveles disponibles
-- [ ] Cada nivel muestra nombre y descripción
-- [ ] Se distingue entre niveles de plataforma e institucionales
+- [x] La ruta `/academic-levels` muestra el catálogo
+- [x] Se listan todos los niveles disponibles
+- [x] Cada nivel muestra nombre y descripción
+- [x] Se distingue entre niveles de plataforma e institucionales
 
 ---
 
@@ -1152,15 +1152,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] QA_NIVEL aparece.
-- [ ] Código duplicado: error en español.
+- [x] QA_NIVEL aparece.
+- [x] Código duplicado: error en español.
 
 #### Criterios de aceptación
 
-- [ ] SUPER_ADMIN puede crear niveles personalizados
-- [ ] El nivel se guarda en el catálogo de plataforma
-- [ ] El nuevo nivel aparece en el listado
-- [ ] Otros roles no pueden crear niveles de plataforma
+- [x] SUPER_ADMIN puede crear niveles personalizados
+- [x] El nivel se guarda en el catálogo de plataforma
+- [x] El nuevo nivel aparece en el listado
+- [x] Otros roles no pueden crear niveles de plataforma
 
 ---
 
@@ -1201,15 +1201,15 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] 9VO_QA queda vinculado a EGB.
-- [ ] Código duplicado o campos vacíos: error.
+- [x] 9VO_QA queda vinculado a EGB.
+- [x] Código duplicado o campos vacíos: error.
 
 #### Criterios de aceptación
 
-- [ ] Se puede crear grado en `/grade-levels`
-- [ ] El grado queda vinculado al nivel académico seleccionado
-- [ ] El grado aparece en el listado
-- [ ] Se validan campos obligatorios
+- [x] Se puede crear grado en `/grade-levels`
+- [x] El grado queda vinculado al nivel académico seleccionado
+- [x] El grado aparece en el listado
+- [x] Se validan campos obligatorios
 
 ---
 
@@ -1250,16 +1250,16 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 **Resultado esperado**
 
-- [ ] 8vo C aparece.
-- [ ] Duplicado período+grado+sección: error.
+- [x] 8vo C aparece.
+- [x] Duplicado período+grado+sección: error.
 
 #### Criterios de aceptación
 
-- [ ] Se puede crear curso en `/courses`
-- [ ] El curso queda vinculado al período y grado
-- [ ] Se puede definir sección/paralelo
-- [ ] Se puede definir capacidad máxima
-- [ ] El curso aparece en el listado
+- [x] Se puede crear curso en `/courses`
+- [x] El curso queda vinculado al período y grado
+- [x] Se puede definir sección/paralelo
+- [x] Se puede definir capacidad máxima
+- [x] El curso aparece en el listado
 
 ---
 
@@ -1288,10 +1288,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] Se puede editar un curso existente
-- [ ] La capacidad se actualiza correctamente
-- [ ] La sección se actualiza correctamente
-- [ ] Los cambios se reflejan en el listado y detalle
+- [x] Se puede editar un curso existente
+- [x] La capacidad se actualiza correctamente
+- [x] La sección se actualiza correctamente
+- [x] Los cambios se reflejan en el listado y detalle
 
 ---
 
@@ -1319,10 +1319,10 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 
 #### Criterios de aceptación
 
-- [ ] La ruta `/academic-structure` muestra vista árbol
-- [ ] La jerarquía es nivel > grado > curso
-- [ ] Los nodos se pueden expandir y colapsar
-- [ ] Cada nivel muestra la información relevante
+- [x] La ruta `/academic-structure` muestra vista árbol
+- [x] La jerarquía es nivel > grado > curso
+- [x] Los nodos se pueden expandir y colapsar
+- [x] Cada nivel muestra la información relevante
 
 ---
 
