@@ -1,4 +1,4 @@
-const DEFAULT_SERVER_API_URL = "http://127.0.0.1:3001";
+const DEFAULT_SERVER_API_URL = "https://zerocademy.onrender.com";
 
 function normalizeUrl(url: string): string {
   return url.replace(/\/$/, "");
