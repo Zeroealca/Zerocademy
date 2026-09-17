@@ -31,6 +31,14 @@
     "prisma:seed:grades-demo": "npm run prisma:seed:grades-demo -w backend-zerocademy",
     "test:e2e:grades": "npm run test:e2e -w backend-zerocademy -- grades.e2e-spec"
   },
+  "overrides": {
+    "@nestjs/platform-express": {
+      "multer": "2.3.0"
+    },
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.0"
+    }
+  },
   "engines": {
     "node": ">=20"
   }
