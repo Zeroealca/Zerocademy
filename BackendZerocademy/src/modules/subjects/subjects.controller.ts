@@ -19,6 +19,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { ApiRequireRoles } from '../../common/decorators/api';
 import {
   PLATFORM_CATALOG_WRITE_ROLES,
@@ -73,11 +75,11 @@ export class SubjectsController {
   }
 
   @Post()
-  @ApiRequireRoles(...PLATFORM_CATALOG_WRITE_ROLES)
+  @ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN)
   @ApiOperation({ summary: 'Create subject' })
   @ApiCreatedResponse({ type: SubjectResponseDto })
-  create(@Body() dto: CreateSubjectDto): Promise<SubjectResponseDto> {
-    return this.subjectsService.create(dto);
+  create(@Body() dto: CreateSubjectDto, @CurrentUser() actor: AuthenticatedUser): Promise<SubjectResponseDto> {
+    return this.subjectsService.create(dto, actor);
   }
 
   @Patch(':id')

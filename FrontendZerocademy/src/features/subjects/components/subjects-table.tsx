@@ -74,16 +74,16 @@ export function SubjectsTable({
                     <th className="px-4 py-3 font-medium">Grados</th>
                     <th className="px-4 py-3 font-medium">Ámbito</th>
                     <th className="px-4 py-3 font-medium">Estado</th>
-                    <th className="px-4 py-3 font-medium text-right">
+                    {canManage ? <th className="px-4 py-3 font-medium text-right">
                       Acciones
-                    </th>
+                    </th> : null}
                   </tr>
                 </thead>
                 <tbody>
                   {subjects.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={canManage ? 6 : 5}
                         className="px-4 py-8 text-center text-muted-foreground"
                       >
                         No se encontraron materias.
@@ -130,7 +130,7 @@ export function SubjectsTable({
                             }
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        {canManage ? <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             {canManage ? (
                               <Button
@@ -149,7 +149,7 @@ export function SubjectsTable({
                               </Button>
                             ) : null}
                           </div>
-                        </td>
+                        </td> : null}
                       </tr>
                     ))
                   )}

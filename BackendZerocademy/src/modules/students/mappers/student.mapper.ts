@@ -12,6 +12,7 @@ export function toStudentResponseDto(student: StudentWithUser): StudentResponseD
   return {
     id: student.id,
     userId: student.userId,
+    registrationNumber: student.registrationNumber,
     email: student.user.email,
     firstName: student.user.firstName,
     lastName: student.user.lastName,
@@ -32,6 +33,7 @@ export function toStudentResponseDto(student: StudentWithUser): StudentResponseD
 export const studentWithUserSelect = {
   id: true,
   userId: true,
+  registrationNumber: true,
   institutionId: true,
   nationalId: true,
   birthDate: true,

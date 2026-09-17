@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { Prisma } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
@@ -89,8 +91,9 @@ export class TeacherAssignmentsService {
 
   async create(
     dto: CreateTeacherAssignmentDto,
+    actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentResponseDto> {
-    const { institutionId } = await this.validateAssignmentKeys(dto);
+    const { institutionId } = await this.validateAssignmentKeys(dto, actor);
 
     try {
       const assignment = await this.prisma.teacherAssignment.create({
@@ -127,17 +130,21 @@ export class TeacherAssignmentsService {
   async update(
     id: string,
     dto: UpdateTeacherAssignmentDto,
+    actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentResponseDto> {
     const existing = await this.findAssignmentOrThrow(id);
+    if (!existing.institutionId) throw new BadRequestException('La asignación no tiene una institución.');
+    await assertActorCanAccessInstitution(this.prisma, actor, existing.institutionId);
 
     const keys = {
+      institutionId: dto.institutionId,
       teacherId: dto.teacherId ?? existing.teacherId,
       subjectId: dto.subjectId ?? existing.subjectId,
       courseId: dto.courseId ?? existing.courseId,
       academicPeriodId: dto.academicPeriodId ?? existing.academicPeriodId,
     };
 
-    const { institutionId } = await this.validateAssignmentKeys(keys, id);
+    const { institutionId } = await this.validateAssignmentKeys(keys, actor, id);
 
     try {
       const assignment = await this.prisma.teacherAssignment.update({
@@ -174,6 +181,7 @@ export class TeacherAssignmentsService {
 
   private async validateAssignmentKeys(
     keys: CreateTeacherAssignmentDto,
+    actor: AuthenticatedUser,
     excludeId?: string,
   ): Promise<{ institutionId: string | null }> {
     await assertTeacherExistsAndActive(this.prisma, keys.teacherId);
@@ -184,6 +192,22 @@ export class TeacherAssignmentsService {
       keys.courseId,
       keys.academicPeriodId,
     );
+    if (!institutionId || (keys.institutionId && keys.institutionId !== institutionId)) {
+      throw new BadRequestException('El curso no pertenece a la institución seleccionada.');
+    }
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
+    const teacher = await this.prisma.teacherProfile.findUniqueOrThrow({ where: { id: keys.teacherId } });
+    const membership = await this.prisma.institutionMembership.findFirst({
+      where: { userId: teacher.userId, institutionId, role: 'TEACHER', isActive: true },
+      select: { id: true },
+    });
+    if (teacher.institutionId !== institutionId && !membership) {
+      throw new BadRequestException('El docente no pertenece a la institución seleccionada.');
+    }
+    const subject = await this.prisma.subject.findUniqueOrThrow({ where: { id: keys.subjectId } });
+    if (subject.institutionId && subject.institutionId !== institutionId) {
+      throw new BadRequestException('La materia no pertenece a la institución seleccionada.');
+    }
 
     await assertSubjectAppliesToGrade(
       this.prisma,

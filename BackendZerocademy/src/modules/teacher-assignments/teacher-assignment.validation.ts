@@ -139,7 +139,6 @@ export async function assertUniqueAssignment(
 ): Promise<void> {
   const existing = await prisma.teacherAssignment.findFirst({
     where: {
-      teacherId: keys.teacherId,
       subjectId: keys.subjectId,
       courseId: keys.courseId,
       academicPeriodId: keys.academicPeriodId,
@@ -150,7 +149,7 @@ export async function assertUniqueAssignment(
 
   if (existing) {
     throw new ConflictException(
-      'This teacher is already assigned to this subject for the selected course and period',
+      'A teacher is already assigned to this subject for the selected course and period',
     );
   }
 }
@@ -161,7 +160,7 @@ export function mapPrismaConflict(error: unknown): never {
     error.code === 'P2002'
   ) {
     throw new ConflictException(
-      'This teacher is already assigned to this subject for the selected course and period',
+      'A teacher is already assigned to this subject for the selected course and period',
     );
   }
 

@@ -2,6 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender } from '@prisma/client';
 
 export class StudentResponseDto {
+  @ApiProperty()
+  registrationNumber: string;
   @ApiProperty({ format: 'uuid' })
   id: string;
 

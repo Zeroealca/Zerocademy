@@ -85,7 +85,10 @@ export class AcademicLevelsService {
           include: {
             courses: query.academicPeriodId
               ? {
-                  where: { academicPeriodId: query.academicPeriodId },
+                  where: {
+                    academicPeriodId: query.academicPeriodId,
+                    ...(query.institutionId ? { institutionId: query.institutionId } : {}),
+                  },
                   orderBy: [{ section: 'asc' }, { name: 'asc' }],
                 }
               : false,

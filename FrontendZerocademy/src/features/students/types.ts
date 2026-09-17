@@ -1,6 +1,7 @@
 export type Gender = "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 
 export interface Student {
+  registrationNumber?: string;
   id: string;
   userId: string;
   email: string;
@@ -42,6 +43,7 @@ export interface StudentsFilters {
 }
 
 export interface CreateStudentInput {
+  registrationNumber?: string;
   email: string;
   password: string;
   firstName: string;

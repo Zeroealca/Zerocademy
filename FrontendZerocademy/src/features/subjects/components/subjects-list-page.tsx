@@ -15,6 +15,8 @@ import { useSubjects } from "@/features/subjects/hooks/use-subjects";
 import type { Subject, SubjectsFilters } from "@/features/subjects/types";
 import {
   canManagePlatformCatalog,
+  canViewSubjects,
+  canCreateSubjects,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -30,13 +32,14 @@ export function SubjectsListPage() {
   const activate = useActivateSubject();
   const deactivate = useDeactivateSubject();
 
-  if (!canManagePlatformCatalog(currentUser?.role)) {
+  if (!canViewSubjects(currentUser?.role)) {
     return <AccessDenied />;
   }
 
-  const canManage = true;
+  const canManage = canManagePlatformCatalog(currentUser?.role);
 
   const handleToggleActive = async (subject: Subject) => {
+    if (!canManage) return;
     if (
       !window.confirm(
         subject.isActive
@@ -63,7 +66,7 @@ export function SubjectsListPage() {
             Catálogo reutilizable de materias para asignaciones docentes.
           </p>
         </div>
-        {canManage ? (
+        {canCreateSubjects(currentUser?.role) ? (
           <Button asChild>
             <Link href="/subjects/new">Nueva materia</Link>
           </Button>

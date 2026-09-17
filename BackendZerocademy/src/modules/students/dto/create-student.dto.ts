@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Gender } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
   IsDateString,
   IsEmail,
@@ -11,6 +12,12 @@ import {
 } from 'class-validator';
 
 export class CreateStudentDto {
+  @ApiPropertyOptional({ description: 'Generated automatically when omitted', maxLength: 64 })
+  @Transform(({ value }: { value: unknown }) => typeof value === 'string' ? value.trim().toUpperCase() || undefined : value)
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  registrationNumber?: string;
   @ApiProperty({ example: 'student@zerocademy.edu' })
   @IsEmail()
   email: string;

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useCourses } from "@/features/courses/hooks/use-courses";
+import { useUsers } from "@/features/users/hooks/use-users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,18 +33,21 @@ const DEFAULT_FILTERS: TeacherAssignmentsFilters = {
 export function TeacherAssignmentsListPage() {
   const currentUser = useAuthStore((state) => state.user);
   const effectivePeriodId = useEffectiveAcademicPeriodId();
+  const lastEffectivePeriodId = useRef<string | undefined>(undefined);
   const [filters, setFilters] = useState<TeacherAssignmentsFilters>(DEFAULT_FILTERS);
   const { data, isLoading, isError, refetch } = useTeacherAssignments(filters);
 
   useEffect(() => {
-    if (effectivePeriodId && filters.academicPeriodId !== effectivePeriodId) {
+    if (lastEffectivePeriodId.current !== effectivePeriodId) {
+      lastEffectivePeriodId.current = effectivePeriodId;
       setFilters((prev) => ({
         ...prev,
         academicPeriodId: effectivePeriodId,
+        courseId: undefined,
         page: 1,
       }));
     }
-  }, [effectivePeriodId, filters.academicPeriodId]);
+  }, [effectivePeriodId]);
   const { data: periodsData } = useInstitutionAcademicPeriods();
   const removeAssignment = useDeleteTeacherAssignment();
 
@@ -118,6 +123,16 @@ function FiltersBar({
   periods: AcademicPeriod[];
   onChange: (filters: TeacherAssignmentsFilters) => void;
 }) {
+  const { data: coursesData, isLoading: coursesLoading, isError: coursesError } = useCourses({
+    page: 1,
+    limit: 100,
+    academicPeriodId: filters.academicPeriodId,
+  });
+  const { data: teachersData, isLoading: teachersLoading, isError: teachersError } = useUsers({
+    page: 1,
+    limit: 100,
+    role: "TEACHER",
+  });
   return (
     <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
       <div className="space-y-2 sm:col-span-2">
@@ -141,6 +156,7 @@ function FiltersBar({
             onChange({
               ...filters,
               academicPeriodId: event.target.value || undefined,
+              courseId: undefined,
             })
           }
         >
@@ -149,6 +165,34 @@ function FiltersBar({
             <option key={period.id} value={period.id}>
               {formatAcademicPeriodOptionLabel(period)}
             </option>
+          ))}
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="courseFilter">Curso</Label>
+        <Select
+          id="courseFilter"
+          value={filters.courseId ?? ""}
+          disabled={coursesLoading || coursesError}
+          onChange={(event) => onChange({ ...filters, courseId: event.target.value || undefined })}
+        >
+          <option value="">{coursesLoading ? "Cargando cursos..." : coursesError ? "No se pudieron cargar los cursos" : "Todos los cursos"}</option>
+          {(coursesData?.data ?? []).map((course) => (
+            <option key={course.id} value={course.id}>{course.name} ({course.section})</option>
+          ))}
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="teacherFilter">Profesor</Label>
+        <Select
+          id="teacherFilter"
+          value={filters.teacherId ?? ""}
+          disabled={teachersLoading || teachersError}
+          onChange={(event) => onChange({ ...filters, teacherId: event.target.value || undefined })}
+        >
+          <option value="">{teachersLoading ? "Cargando profesores..." : teachersError ? "No se pudieron cargar los profesores" : "Todos los profesores"}</option>
+          {(teachersData?.data ?? []).filter((teacher) => teacher.profileType === "teacher" && teacher.profileId).map((teacher) => (
+            <option key={teacher.id} value={teacher.profileId}>{teacher.firstName} {teacher.lastName}</option>
           ))}
         </Select>
       </div>

@@ -11,6 +11,7 @@ function buildListQuery(filters: CoursesFilters): string {
   const params = new URLSearchParams();
   params.set("page", String(filters.page));
   params.set("limit", String(filters.limit));
+  if (filters.institutionId) params.set("institutionId", filters.institutionId);
 
   if (filters.search) {
     params.set("search", filters.search);

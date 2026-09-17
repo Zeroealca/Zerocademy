@@ -123,7 +123,9 @@ const EXACT_MESSAGES: Record<string, string> = {
     "Esta asignación docente no te corresponde",
   "Teacher profile is required": "Se requiere un perfil de docente",
   "This teacher is already assigned to this subject for the selected course and period":
-    "Este docente ya está asignado a esta materia en el curso y período seleccionados",
+    "Ya hay un docente asignado a esta materia en el curso y período seleccionados.",
+  "A teacher is already assigned to this subject for the selected course and period":
+    "Ya hay un docente asignado a esta materia en el curso y período seleccionados.",
   "National ID already registered": "Esta cédula ya está registrada",
   "Email or national ID already exists":
     "El correo o la cédula ya están registrados",

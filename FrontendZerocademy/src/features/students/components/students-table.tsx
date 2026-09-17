@@ -61,6 +61,7 @@ export function StudentsTable({
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Estudiante</th>
+                    <th className="px-4 py-3 font-medium">Matrícula</th>
                     <th className="px-4 py-3 font-medium">Cédula</th>
                     <th className="px-4 py-3 font-medium">Correo</th>
                     <th className="px-4 py-3 font-medium">Estado</th>
@@ -71,7 +72,7 @@ export function StudentsTable({
                   {students.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="px-4 py-8 text-center text-muted-foreground"
                       >
                         No hay estudiantes que coincidan con los filtros.
@@ -82,6 +83,9 @@ export function StudentsTable({
                       <tr key={student.id} className="border-b border-border">
                         <td className="px-4 py-3 font-medium">
                           {student.firstName} {student.lastName}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {student.registrationNumber ?? "—"}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {student.nationalId ?? "—"}

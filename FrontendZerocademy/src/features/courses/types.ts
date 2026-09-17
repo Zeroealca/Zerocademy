@@ -23,6 +23,7 @@ export interface CoursesListResponse {
 }
 
 export interface CoursesFilters {
+  institutionId?: string;
   page: number;
   limit: number;
   search?: string;
