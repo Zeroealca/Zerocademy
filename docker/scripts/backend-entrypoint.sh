@@ -38,6 +38,13 @@ fi
 echo "Running prisma generate..."
 npx prisma generate --schema="$PRISMA_SCHEMA"
 
+if [ "${RECOVER_TEACHER_ASSIGNMENT_MIGRATION:-false}" = "true" ]; then
+  echo "Recovering failed teacher assignment uniqueness migration..."
+  npx prisma migrate resolve \
+    --rolled-back 20260917120000_unique_teacher_per_subject_course \
+    --schema="$PRISMA_SCHEMA"
+fi
+
 echo "Applying database migrations..."
 npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
 
