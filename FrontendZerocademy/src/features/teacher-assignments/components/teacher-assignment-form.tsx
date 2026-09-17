@@ -13,7 +13,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
-import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
+import { useAcademicPeriods } from "@/features/academic-periods/hooks/use-academic-periods";
+import { useInstitutions } from "@/features/institutions/hooks/use-institutions";
 import { useCourses } from "@/features/courses/hooks/use-courses";
 import { useSubjects } from "@/features/subjects/hooks/use-subjects";
 import {
@@ -28,6 +29,7 @@ export function assignmentToFormValues(
   assignment: TeacherAssignment,
 ): Partial<CreateTeacherAssignmentInput> {
   return {
+    institutionId: assignment.institutionId ?? "",
     teacherId: assignment.teacherId,
     subjectId: assignment.subjectId,
     courseId: assignment.courseId,
@@ -52,19 +54,8 @@ export function TeacherAssignmentForm({
   onSubmit,
   disabled = false,
 }: TeacherAssignmentFormProps) {
-  const { data: periodsData, isLoading: periodsLoading } =
-    useInstitutionAcademicPeriods();
-  const {
-    data: teachersData,
-    isLoading: teachersLoading,
-    isError: teachersError,
-  } = useUsers({
-    page: 1,
-    limit: 100,
-    role: "TEACHER",
-    isActive: true,
-  });
-
+  const { data: institutionsData, isLoading: institutionsLoading, isError: institutionsError } =
+    useInstitutions({ page: 1, limit: 100 });
   const {
     control,
     handleSubmit,
@@ -74,11 +65,30 @@ export function TeacherAssignmentForm({
   } = useForm<CreateTeacherAssignmentInput>({
     resolver: zodResolver(createTeacherAssignmentSchema),
     defaultValues: {
+      institutionId: defaultValues?.institutionId ?? "",
       teacherId: defaultValues?.teacherId ?? "",
       subjectId: defaultValues?.subjectId ?? "",
       courseId: defaultValues?.courseId ?? "",
       academicPeriodId: defaultValues?.academicPeriodId ?? "",
     },
+  });
+  const institutionId = useWatch({ control, name: "institutionId" });
+  const selectedInstitution = institutionsData?.data.find((institution) => institution.id === institutionId);
+  const { data: periodsData, isLoading: periodsLoading } = useAcademicPeriods({
+    page: 1, limit: 100,
+    institutionId: institutionId || undefined,
+    regime: selectedInstitution?.regime ?? undefined,
+  });
+  const {
+    data: teachersData,
+    isLoading: teachersLoading,
+    isError: teachersError,
+  } = useUsers({
+    page: 1,
+    limit: 100,
+    role: "TEACHER",
+    isActive: true,
+    institutionId: institutionId || undefined,
   });
 
   const academicPeriodId = useWatch({ control, name: "academicPeriodId" });
@@ -88,6 +98,7 @@ export function TeacherAssignmentForm({
     page: 1,
     limit: 100,
     academicPeriodId: academicPeriodId || undefined,
+    institutionId: institutionId || undefined,
     isActive: true,
   });
 
@@ -98,6 +109,7 @@ export function TeacherAssignmentForm({
     limit: 100,
     isActive: true,
     gradeLevelId: selectedCourse?.gradeLevelId,
+    institutionId: institutionId || undefined,
   });
 
   const periods = periodsData?.data ?? [];
@@ -136,7 +148,27 @@ export function TeacherAssignmentForm({
       <CardContent>
         <form onSubmit={handleFormSubmit} className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="academicPeriodId">Período académico</Label>
+            <Label htmlFor="assignmentInstitutionId">Institución *</Label>
+            <Controller name="institutionId" control={control} render={({ field }) => (
+              <Select id="assignmentInstitutionId" value={field.value} onBlur={field.onBlur}
+                disabled={disabled || institutionsLoading || institutionsError}
+                onChange={(event) => {
+                  field.onChange(event);
+                  setValue("academicPeriodId", "");
+                  setValue("teacherId", "");
+                  setValue("courseId", "");
+                  setValue("subjectId", "");
+                }}>
+                <option value="">{institutionsError ? "No se pudieron cargar las instituciones" : "Seleccionar institución"}</option>
+                {(institutionsData?.data ?? []).map((institution) => (
+                  <option key={institution.id} value={institution.id}>{institution.name} ({institution.code})</option>
+                ))}
+              </Select>
+            )} />
+            {errors.institutionId ? <p className="text-sm text-destructive">{errors.institutionId.message}</p> : null}
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="academicPeriodId">Período académico *</Label>
             <Controller
               name="academicPeriodId"
               control={control}
@@ -150,7 +182,7 @@ export function TeacherAssignmentForm({
                     setValue("subjectId", "");
                   }}
                   onBlur={field.onBlur}
-                  disabled={disabled || periodsLoading}
+                  disabled={disabled || !institutionId || periodsLoading}
                 >
                   <option value="">Seleccionar período</option>
                   {periods.map((period) => (
@@ -169,7 +201,7 @@ export function TeacherAssignmentForm({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="teacherId">Docente</Label>
+            <Label htmlFor="teacherId">Docente *</Label>
             <Controller
               name="teacherId"
               control={control}
@@ -179,7 +211,7 @@ export function TeacherAssignmentForm({
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  disabled={disabled || teachersLoading}
+                  disabled={disabled || !institutionId || teachersLoading || teachersError}
                 >
                   <option value="">Seleccionar docente</option>
                   {teachers.map((teacher) => (
@@ -210,7 +242,7 @@ export function TeacherAssignmentForm({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="courseId">Curso / paralelo</Label>
+            <Label htmlFor="courseId">Curso / paralelo *</Label>
             <Controller
               name="courseId"
               control={control}
@@ -244,7 +276,7 @@ export function TeacherAssignmentForm({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="subjectId">Materia</Label>
+            <Label htmlFor="subjectId">Materia *</Label>
             <Controller
               name="subjectId"
               control={control}
@@ -279,7 +311,7 @@ export function TeacherAssignmentForm({
           ) : null}
 
           <div className="sm:col-span-2">
-            <Button type="submit" disabled={disabled || isSubmitting}>
+            <Button type="submit" disabled={disabled || isSubmitting || !institutionId || institutionsError || teachersError}>
               {isSubmitting ? "Guardando…" : submitLabel}
             </Button>
           </div>

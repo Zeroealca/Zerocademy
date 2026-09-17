@@ -26,6 +26,7 @@ interface SubjectFormProps {
   defaultValues?: Partial<CreateSubjectInput>;
   onSubmit: (values: CreateSubjectInput) => Promise<void>;
   disabled?: boolean;
+  allowSystemSubject?: boolean;
 }
 
 export function SubjectForm({
@@ -35,6 +36,7 @@ export function SubjectForm({
   defaultValues,
   onSubmit,
   disabled = false,
+  allowSystemSubject = true,
 }: SubjectFormProps) {
   const { data: gradesData, isLoading: gradesLoading } = useGradeLevels({
     page: 1,
@@ -127,7 +129,7 @@ export function SubjectForm({
             ) : null}
           </div>
 
-          <div className="space-y-2 flex items-end">
+          {allowSystemSubject ? <div className="space-y-2 flex items-end">
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -137,7 +139,7 @@ export function SubjectForm({
               />
               Materia del catálogo del sistema
             </label>
-          </div>
+          </div> : null}
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="description">Descripción</Label>

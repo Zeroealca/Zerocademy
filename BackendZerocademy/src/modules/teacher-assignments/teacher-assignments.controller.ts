@@ -19,6 +19,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   ApiRequireRoles,
   ApiRequireRolesStrict,
@@ -83,8 +85,9 @@ export class TeacherAssignmentsController {
   @ApiCreatedResponse({ type: TeacherAssignmentResponseDto })
   create(
     @Body() dto: CreateTeacherAssignmentDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentResponseDto> {
-    return this.teacherAssignmentsService.create(dto);
+    return this.teacherAssignmentsService.create(dto, actor);
   }
 
   @Patch(':id')
@@ -94,8 +97,9 @@ export class TeacherAssignmentsController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTeacherAssignmentDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentResponseDto> {
-    return this.teacherAssignmentsService.update(id, dto);
+    return this.teacherAssignmentsService.update(id, dto, actor);
   }
 
   @Delete(':id')

@@ -50,6 +50,15 @@ export function canManagePlatformCatalog(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
 }
 
+/** Matches the backend subject catalog read roles. */
+export function canViewSubjects(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER", "STUDENT"]);
+}
+
+export function canCreateSubjects(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN"]);
+}
+
 /** Courses, teacher assignments, and structure tree (ADMIN, TEACHER). */
 export function canViewInstitutionOperations(
   role: UserRole | undefined,

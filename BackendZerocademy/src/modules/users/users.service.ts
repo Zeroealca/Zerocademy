@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { AppConfig } from '../../config/configuration';
 import { ProfileProvisioningService } from '../../common/rbac/profile-provisioning.service';
 import { RoleUtils } from '../../common/rbac/role.utils';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import {
   buildPaginationMeta,
   getPaginationSkip,
@@ -41,6 +42,13 @@ export class UsersService {
     this.assertCanQueryRole(actor.role, query.role);
 
     const where = this.buildListWhere(actor.role, query);
+    if (query.institutionId) {
+      await assertActorCanAccessInstitution(this.prisma, actor, query.institutionId);
+      where.AND = [{ OR: [
+        { teacherProfile: { institutionId: query.institutionId } },
+        { institutionMemberships: { some: { institutionId: query.institutionId, isActive: true, ...(query.role === Role.TEACHER ? { role: 'TEACHER' as const } : {}) } } },
+      ] }];
+    }
     const skip = getPaginationSkip(query.page, query.limit);
 
     const [total, users] = await this.prisma.$transaction([

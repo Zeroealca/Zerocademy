@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import {
   canManageAcademicPeriods,
   canManagePlatformCatalog,
+  canViewSubjects,
   canManageUsers,
   canViewAcademicEvaluation,
   canViewAcademicPerformance,
@@ -143,8 +144,11 @@ export function DashboardSidebar() {
     navItems.push(
       academicLevelsNavItem,
       gradeLevelsNavItem,
-      subjectsNavItem,
     );
+  }
+
+  if (canViewSubjects(currentUser?.role)) {
+    navItems.push(subjectsNavItem);
   }
 
   if (canViewInstitutionOperations(currentUser?.role)) {

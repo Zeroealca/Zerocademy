@@ -39,6 +39,7 @@ export interface TeacherAssignmentsFilters {
 }
 
 export interface CreateTeacherAssignmentInput {
+  institutionId: string;
   teacherId: string;
   subjectId: string;
   courseId: string;

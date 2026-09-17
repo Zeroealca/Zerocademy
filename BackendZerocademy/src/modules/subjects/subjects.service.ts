@@ -1,9 +1,12 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
+import { resolveActorInstitutionId, assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
   buildPaginationMeta,
@@ -87,9 +90,19 @@ export class SubjectsService {
     return { subjects: subjects.map(toSubjectResponseDto) };
   }
 
-  async create(dto: CreateSubjectDto): Promise<SubjectResponseDto> {
+  async create(dto: CreateSubjectDto, actor: AuthenticatedUser): Promise<SubjectResponseDto> {
     const isSystem = dto.isSystem ?? false;
-    const institutionId = dto.institutionId ?? null;
+    let institutionId = dto.institutionId ?? null;
+    if (actor.role === Role.ADMIN) {
+      if (isSystem) {
+        throw new ForbiddenException('Solo el super administrador puede crear materias del sistema.');
+      }
+      institutionId = institutionId ?? await resolveActorInstitutionId(this.prisma, actor) ?? null;
+      if (!institutionId) {
+        throw new ForbiddenException('No tienes una institución asignada para crear materias.');
+      }
+      await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
+    }
     const gradeLevelIds = dto.gradeLevelIds ?? [];
     assertSystemSubjectRules(isSystem, institutionId, gradeLevelIds);
 
@@ -99,6 +112,9 @@ export class SubjectsService {
 
     const code = normalizeSubjectCode(dto.code);
     await assertUniqueSubjectCode(this.prisma, code, institutionId);
+    if (institutionId) {
+      await assertUniqueSubjectCode(this.prisma, code, null);
+    }
     await assertGradeLevelsExist(this.prisma, gradeLevelIds);
 
     const subject = await this.prisma.$transaction(async (tx) => {

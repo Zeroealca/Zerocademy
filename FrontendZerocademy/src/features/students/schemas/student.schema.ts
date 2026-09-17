@@ -5,6 +5,7 @@ const genderSchema = z.enum(["MALE", "FEMALE", "OTHER", "UNSPECIFIED"], {
 });
 
 export const createStudentSchema = z.object({
+  registrationNumber: z.string().trim().max(64, "La matrícula no puede superar 64 caracteres").optional(),
   email: z.string().email("Ingresa un correo electrónico válido"),
   password: z
     .string()

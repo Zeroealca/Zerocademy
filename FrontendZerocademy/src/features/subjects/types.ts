@@ -29,6 +29,7 @@ export interface SubjectsListResponse {
 }
 
 export interface SubjectsFilters {
+  institutionId?: string;
   page: number;
   limit: number;
   search?: string;

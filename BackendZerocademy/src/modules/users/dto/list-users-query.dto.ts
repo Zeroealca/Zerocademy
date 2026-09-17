@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { IsBoolean, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
@@ -11,6 +11,10 @@ export const USER_LIST_SORT_ORDERS = ['asc', 'desc'] as const;
 export type UserListSortOrder = (typeof USER_LIST_SORT_ORDERS)[number];
 
 export class ListUsersQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  institutionId?: string;
   @ApiPropertyOptional({ enum: Role })
   @IsOptional()
   @IsEnum(Role)

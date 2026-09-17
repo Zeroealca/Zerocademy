@@ -163,6 +163,7 @@ model InstitutionMembership {
 /// Permanent student entity (1:1 with User account role STUDENT).
 model StudentProfile {
   id               String       @id @default(uuid())
+  registrationNumber String     @unique @default(dbgenerated("('MAT-'::text || (gen_random_uuid())::text)"))
   userId           String       @unique
   institutionId    String?
   nationalId       String?      @unique
@@ -409,6 +410,7 @@ model TeacherAssignment {
   assessments      Assessment[]
 
   @@unique([teacherId, subjectId, courseId, academicPeriodId])
+  @@unique([subjectId, courseId, academicPeriodId], map: "teacher_assignments_subject_course_period_key")
   @@index([institutionId])
   @@index([teacherId])
   @@index([subjectId])

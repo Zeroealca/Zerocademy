@@ -57,6 +57,7 @@ export function StudentForm({
     defaultValues: isCreate
       ? {
           email: "",
+          registrationNumber: "",
           password: "",
           firstName: "",
           lastName: "",
@@ -118,7 +119,14 @@ export function StudentForm({
           {isCreate ? (
             <>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="registrationNumber">Número de matrícula (opcional)</Label>
+                <Input id="registrationNumber" {...form.register("registrationNumber")} />
+                {"registrationNumber" in form.formState.errors && form.formState.errors.registrationNumber ? (
+                  <p className="text-sm text-destructive">{form.formState.errors.registrationNumber.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="email">Correo electrónico *</Label>
                 <Input id="email" type="email" {...form.register("email")} />
                 {"email" in form.formState.errors && form.formState.errors.email ? (
                   <p className="text-sm text-destructive">
@@ -127,7 +135,7 @@ export function StudentForm({
                 ) : null}
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="password">Contraseña temporal</Label>
+                <Label htmlFor="password">Contraseña temporal *</Label>
                 <PasswordInput
                   id="password"
                   autoComplete="new-password"
@@ -144,7 +152,7 @@ export function StudentForm({
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="firstName">Nombre</Label>
+            <Label htmlFor="firstName">Nombre *</Label>
             <Input id="firstName" {...form.register("firstName")} />
             {form.formState.errors.firstName ? (
               <p className="text-sm text-destructive">
@@ -153,7 +161,7 @@ export function StudentForm({
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="lastName">Apellido</Label>
+            <Label htmlFor="lastName">Apellido *</Label>
             <Input id="lastName" {...form.register("lastName")} />
             {form.formState.errors.lastName ? (
               <p className="text-sm text-destructive">
@@ -162,7 +170,7 @@ export function StudentForm({
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="nationalId">Cédula / ID nacional</Label>
+            <Label htmlFor="nationalId">Cédula / ID nacional *</Label>
             <Input id="nationalId" {...form.register("nationalId")} />
             {form.formState.errors.nationalId ? (
               <p className="text-sm text-destructive">

@@ -120,6 +120,7 @@ export class StudentsService {
           data: {
             institutionId,
             nationalId: dto.nationalId.trim(),
+            registrationNumber: dto.registrationNumber?.trim().toUpperCase() || undefined,
             birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
             gender: dto.gender,
             phone: dto.phone?.trim(),
@@ -266,6 +267,10 @@ export class StudentsService {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002'
     ) {
+      const target = error.meta?.target;
+      if (Array.isArray(target) && target.includes('registrationNumber')) {
+        throw new ConflictException('El número de matrícula ya está registrado.');
+      }
       throw new ConflictException('Email or national ID already exists');
     }
   }

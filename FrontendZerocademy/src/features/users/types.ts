@@ -30,6 +30,7 @@ export type UserSortField = "role" | "isActive" | "createdAt";
 export type UserSortOrder = "asc" | "desc";
 
 export interface UsersFilters {
+  institutionId?: string;
   page: number;
   limit: number;
   role?: UserRole;

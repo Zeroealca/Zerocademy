@@ -7,7 +7,7 @@ import { SubjectForm } from "@/features/subjects/components/subject-form";
 import { useCreateSubject } from "@/features/subjects/hooks/use-subject-mutations";
 import type { CreateSubjectInput } from "@/features/subjects/schemas/subject.schema";
 import {
-  canManagePlatformCatalog,
+  canCreateSubjects,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -16,19 +16,19 @@ export function CreateSubjectPage() {
   const currentUser = useAuthStore((state) => state.user);
   const createSubject = useCreateSubject();
 
-  if (!canManagePlatformCatalog(currentUser?.role)) {
+  if (!canCreateSubjects(currentUser?.role)) {
     return (
       <AccessDenied
         href="/subjects"
         label="Volver al listado"
-        message="Solo el super administrador puede crear materias."
+        message="Solo administradores pueden crear materias."
       />
     );
   }
 
   const handleSubmit = async (values: CreateSubjectInput) => {
-    const subject = await createSubject.mutateAsync(values);
-    router.push(`/subjects/${subject.id}/edit`);
+    await createSubject.mutateAsync(values);
+    router.push("/subjects");
   };
 
   return (
@@ -40,6 +40,7 @@ export function CreateSubjectPage() {
         title="Nueva materia"
         description="Registra una materia reutilizable y vincúlala a los grados donde aplica."
         submitLabel="Crear materia"
+        allowSystemSubject={currentUser?.role === "SUPER_ADMIN"}
         onSubmit={handleSubmit}
       />
     </div>
