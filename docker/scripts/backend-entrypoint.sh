@@ -34,11 +34,14 @@ npx prisma generate --schema="$PRISMA_SCHEMA"
 echo "Applying database migrations..."
 npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
 
-if [ "${RUN_PRISMA_SEED:-true}" != "false" ]; then
+# Seed only when explicitly enabled. Default: on in development, off in production
+# (prod image has no ts-node; Neon already has migrated data).
+if [ "${RUN_PRISMA_SEED:-}" = "true" ] \
+  || { [ "${RUN_PRISMA_SEED:-}" = "" ] && [ "${NODE_ENV:-development}" != "production" ]; }; then
   echo "Running database seed..."
   npm run prisma:seed -w backend-zerocademy
 else
-  echo "Skipping database seed (RUN_PRISMA_SEED=false)."
+  echo "Skipping database seed (production default or RUN_PRISMA_SEED=false)."
 fi
 
 if [ "$#" -eq 0 ]; then
