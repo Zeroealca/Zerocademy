@@ -17,7 +17,14 @@ export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 export POSTGRES_USER="${POSTGRES_USER:-zerocademy}"
 export POSTGRES_DB="${POSTGRES_DB:-zerocademy_db}"
 
-/app/docker/scripts/wait-for-postgres.sh
+# Local Compose uses hostname "postgres". Managed DBs (e.g. Neon on Render)
+# skip the wait — connectivity is validated by migrate deploy / the app.
+if [ "${SKIP_POSTGRES_WAIT:-false}" = "true" ] \
+  || echo "${DATABASE_URL:-}" | grep -Eqi 'neon\.tech|amazonaws\.com|render\.com|supabase\.co'; then
+  echo "Skipping wait-for-postgres (managed DATABASE_URL or SKIP_POSTGRES_WAIT=true)."
+else
+  /app/docker/scripts/wait-for-postgres.sh
+fi
 
 PRISMA_SCHEMA="BackendZerocademy/prisma/schema.prisma"
 

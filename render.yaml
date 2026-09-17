@@ -1,0 +1,45 @@
+# Render Blueprint — Zerocademy API (NestJS + Prisma → Neon)
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy: Dashboard → New → Blueprint → connect this repo → apply.
+# Or: New → Web Service → Docker, with the same settings below.
+
+services:
+  - type: web
+    name: zerocademy-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./BackendZerocademy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_PRISMA_SEED
+        value: "false"
+      - key: SKIP_POSTGRES_WAIT
+        value: "true"
+      # Neon pooled URL (hostname contains -pooler)
+      - key: DATABASE_URL
+        sync: false
+      # Neon direct URL (no -pooler) — required for Prisma migrate
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_SALT_ROUNDS
+        value: "12"
+      # Set to your frontend URL(s), comma-separated, e.g. https://app.example.com
+      - key: CORS_ORIGIN
+        sync: false
+      - key: SWAGGER_ENABLED
+        value: "false"
