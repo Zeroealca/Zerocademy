@@ -14,8 +14,16 @@ export class PrismaService
 
   constructor(config: ConfigService<AppConfig, true>) {
     const logQueries = config.get('prismaLogQueries', { infer: true });
+    const databaseUrl = new URL(config.get('databaseUrl', { infer: true }));
+    if (
+      databaseUrl.hostname.endsWith('.neon.tech') &&
+      !databaseUrl.searchParams.has('connect_timeout')
+    ) {
+      databaseUrl.searchParams.set('connect_timeout', '15');
+    }
 
     super({
+      datasources: { db: { url: databaseUrl.toString() } },
       log: logQueries
         ? [
             { emit: 'event', level: 'query' },
