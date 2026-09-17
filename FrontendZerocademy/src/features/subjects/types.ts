@@ -5,6 +5,7 @@ export interface SubjectGradeLevelRef {
 }
 
 export interface Subject {
+  institutionId?: string | null;
   id: string;
   name: string;
   code: string;

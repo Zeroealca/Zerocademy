@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select";
 import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
 import { useAcademicTerms } from "@/features/academic-periods/hooks/use-academic-terms";
 import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useGrades } from "@/features/grades/hooks/use-grades";
 import type { GradesFilters } from "@/features/grades/types";
 import { canViewOwnGrades } from "@/lib/permissions";
@@ -79,7 +80,7 @@ export function StudentGradesPage() {
             <option value="">Todos</option>
             {(periodsData?.data ?? []).map((period) => (
               <option key={period.id} value={period.id}>
-                {period.name}
+                {formatAcademicPeriodOptionLabel(period)}
               </option>
             ))}
           </Select>

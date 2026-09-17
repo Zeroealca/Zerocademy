@@ -46,4 +46,4 @@ export interface CreateTeacherAssignmentInput {
   academicPeriodId: string;
 }
 
-export type UpdateTeacherAssignmentInput = Partial<CreateTeacherAssignmentInput>;
+export type UpdateTeacherAssignmentInput = Partial<Pick<CreateTeacherAssignmentInput, "courseId" | "subjectId">>;

@@ -43,7 +43,7 @@ export function BulkEnrollmentPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { bulkCreateMutation } = useEnrollmentMutations();
-  const { data: periodsData } = useInstitutionAcademicPeriods();
+  const { data: periodsData } = useInstitutionAcademicPeriods({ page: 1, limit: 100, status: "ACTIVE" });
   const { data: coursesData } = useCourses({
     page: 1,
     limit: 100,
@@ -52,10 +52,10 @@ export function BulkEnrollmentPage() {
   });
 
   useEffect(() => {
-    if (effectivePeriodId && !academicPeriodId) {
+    if (effectivePeriodId && !academicPeriodId && periodsData?.data.some((period) => period.id === effectivePeriodId)) {
       setAcademicPeriodId(effectivePeriodId);
     }
-  }, [effectivePeriodId, academicPeriodId]);
+  }, [effectivePeriodId, academicPeriodId, periodsData]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
@@ -123,6 +123,10 @@ export function BulkEnrollmentPage() {
   };
 
   const handleSubmit = async () => {
+    if (!periodsData?.data.some((period) => period.id === academicPeriodId)) {
+      setSubmitError("Selecciona un periodo lectivo activo.");
+      return;
+    }
     if (!courseId || !academicPeriodId || selectedIds.size === 0) return;
 
     setSubmitError(null);

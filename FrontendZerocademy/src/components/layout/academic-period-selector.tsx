@@ -1,97 +1,35 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
-import {
-  useAcademicPeriodContext,
-  useSetSelectedAcademicPeriod,
-} from "@/features/academic-periods/hooks/use-academic-period-context";
-import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
+import { useAcademicPeriodContext } from "@/features/academic-periods/hooks/use-academic-period-context";
 import { canSelectAcademicPeriod } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
 export function AcademicPeriodSelector() {
   const role = useAuthStore((state) => state.user?.role);
-
-  if (!canSelectAcademicPeriod(role)) {
-    return null;
-  }
-
-  return <AcademicPeriodSelectorInner />;
+  if (!canSelectAcademicPeriod(role)) return null;
+  return <ActiveAcademicPeriodLabel />;
 }
 
-function AcademicPeriodSelectorInner() {
-  const { data: context, isLoading: contextLoading } = useAcademicPeriodContext();
-  const {
-    data: periodsData,
-    isLoading: periodsLoading,
-    hasInstitutionScope,
-    hasRegime,
-    isScopeReady,
-  } = useInstitutionAcademicPeriods();
-  const setPeriod = useSetSelectedAcademicPeriod();
-
-  const effectivePeriod = context?.effectivePeriod ?? null;
-  const institutionRegime = context?.institutionRegime;
-  const effectiveId =
-    effectivePeriod &&
-    (!institutionRegime || effectivePeriod.regime === institutionRegime)
-      ? effectivePeriod.id
-      : "";
-  const periods = periodsData?.data ?? [];
-  const periodOptions = periods.filter((period) =>
-    institutionRegime ? period.regime === institutionRegime : true,
-  );
-
-  // Si el efectivo coincide con el régimen pero no vino en la lista, incluirlo.
-  const optionsWithEffective =
-    effectivePeriod &&
-    effectiveId &&
-    !periodOptions.some((period) => period.id === effectivePeriod.id)
-      ? [effectivePeriod, ...periodOptions]
-      : periodOptions;
-
-  const emptyHint = !contextLoading && !hasInstitutionScope
-    ? "Sin institución asignada"
-    : !contextLoading && hasInstitutionScope && !hasRegime
-      ? "Institución sin régimen"
-      : optionsWithEffective.length === 0 && isScopeReady
-        ? "Sin períodos para este régimen"
-        : "Seleccionar período";
+function ActiveAcademicPeriodLabel() {
+  const { data: context, isLoading, isError } = useAcademicPeriodContext();
+  const period = context?.effectivePeriod;
+  const activePeriod = period?.status === "ACTIVE" && period.isActive ? period : null;
+  const label = isLoading
+    ? "Cargando periodo lectivo..."
+    : isError
+      ? "No se pudo cargar el periodo activo"
+      : activePeriod
+        ? formatAcademicPeriodOptionLabel(activePeriod)
+        : "Sin periodo lectivo activo";
 
   return (
-    <div className="hidden min-w-[200px] flex-col gap-1 sm:flex">
-      <Label htmlFor="header-period" className="sr-only">
-        Período académico
-      </Label>
-      <Select
-        id="header-period"
-        value={effectiveId}
-        disabled={
-          contextLoading ||
-          periodsLoading ||
-          setPeriod.isPending ||
-          !isScopeReady
-        }
-        onChange={(event) => {
-          const nextId = event.target.value;
-          if (nextId && nextId !== effectiveId) {
-            void setPeriod.mutateAsync(nextId);
-          }
-        }}
-        className="h-9 text-xs"
-        aria-label="Período académico seleccionado"
-      >
-        <option value="">
-          {contextLoading || periodsLoading ? "Cargando…" : emptyHint}
-        </option>
-        {optionsWithEffective.map((period) => (
-          <option key={period.id} value={period.id}>
-            {formatAcademicPeriodOptionLabel(period)}
-          </option>
-        ))}
-      </Select>
-    </div>
+    <span
+      className="hidden max-w-full text-xs text-muted-foreground sm:block"
+      aria-label="Periodo lectivo activo"
+      aria-live="polite"
+    >
+      {label}
+    </span>
   );
 }
