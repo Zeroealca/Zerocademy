@@ -35,9 +35,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const body = this.normalizeErrorBody(status, exceptionResponse);
 
     if (status >= 500) {
+      const err =
+        exception instanceof Error
+          ? exception
+          : new Error(typeof exception === 'string' ? exception : 'Unknown error');
+
       this.logger.error({
         context: 'HttpExceptionFilter',
         event: 'UNEXPECTED_ERROR',
+        message: err.message || body.message,
+        stack: err.stack,
+        metadata: {
+          path: request.url,
+          method: request.method,
+          statusCode: status,
+          errorName: err.name,
+          exceptionType:
+            exception instanceof HttpException
+              ? 'HttpException'
+              : exception instanceof Error
+                ? exception.constructor.name
+                : typeof exception,
+        },
+      });
+    } else if (status === HttpStatus.UNAUTHORIZED) {
+      this.logger.warn({
+        context: 'HttpExceptionFilter',
+        event: 'UNAUTHORIZED',
         message: body.message,
         metadata: {
           path: request.url,
