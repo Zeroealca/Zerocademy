@@ -120,20 +120,22 @@ La suma de pesos de categorías **activas** por institución debe ser **100 %**.
 
 | Categoría | Peso típico | Descripción |
 |-----------|-------------|-------------|
-| Evaluación formativa | 40 % | Tareas, participación, trabajo en clase |
-| Evaluación sumativa | 60 % | Pruebas, exámenes, proyectos evaluados |
+| Evaluación formativa | 70 % | Tareas, participación, trabajo en clase |
+| Evaluación sumativa | 30 % | Pruebas, exámenes, proyectos evaluados |
+
+Referencia: [Instructivo de Evaluación Estudiantil 2025, página 16](https://educacion.gob.ec/wp-content/uploads/downloads/2025/04/Instructivo-de-Evaluacion-Estudiantil-2025.pdf), para EGB Media, Superior y Bachillerato. No aplicar estos pesos a niveles con evaluación exclusivamente cualitativa.
 
 ### Categorías TAI, AGA, AEA (personalización)
 
-Muchas instituciones ecuatorianas desglosan la evaluación formativa en instrumentos como:
+Estos nombres son ejemplos personalizados del plan de pruebas del proyecto, no categorías oficiales obligatorias del Ministerio:
 
 | Sigla | Nombre habitual | Uso |
 |-------|-----------------|-----|
-| **TAI** | Tareas de aprendizaje integral / técnicas de aprendizaje | Actividades integradoras |
+| **TAI** | Trabajo Autónomo e Interactivo | Actividades individuales e interactivas |
 | **AGA** | Actividades grupales de aprendizaje | Trabajo colaborativo |
-| **AEA** | Actividades de estudio autónomo | Trabajo fuera de clase |
+| **AEA** | Actividades de Evaluación Académica | Pruebas y otras actividades calificadas |
 
-Zerocademy **no obliga** esos nombres: puede crear categorías personalizadas con los pesos que su colegio defina, siempre que **sumen 100 %**. Si prefiere el modelo ministerial simplificado, use la plantilla con evaluación formativa y sumativa.
+Zerocademy **no obliga** esos nombres. Las categorías personalizadas deben sumar 100 % y su configuración debe respetar la normativa aplicable. La plantilla Ecuador usa evaluación formativa y sumativa. Actualizar la plantilla no modifica automáticamente configuraciones institucionales existentes.
 
 ### Pasos
 

@@ -2163,7 +2163,7 @@ Estudiantes extra: `student2.demo` … `student8.demo@zerocademy.edu` / `DemoStu
 - [ ] Existe botón de init Ecuador defaults
 - [ ] Se crea esquema de calificación 0-10
 - [ ] Se crean términos de evaluación con pesos estándar
-- [ ] Se crean categorías TAI/AGA/AEA
+- [ ] Se crean categorías Evaluación formativa (70%) y Evaluación sumativa (30%) para EGB Media, Superior y Bachillerato, según el Instructivo de Evaluación Estudiantil 2025.
 - [ ] La configuración queda lista para usar
 
 ---
