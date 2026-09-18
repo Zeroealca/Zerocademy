@@ -17,6 +17,7 @@ import {
   canViewAcademicEvaluation,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
+import { ApiError } from "@/lib/api-error";
 
 const NAV_ITEMS = [
   {
@@ -45,6 +46,8 @@ export function AcademicEvaluationDashboardPage() {
   const currentUser = useAuthStore((state) => state.user);
   const effectivePeriodId = useEffectiveAcademicPeriodId();
   const [institutionId, setInstitutionId] = useState("");
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [initializedInstitutionId, setInitializedInstitutionId] = useState<string | null>(null);
   const { data: preview, isLoading, isError, refetch } = useEvaluationPreview(
     institutionId || undefined,
     effectivePeriodId,
@@ -84,7 +87,14 @@ export function AcademicEvaluationDashboardPage() {
       return;
     }
 
-    await mutations.applyPlatformDefaultsInstitution.mutateAsync(institutionId);
+    setInitializationError(null);
+    setInitializedInstitutionId(null);
+    try {
+      await mutations.applyPlatformDefaultsInstitution.mutateAsync(institutionId);
+      setInitializedInstitutionId(institutionId);
+    } catch (error) {
+      setInitializationError(error instanceof ApiError ? error.message : "No se pudo inicializar la plantilla.");
+    }
   };
 
   return (
@@ -108,19 +118,23 @@ export function AcademicEvaluationDashboardPage() {
               </Link>
             </Button>
           ) : null}
-          {canManage && institutionId ? (
+          {canManage ? (
             <Button
               variant="outline"
               onClick={handleApplyPlatformDefaults}
-              disabled={mutations.applyPlatformDefaultsInstitution.isPending}
+              disabled={!institutionId || mutations.applyPlatformDefaultsInstitution.isPending}
             >
-              Aplicar plantilla de plataforma
+              {mutations.applyPlatformDefaultsInstitution.isPending ? "Inicializando..." : "Inicializar plantilla Ecuador"}
             </Button>
           ) : null}
         </div>
       </header>
 
       <InstitutionScopeSelector value={institutionId} onChange={setInstitutionId} />
+      {initializationError ? <p role="alert" className="text-sm text-destructive">{initializationError}</p> : null}
+      {initializedInstitutionId === institutionId && institutionId ? (
+        <p role="status" className="text-sm">Plantilla inicializada correctamente.</p>
+      ) : null}
 
       {!institutionId ? (
         <EmptyState message="Seleccione una institución para ver la vista previa de configuración." />
@@ -210,6 +224,28 @@ function PreviewPanel({
             label="Peso de categorías de evaluación"
             total={preview.assessmentCategoryWeightTotal}
           />
+          <h3 className="text-sm font-medium">Categorías de evaluación</h3>
+          {preview.assessmentCategories.length ? (
+            <ul className="divide-y divide-border text-sm">
+              {preview.assessmentCategories.map((category) => (
+                <li key={category.name} className="flex justify-between gap-4 py-2">
+                  <span>{category.name}</span>
+                  <span>{category.weight}%</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="text-sm text-muted-foreground">Sin categorías configuradas.</p>}
+          <h3 className="text-sm font-medium">Períodos de evaluación</h3>
+          {preview.evaluationTerms.length ? (
+            <ul className="divide-y divide-border text-sm">
+              {preview.evaluationTerms.map((term) => (
+                <li key={term.name} className="flex justify-between gap-4 py-2">
+                  <span>{term.name}</span>
+                  <span>{term.weight}%</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="text-sm text-muted-foreground">Sin períodos de evaluación configurados.</p>}
         </div>
       </CardContent>
     </Card>
