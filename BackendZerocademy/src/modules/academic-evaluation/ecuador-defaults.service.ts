@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { assertInstitutionExistsAndActive } from './academic-evaluation.validation';
-import { ACADEMIC_EVALUATION_CONTEXT, ECUADOR_DEFAULT_SCHEME_NAME } from './constants';
+import { ACADEMIC_EVALUATION_CONTEXT, ECUADOR_DEFAULT_SCHEME_NAME, ECUADOR_ASSESSMENT_CATEGORY_TEMPLATES } from './constants';
 import { GradingSchemeResponseDto } from './dto/grading-scheme-response.dto';
 import { InstitutionAcademicConfigurationResponseDto } from './dto/institution-academic-configuration-response.dto';
 import { toGradingSchemeResponseDto } from './mappers/academic-evaluation.mapper';
@@ -120,6 +120,11 @@ export class EcuadorDefaultsService {
       orderBy: { order: 'asc' },
     });
 
+    // Upgrade only the exact legacy Ecuador template when making a new copy.
+    const isLegacyEcuador = templates.length === 2 &&
+      templates.some((template) => template.name === 'Evaluación formativa' && template.weight.equals(40)) &&
+      templates.some((template) => template.name === 'Evaluación sumativa' && template.weight.equals(60));
+
     for (const template of templates) {
       const exists = await this.prisma.assessmentCategory.findFirst({
         where: { institutionId, name: template.name },
@@ -131,7 +136,9 @@ export class EcuadorDefaultsService {
         data: {
           institutionId,
           name: template.name,
-          weight: template.weight,
+          weight: isLegacyEcuador
+            ? ECUADOR_ASSESSMENT_CATEGORY_TEMPLATES.find((category) => category.name === template.name)!.weight
+            : template.weight,
           description: template.description,
           isActive: true,
         },

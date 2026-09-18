@@ -45,14 +45,14 @@ export const ECUADOR_DEFAULT_GRADE_SCALES = [
 export const ECUADOR_ASSESSMENT_CATEGORY_TEMPLATES = [
   {
     name: 'Evaluación formativa',
-    weight: 40,
+    weight: 70,
     order: 1,
     description:
       'Seguimiento cotidiano del proceso de aprendizaje (tareas, participación, trabajo en clase)',
   },
   {
     name: 'Evaluación sumativa',
-    weight: 60,
+    weight: 30,
     order: 2,
     description:
       'Instrumentos de evaluación parcial y quimestral (pruebas, exámenes, proyectos evaluados)',
