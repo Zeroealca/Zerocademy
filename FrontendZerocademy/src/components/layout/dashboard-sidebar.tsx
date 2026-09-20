@@ -40,6 +40,7 @@ import {
   canViewOwnEnrollmentHistory,
   canViewStudents,
   canViewRepresentativePortal,
+  canViewAcademicPlanning,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -157,6 +158,7 @@ const academicEvaluationNavItem = {
   label: "Evaluación académica",
   icon: Scale,
 };
+const academicPlanningNavItem = { href: "/academic-plans", label: "Planificación académica", icon: ClipboardList };
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -191,6 +193,7 @@ export function DashboardSidebar() {
   if (canViewAcademicEvaluation(currentUser?.role)) {
     navItems.push(academicEvaluationNavItem);
   }
+  if (canViewAcademicPlanning(currentUser?.role)) navItems.push(academicPlanningNavItem);
 
   if (canViewStudents(currentUser?.role)) {
     navItems.push(studentsNavItem);

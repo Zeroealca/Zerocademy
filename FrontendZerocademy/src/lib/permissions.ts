@@ -177,6 +177,15 @@ export function canViewAcademicEvaluation(role: UserRole | undefined): boolean {
   return hasRole(role, ["ADMIN", "TEACHER"]);
 }
 
+/** Academic plans: teacher-owned drafts and institution read-only oversight. */
+export function canViewAcademicPlanning(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER"]);
+}
+
+export function canManageAcademicPlanning(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["TEACHER"]);
+}
+
 export function canManageAcademicEvaluation(
   role: UserRole | undefined,
 ): boolean {
