@@ -140,7 +140,6 @@ export async function apiClient<T>(
     });
 
   let response = await execute();
-
   if (response.status === 401 && !skipAuth) {
     const refreshed = await refreshAccessToken();
 
@@ -154,4 +153,33 @@ export async function apiClient<T>(
   }
 
   return parseResponse<T>(response);
+}
+
+/** Authenticated binary download with the same one-time token refresh as apiClient. */
+export async function apiDownloadClient(path: string): Promise<Blob> {
+  const url = path.startsWith("http") ? path : `${getApiBaseUrl()}${path}`;
+  const requestHeaders = new Headers();
+  const setAuthorization = () => {
+    const accessToken = useAuthStore.getState().accessToken;
+    if (accessToken) {
+      requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+    }
+  };
+  setAuthorization();
+
+  let response = await fetch(url, { headers: requestHeaders });
+  if (response.status === 401 && (await refreshAccessToken())) {
+    setAuthorization();
+    response = await fetch(url, { headers: requestHeaders });
+  }
+
+  if (!response.ok) {
+    throw new ApiError({
+      statusCode: response.status,
+      message: response.statusText || "No se pudo descargar el archivo",
+      error: "Error",
+    });
+  }
+
+  return response.blob();
 }
