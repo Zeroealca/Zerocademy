@@ -10,46 +10,46 @@ Granular permissions and ABAC remain future work.
 
 ### SUPER_ADMIN
 
-| Can | Cannot |
-|-----|--------|
-| Create institutions | Manage institution operational data (courses, assignments, students, enrollments) via strict routes |
-| Create academic levels, grades, subjects, periods | |
-| Activate/deactivate periods (one active per regime globally) | |
-| Create all user types | |
-| List, search, and filter users (including SUPER_ADMIN) | |
-| Assign institution memberships | |
+| Can                                                          | Cannot                                                                                              |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Create institutions                                          | Manage institution operational data (courses, assignments, students, enrollments) via strict routes |
+| Create academic levels, grades, subjects, periods            |                                                                                                     |
+| Activate/deactivate periods (one active per regime globally) |                                                                                                     |
+| Create all user types                                        |                                                                                                     |
+| List, search, and filter users (including SUPER_ADMIN)       |                                                                                                     |
+| Assign institution memberships                               |                                                                                                     |
 
 ### ADMIN
 
-| Can | Cannot |
-|-----|--------|
-| Create students, enrollments, and CSV bulk import | Create academic levels, grade levels, or subjects |
-| Manage courses/parallels and teacher assignments | Create academic periods or activate global calendar |
-| View academic levels, grades, and subjects (read-only catalog) | Assign institution memberships |
-| List, search, and filter users (except SUPER_ADMIN) | Manage super admins |
-| View and configure **only institutions with an active ADMIN membership** | Access other institutions (404) |
-| Run institution academic transitions (membership required) | |
-| Select academic period context | |
-| View academic structures | |
+| Can                                                                      | Cannot                                              |
+| ------------------------------------------------------------------------ | --------------------------------------------------- |
+| Create students, enrollments, and CSV bulk import                        | Create academic levels, grade levels, or subjects   |
+| Manage courses/parallels and teacher assignments                         | Create academic periods or activate global calendar |
+| View academic levels, grades, and subjects (read-only catalog)           | Assign institution memberships                      |
+| List, search, and filter users (except SUPER_ADMIN)                      | Manage super admins                                 |
+| View and configure **only institutions with an active ADMIN membership** | Access other institutions (404)                     |
+| Run institution academic transitions (membership required)               |                                                     |
+| Select academic period context                                           |                                                     |
+| View academic structures                                                 |                                                     |
 
 ### TEACHER
 
-| Can | Cannot |
-|-----|--------|
-| Access assigned courses/subjects for selected period | Institution or platform configuration |
-| Select academic period context | Unassigned data |
-| View students/enrollments in assigned courses (read-only) | Create students or manage enrollments |
+| Can                                                                 | Cannot                                  |
+| ------------------------------------------------------------------- | --------------------------------------- |
+| Access assigned courses/subjects for selected period                | Institution or platform configuration   |
+| Select academic period context                                      | Unassigned data                         |
+| View students/enrollments in assigned courses (read-only)           | Create students or manage enrollments   |
 | Record and edit daily attendance for assigned course/period rosters | Record attendance outside an assignment |
 
 ### STUDENT
 
-| Can | Cannot |
-|-----|--------|
+| Can                                        | Cannot                          |
+| ------------------------------------------ | ------------------------------- |
 | View own academic data for selected period | Other students or configuration |
 
 ### REPRESENTATIVE
 
-Read-only access to students with an active `RepresentativeStudent` relationship. Representatives can view associated student profiles, grades, performance, report cards/PDFs, attendance history, and factual justification status. They cannot change academic data or submit/review attendance justifications.
+Relationship-scoped access to students with an active `RepresentativeStudent` relationship. Representatives can view associated student profiles, grades, performance, report cards/PDFs, attendance history, and factual justification status. They can submit the existing attendance justification for an eligible associated student's absence; the backend resolves the attendance record through its enrollment/student and never trusts a client-supplied student or representative identity. They cannot record or modify attendance, review justifications, access unrelated students, or access an inactive relationship.
 
 ## Architecture
 
@@ -70,22 +70,22 @@ HTTP Request
 
 ### Role sets (`common/rbac/rbac-role-sets.ts`)
 
-| Constant | Roles |
-|----------|-------|
-| `PLATFORM_READ_ROLES` | SUPER_ADMIN, ADMIN, TEACHER, STUDENT |
-| `PLATFORM_CALENDAR_WRITE_ROLES` | SUPER_ADMIN |
-| `PLATFORM_CATALOG_WRITE_ROLES` | SUPER_ADMIN |
-| `INSTITUTION_OPS_WRITE_ROLES` | ADMIN (strict) |
-| `INSTITUTION_OPS_READ_ROLES` | SUPER_ADMIN, ADMIN, TEACHER |
-| `STUDENT_ENROLLMENT_WRITE_ROLES` | ADMIN (strict) |
-| `STUDENT_ENROLLMENT_READ_ROLES` | ADMIN, TEACHER, STUDENT (strict) |
+| Constant                         | Roles                                |
+| -------------------------------- | ------------------------------------ |
+| `PLATFORM_READ_ROLES`            | SUPER_ADMIN, ADMIN, TEACHER, STUDENT |
+| `PLATFORM_CALENDAR_WRITE_ROLES`  | SUPER_ADMIN                          |
+| `PLATFORM_CATALOG_WRITE_ROLES`   | SUPER_ADMIN                          |
+| `INSTITUTION_OPS_WRITE_ROLES`    | ADMIN (strict)                       |
+| `INSTITUTION_OPS_READ_ROLES`     | SUPER_ADMIN, ADMIN, TEACHER          |
+| `STUDENT_ENROLLMENT_WRITE_ROLES` | ADMIN (strict)                       |
+| `STUDENT_ENROLLMENT_READ_ROLES`  | ADMIN, TEACHER, STUDENT (strict)     |
 
 ## Academic period context API
 
-| Method | Path | Roles |
-|--------|------|-------|
-| GET | `/v1/academic-periods/context` | Platform read roles |
-| PUT | `/v1/academic-periods/context/selection` | ADMIN, TEACHER, STUDENT |
+| Method | Path                                     | Roles                   |
+| ------ | ---------------------------------------- | ----------------------- |
+| GET    | `/v1/academic-periods/context`           | Platform read roles     |
+| PUT    | `/v1/academic-periods/context/selection` | ADMIN, TEACHER, STUDENT |
 
 Returns `selectedPeriod`, `effectivePeriod`, and `activeByRegime`.
 

@@ -5,6 +5,7 @@ import {
   fetchDailyAttendance,
   fetchCourseAttendanceReport,
   fetchMyAttendanceHistory,
+  fetchRepresentativeStudentAttendanceHistory,
   createAttendanceJustification,
   fetchAttendanceJustifications,
   reviewAttendanceJustification,
@@ -49,6 +50,7 @@ export function useMyAttendanceHistory(
   academicPeriodId: string,
   startDate: string,
   endDate: string,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: [
@@ -64,7 +66,33 @@ export function useMyAttendanceHistory(
         startDate || undefined,
         endDate || undefined,
       ),
-    enabled: Boolean(academicPeriodId),
+    enabled: enabled && Boolean(academicPeriodId),
+  });
+}
+export function useRepresentativeStudentAttendanceHistory(
+  studentId: string,
+  academicPeriodId: string,
+  startDate: string,
+  endDate: string,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: [
+      ...attendanceKeys.all,
+      "representative-student-history",
+      studentId,
+      academicPeriodId,
+      startDate,
+      endDate,
+    ],
+    queryFn: () =>
+      fetchRepresentativeStudentAttendanceHistory(
+        studentId,
+        academicPeriodId,
+        startDate || undefined,
+        endDate || undefined,
+      ),
+    enabled: enabled && Boolean(studentId && academicPeriodId),
   });
 }
 export function useCourseAttendanceReport(

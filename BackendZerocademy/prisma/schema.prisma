@@ -56,6 +56,8 @@ model User {
   attendanceRecordsRecorded         AttendanceRecord[]         @relation("AttendanceRecordedBy")
   attendanceJustificationsSubmitted AttendanceJustification[]  @relation("AttendanceJustificationSubmittedBy")
   attendanceJustificationsReviewed  AttendanceJustification[]  @relation("AttendanceJustificationReviewedBy")
+  academicPlansCreated              AcademicPlan[]             @relation("AcademicPlanCreatedBy")
+  academicPlansPublished            AcademicPlan[]             @relation("AcademicPlanPublishedBy")
   representativeStudentRelations    RepresentativeStudent[]    @relation("RepresentativeStudentRepresentative")
   selectedAcademicPeriod            AcademicPeriod?            @relation("UserSelectedPeriod", fields: [selectedAcademicPeriodId], references: [id], onDelete: SetNull)
 
@@ -122,6 +124,11 @@ enum AttendanceJustificationStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum AcademicPlanStatus {
+  DRAFT
+  PUBLISHED
 }
 
 model Institution {
@@ -319,6 +326,7 @@ model AcademicTerm {
   updatedAt        DateTime       @updatedAt
   academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
   assessments      Assessment[]
+  academicPlans    AcademicPlan[]
 
   @@unique([academicPeriodId, order])
   @@index([academicPeriodId])
@@ -456,6 +464,7 @@ model TeacherAssignment {
   course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
   assessments      Assessment[]
+  academicPlans    AcademicPlan[]
 
   @@unique([teacherId, subjectId, courseId, academicPeriodId])
   @@unique([subjectId, courseId, academicPeriodId], map: "teacher_assignments_subject_course_period_key")
@@ -466,6 +475,36 @@ model TeacherAssignment {
   @@index([academicPeriodId])
   @@index([academicPeriodId, teacherId])
   @@map("teacher_assignments")
+}
+
+model AcademicPlan {
+  id                  String             @id @default(uuid())
+  teacherAssignmentId String
+  academicTermId      String
+  title               String             @db.VarChar(200)
+  description         String?            @db.VarChar(2000)
+  startDate           DateTime?          @db.Date
+  endDate             DateTime?          @db.Date
+  objectives          String?            @db.Text
+  contents            String?            @db.Text
+  activities          String?            @db.Text
+  resources           String?            @db.Text
+  evaluationNotes     String?            @db.Text
+  notes               String?            @db.Text
+  status              AcademicPlanStatus @default(DRAFT)
+  createdByUserId     String
+  publishedAt         DateTime?
+  publishedByUserId   String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  teacherAssignment   TeacherAssignment  @relation(fields: [teacherAssignmentId], references: [id], onDelete: Restrict)
+  academicTerm        AcademicTerm       @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
+  createdByUser       User               @relation("AcademicPlanCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  publishedByUser     User?              @relation("AcademicPlanPublishedBy", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([teacherAssignmentId, status])
+  @@index([academicTermId])
+  @@map("academic_plans")
 }
 
 /// Student enrollment in a classroom course for an academic period (historical status tracked).

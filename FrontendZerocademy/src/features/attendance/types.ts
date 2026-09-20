@@ -49,7 +49,11 @@ export interface AttendanceHistoryItem {
   status: AttendanceStatus;
   notes: string | null;
   courseName: string;
-  pendingJustification: { id: string; status: "PENDING" } | null;
+  justification: {
+    id: string;
+    status: AttendanceJustificationStatus;
+  } | null;
+  canSubmitJustification: boolean;
 }
 export interface MyAttendanceHistory {
   summary: AttendanceCounts;
@@ -73,6 +77,11 @@ export interface AttendanceJustification {
   status: AttendanceJustificationStatus;
   createdAt: string;
   reviewComment: string | null;
+  submittedByUser: {
+    firstName: string;
+    lastName: string;
+    role: "STUDENT" | "REPRESENTATIVE";
+  };
   attendanceRecord: {
     id: string;
     date: string;

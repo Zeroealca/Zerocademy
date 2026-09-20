@@ -23,11 +23,11 @@ Statuses are the typed Prisma enum: `PRESENT`, `ABSENT`, `LATE`, and `EXCUSED`.
 
 ## API
 
-| Endpoint | Roles | Purpose |
-| --- | --- | --- |
-| `GET /v1/attendance/courses?academicPeriodId=` | SUPER_ADMIN, ADMIN, TEACHER | Courses the actor can use for attendance. |
+| Endpoint                                                               | Roles                       | Purpose                                             |
+| ---------------------------------------------------------------------- | --------------------------- | --------------------------------------------------- |
+| `GET /v1/attendance/courses?academicPeriodId=`                         | SUPER_ADMIN, ADMIN, TEACHER | Courses the actor can use for attendance.           |
 | `GET /v1/attendance/daily?academicPeriodId=&courseId=&date=YYYY-MM-DD` | SUPER_ADMIN, ADMIN, TEACHER | Roster plus explicit recorded or unrecorded status. |
-| `POST /v1/attendance/bulk` | SUPER_ADMIN, ADMIN, TEACHER | Transactional create/update batch. |
+| `POST /v1/attendance/bulk`                                             | SUPER_ADMIN, ADMIN, TEACHER | Transactional create/update batch.                  |
 
 Every submitted enrollment must be active, belong to the exact course and academic period, and have an enrollment date no later than the selected date. Existing records remain visible even if an enrollment subsequently becomes inactive, preserving the historical roster. The current enrollment model has no withdrawal-effective date, so it cannot reconstruct membership before a later withdrawal beyond already recorded records.
 
@@ -60,14 +60,16 @@ PDF and CSV exports remain deferred: Phase 2 exposes the typed report DTO that a
 
 An `AttendanceJustification` belongs to an individual `AttendanceRecord`, never directly to a student. This preserves the exact course, period, and calendar date being challenged. Its independent enum is `PENDING`, `APPROVED`, or `REJECTED`; it is intentionally separate from `AttendanceStatus`.
 
-Only the authenticated student whose enrollment owns an `ABSENT` record may submit a reason (1–1000 characters). Submission is blocked for `CLOSED` and `ARCHIVED` periods and when a pending justification already exists for that record. A PostgreSQL partial unique index permits only one `PENDING` row per attendance record; the service returns a clear conflict for ordinary and concurrent submissions. The regular `(attendanceRecordId, status)` index supports the lookup path.
+Only the authenticated student whose enrollment owns an `ABSENT` record, or an authenticated representative with an active `RepresentativeStudent` relationship to that enrollment's student, may submit a reason (1–1000 characters). The submitter is always recorded as `submittedByUserId`; the justification remains attached to the attendance record. Representative authorization resolves the full attendance → enrollment → student relationship and verifies the attendance institution matches the student context, so a relationship for one student never grants access to another student's or institution's attendance record.
+
+Submission is blocked for `CLOSED` and `ARCHIVED` periods and when a pending justification already exists for that record. A PostgreSQL partial unique index permits only one `PENDING` row per attendance record regardless of whether the requester is a student or representative; the service returns a clear conflict for ordinary and concurrent submissions. The regular `(attendanceRecordId, status)` index supports the lookup path.
 
 An institution `ADMIN` lists pending submissions and is the only reviewer role in this phase. Rejection requires a review comment. Approval and the related attendance change execute in one Prisma transaction: the justification receives reviewer, timestamp, and decision, then the attendance status changes from `ABSENT` to `EXCUSED`. A rejected record stays `ABSENT`; a reviewed submission cannot be reviewed again. The service also records structured submit/approve/reject events through `AppLoggerService`.
 
-| Endpoint | Roles | Purpose |
-| --- | --- | --- |
-| `POST /v1/attendance/:attendanceRecordId/justifications` | STUDENT | Submit a reason for the caller's own eligible absence. |
-| `GET /v1/attendance/justifications?status=PENDING` | ADMIN | List scoped institution justifications for review. |
-| `POST /v1/attendance/justifications/:justificationId/review` | ADMIN | Approve or reject a pending justification. |
+| Endpoint                                                     | Roles                   | Purpose                                                                                                     |
+| ------------------------------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `POST /v1/attendance/:attendanceRecordId/justifications`     | STUDENT, REPRESENTATIVE | Submit a reason for the caller's own eligible absence or an actively associated student's eligible absence. |
+| `GET /v1/attendance/justifications?status=PENDING`           | ADMIN                   | List scoped institution justifications for review.                                                          |
+| `POST /v1/attendance/justifications/:justificationId/review` | ADMIN                   | Approve or reject a pending justification.                                                                  |
 
-The student history response includes a pending-justification marker, and `/attendance/reports` exposes the submit and administrator-review flows. No binary attachments are accepted in this phase: the current local upload mechanism is not durable across Render instances. Add attachment metadata and object storage only when a persistent storage provider is selected.
+The student and representative history response includes a factual justification status plus a backend-computed submission eligibility flag, and `/attendance/reports` exposes the shared submit and administrator-review flows. The administrator queue includes a safe submitter descriptor (role and display name), so representative requests use the same review queue and state transition. No binary attachments are accepted in this phase: the current local upload mechanism is not durable across Render instances. Add attachment metadata and object storage only when a persistent storage provider is selected.

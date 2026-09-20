@@ -4,7 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AttendanceStatus, Role } from '@prisma/client';
+import {
+  AcademicPeriodStatus,
+  AttendanceJustificationStatus,
+  AttendanceStatus,
+  Role,
+} from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -31,7 +36,7 @@ export class AttendanceReportsService {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async getMyHistory(
+  getMyHistory(
     actor: AuthenticatedUser,
     query: MyAttendanceHistoryQueryDto,
   ): Promise<MyAttendanceHistoryResponseDto> {
@@ -73,8 +78,10 @@ export class AttendanceReportsService {
         status: true,
         notes: true,
         course: { select: { name: true, section: true } },
+        academicPeriod: { select: { status: true } },
         justifications: {
           select: { id: true, status: true },
+          orderBy: { createdAt: 'desc' },
           take: 1,
         },
       },
@@ -104,7 +111,13 @@ export class AttendanceReportsService {
         status: record.status,
         notes: record.notes,
         courseName: `${record.course.name} ${record.course.section}`,
-        pendingJustification: record.justifications[0] ?? null,
+        justification: record.justifications[0] ?? null,
+        canSubmitJustification:
+          record.status === AttendanceStatus.ABSENT &&
+          record.academicPeriod.status !== AcademicPeriodStatus.CLOSED &&
+          record.academicPeriod.status !== AcademicPeriodStatus.ARCHIVED &&
+          record.justifications[0]?.status !==
+            AttendanceJustificationStatus.PENDING,
       })),
     };
   }

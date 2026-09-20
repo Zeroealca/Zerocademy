@@ -68,6 +68,19 @@ export function fetchMyAttendanceHistory(
   if (endDate) params.set("endDate", endDate);
   return apiClient<MyAttendanceHistory>(`/v1/attendance/me/history?${params}`);
 }
+export function fetchRepresentativeStudentAttendanceHistory(
+  studentId: string,
+  academicPeriodId: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<MyAttendanceHistory> {
+  const params = new URLSearchParams({ academicPeriodId });
+  if (startDate) params.set("startDate", startDate);
+  if (endDate) params.set("endDate", endDate);
+  return apiClient<MyAttendanceHistory>(
+    `/v1/attendance/students/${studentId}/history?${params}`,
+  );
+}
 export function fetchCourseAttendanceReport(
   academicPeriodId: string,
   courseId: string,

@@ -24,6 +24,9 @@ export class RepresentativeStudentResponseDto {
   fullName: string;
 
   @ApiPropertyOptional()
+  academicPeriodId?: string;
+
+  @ApiPropertyOptional()
   academicPeriodName?: string;
 
   @ApiPropertyOptional()

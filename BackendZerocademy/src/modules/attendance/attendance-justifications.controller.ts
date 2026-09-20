@@ -24,9 +24,10 @@ export class AttendanceJustificationsController {
   ) {}
 
   @Post(':attendanceRecordId/justifications')
-  @ApiRequireRolesStrict(Role.STUDENT)
+  @ApiRequireRolesStrict(Role.STUDENT, Role.REPRESENTATIVE)
   @ApiOperation({
-    summary: 'Submit a justification for an absent attendance record',
+    summary:
+      'Submit a justification for an absent attendance record owned by the student or an associated representative student',
   })
   @ApiCreatedResponse({ description: 'Justification submitted' })
   create(

@@ -37,17 +37,45 @@ export class AttendanceJustificationsService {
     attendanceRecordId: string,
     dto: CreateAttendanceJustificationDto,
   ) {
-    if (actor.role !== Role.STUDENT || !actor.profileId)
+    if (actor.role !== Role.STUDENT && actor.role !== Role.REPRESENTATIVE)
+      throw new NotFoundException('Attendance record not found');
+    const studentScope =
+      actor.role === Role.STUDENT
+        ? actor.profileId
+          ? { enrollment: { studentId: actor.profileId } }
+          : null
+        : {
+            enrollment: {
+              student: {
+                representativeStudentRelations: {
+                  some: { representativeUserId: actor.id, isActive: true },
+                },
+              },
+            },
+          };
+    if (!studentScope)
       throw new NotFoundException('Attendance record not found');
     const attendance = await this.prisma.attendanceRecord.findFirst({
       where: {
         id: attendanceRecordId,
         status: AttendanceStatus.ABSENT,
-        enrollment: { studentId: actor.profileId },
+        ...studentScope,
       },
-      select: { id: true, academicPeriod: { select: { status: true } } },
+      select: {
+        id: true,
+        institutionId: true,
+        academicPeriod: { select: { status: true } },
+        enrollment: {
+          select: { student: { select: { institutionId: true } } },
+        },
+      },
     });
     if (!attendance)
+      throw new NotFoundException('Eligible attendance record not found');
+    if (
+      actor.role === Role.REPRESENTATIVE &&
+      attendance.enrollment.student.institutionId !== attendance.institutionId
+    )
       throw new NotFoundException('Eligible attendance record not found');
     if (
       attendance.academicPeriod.status === AcademicPeriodStatus.CLOSED ||
@@ -90,10 +118,17 @@ export class AttendanceJustificationsService {
     }
     this.logger.log({
       context: ATTENDANCE_CONTEXT,
-      event: 'JUSTIFICATION_SUBMITTED',
+      event:
+        actor.role === Role.REPRESENTATIVE
+          ? 'REPRESENTATIVE_JUSTIFICATION_SUBMITTED'
+          : 'JUSTIFICATION_SUBMITTED',
       message: 'Attendance justification submitted',
       userId: actor.id,
-      metadata: { attendanceRecordId, justificationId: result.id },
+      metadata: {
+        attendanceRecordId,
+        justificationId: result.id,
+        submitterRole: actor.role,
+      },
     });
     return result;
   }
@@ -195,6 +230,9 @@ export class AttendanceJustificationsService {
         status: true,
         createdAt: true,
         reviewComment: true,
+        submittedByUser: {
+          select: { firstName: true, lastName: true, role: true },
+        },
         attendanceRecord: {
           select: {
             id: true,

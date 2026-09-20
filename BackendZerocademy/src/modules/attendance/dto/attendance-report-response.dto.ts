@@ -20,10 +20,12 @@ export class AttendanceHistoryItemDto {
   @ApiPropertyOptional({ nullable: true }) notes: string | null;
   @ApiProperty() courseName: string;
   @ApiPropertyOptional({ nullable: true })
-  pendingJustification: {
+  justification: {
     id: string;
     status: AttendanceJustificationStatus;
   } | null;
+  @ApiProperty()
+  canSubmitJustification: boolean;
 }
 export class MyAttendanceHistoryResponseDto {
   @ApiProperty({ type: AttendanceCountsDto }) summary: AttendanceCountsDto;
