@@ -44,7 +44,7 @@ Every submitted enrollment must be active, belong to the exact course and academ
 
 ## Future extensibility
 
-Future work can add statistics, representative visibility, justification workflows, notifications, and a session/subject layer without changing the enrollment-based historical record.
+Future work can add exports, notifications, and a session/subject layer without changing the enrollment-based historical record.
 
 ## Phase 2 reporting
 

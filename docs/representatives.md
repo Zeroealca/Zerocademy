@@ -1,8 +1,8 @@
-# Representatives — Phase 1
+# Representatives — Phases 1–2
 
 ## Purpose
 
-Representatives are existing `User` accounts with the global `REPRESENTATIVE` role. They have read-only access to the academic information of students with an active authorized relationship. This phase intentionally excludes submitting attendance justifications, messaging, notifications, and billing.
+Representatives are existing `User` accounts with the global `REPRESENTATIVE` role. They have relationship-scoped read-only access to the academic information of students with an active authorized relationship and may use the existing attendance-justification workflow for an eligible associated student's absence. Messaging, notifications, and billing remain out of scope.
 
 ## Domain model
 

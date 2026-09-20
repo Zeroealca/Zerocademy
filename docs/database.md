@@ -131,6 +131,10 @@ Reusable subject catalog and period-scoped teacher staffing. See [subjects.md](.
 
 Unique: `Subject.code` (global partial index); `Subject(institutionId, code)` when scoped; `TeacherAssignment(teacherId, subjectId, courseId, academicPeriodId)`.
 
+### Academic planning (not yet deployed)
+
+The Prisma source contains an `AcademicPlan` foundation associated with `TeacherAssignment`, `AcademicTerm`, and creator/publication users. It has no committed migration, Nest module, API contract, or frontend route yet, so it is not an operational feature or a database table in deployed environments. [DEMY-91](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-91) tracks the complete Phase 1 implementation.
+
 ### Academic evaluation configuration
 
 Configurable grading engine foundation. See [academic-evaluation.md](./academic-evaluation.md).
@@ -166,6 +170,8 @@ Calculated averages are **not persisted**. The `academic-performance` module rea
 
 `AttendanceRecord` stores one typed daily status per `Enrollment` and school calendar date. It retains institution, course, period and recorder audit keys and enforces `unique(enrollmentId, date)`. See [attendance.md](./attendance.md).
 
+`AttendanceJustification` belongs to one attendance record and records the authenticated submitter, review audit metadata, a typed `PENDING`/`APPROVED`/`REJECTED` state, and a reason. Its partial unique index permits only one pending justification for an attendance record, independent of whether the submitter is the student or an authorized representative.
+
 **Design decision:** Dynamic calculation is used by the first read-only report-card phase. Closure-time snapshot tables remain deferred for future official/PDF report cards.
 
 ### HealthCheck
@@ -198,8 +204,16 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20250520120000_institutions_foundation` | Institution fields, ownership FKs on academic domain |
 | `20250521120000_memberships_transitions` | Memberships, transition audit, `activeAcademicPeriodId` |
 | `20250521140000_user_selected_academic_period` | `User.selectedAcademicPeriodId` |
+| `20250521180000_students_enrollments` | Student profiles and period-scoped enrollments |
+| `20260519172008` | Historical database alignment migration |
 | `20260609120000_academic_evaluation` | Grading schemes, evaluation terms, assessment categories, institution config |
+| `20260609140000_platform_evaluation_defaults` | Platform-level Ecuador evaluation defaults |
 | `20260610120000_grades_assessments_phase1` | Assessments and grade entries |
+| `20260917120000_unique_teacher_per_subject_course` | Teacher-assignment uniqueness enforcement |
+| `20260917130000_student_registration_number` | Student registration-number support |
+| `20260919090000_attendance_daily_phase1` | Daily attendance records and roster integrity |
+| `20260919093000_attendance_justifications_phase3` | Attendance justifications and review audit metadata |
+| `20260919110000_representative_student_relationships` | Representative–student authorization relationships |
 
 Never edit applied migration SQL retroactively.
 
