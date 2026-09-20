@@ -39,6 +39,7 @@ Granular permissions and ABAC remain future work.
 | Access assigned courses/subjects for selected period | Institution or platform configuration |
 | Select academic period context | Unassigned data |
 | View students/enrollments in assigned courses (read-only) | Create students or manage enrollments |
+| Record and edit daily attendance for assigned course/period rosters | Record attendance outside an assignment |
 
 ### STUDENT
 

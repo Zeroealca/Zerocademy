@@ -11,6 +11,8 @@ import {
   Library,
   NotebookPen,
   BarChart3,
+  FileText,
+  ClipboardCheck,
   Scale,
   School,
   UserRound,
@@ -27,6 +29,9 @@ import {
   canManageUsers,
   canViewAcademicEvaluation,
   canViewAcademicPerformance,
+  canViewReportCards,
+  canViewAttendance,
+  canViewOwnAttendance,
   canViewEnrollments,
   canViewGrades,
   canViewInstitutionOperations,
@@ -118,6 +123,22 @@ const academicPerformanceNavItem = {
   icon: BarChart3,
 };
 
+const reportCardsNavItem = {
+  href: "/report-cards",
+  label: "Reportes académicos",
+  icon: FileText,
+};
+const attendanceNavItem = {
+  href: "/attendance",
+  label: "Asistencia",
+  icon: ClipboardCheck,
+};
+const myAttendanceNavItem = {
+  href: "/attendance/reports",
+  label: "Mi asistencia",
+  icon: ClipboardCheck,
+};
+
 const academicStructureNavItem = {
   href: "/academic-structure",
   label: "Estructura (árbol)",
@@ -141,10 +162,7 @@ export function DashboardSidebar() {
   }
 
   if (canManagePlatformCatalog(currentUser?.role)) {
-    navItems.push(
-      academicLevelsNavItem,
-      gradeLevelsNavItem,
-    );
+    navItems.push(academicLevelsNavItem, gradeLevelsNavItem);
   }
 
   if (canViewSubjects(currentUser?.role)) {
@@ -183,6 +201,13 @@ export function DashboardSidebar() {
     navItems.push(academicPerformanceNavItem);
   }
 
+  if (canViewReportCards(currentUser?.role)) {
+    navItems.push(reportCardsNavItem);
+  }
+  if (canViewAttendance(currentUser?.role)) navItems.push(attendanceNavItem);
+  if (canViewOwnAttendance(currentUser?.role))
+    navItems.push(myAttendanceNavItem);
+
   if (canViewInstitutions(currentUser?.role)) {
     navItems.push(institutionsNavItem);
   }
@@ -197,10 +222,12 @@ export function DashboardSidebar() {
         <GraduationCap className="h-5 w-5 text-primary" aria-hidden />
         <span className="font-semibold tracking-tight">Zerocademy</span>
       </div>
-      <nav className="flex flex-1 flex-col gap-1 p-4" aria-label="Navegación principal">
+      <nav
+        className="flex flex-1 flex-col gap-1 p-4"
+        aria-label="Navegación principal"
+      >
         {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            pathname === href || pathname.startsWith(`${href}/`);
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <Link

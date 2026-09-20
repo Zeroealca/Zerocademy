@@ -160,7 +160,11 @@ See [grades.md](./grades.md) and [assessments.md](./assessments.md).
 
 Calculated averages are **not persisted**. The `academic-performance` module reads `Grade`, `Assessment`, and evaluation configuration at query time. See [grade-calculation-engine.md](./grade-calculation-engine.md).
 
-**Design decision:** Dynamic calculation chosen over caching/persistence for maintainability; snapshot tables deferred to report-card phase.
+### Attendance (phase 1)
+
+`AttendanceRecord` stores one typed daily status per `Enrollment` and school calendar date. It retains institution, course, period and recorder audit keys and enforces `unique(enrollmentId, date)`. See [attendance.md](./attendance.md).
+
+**Design decision:** Dynamic calculation is used by the first read-only report-card phase. Closure-time snapshot tables remain deferred for future official/PDF report cards.
 
 ### HealthCheck
 

@@ -28,24 +28,27 @@ enum Role {
 // Authentication account — credentials and RBAC role only (no academic fields)
 // ---------------------------------------------------------------------------
 model User {
-  id                    String                 @id @default(uuid())
-  email                 String                 @unique
-  passwordHash          String
-  firstName             String
-  lastName              String
-  role                      Role                   @default(STUDENT)
-  isActive                  Boolean                @default(true)
-  selectedAcademicPeriodId  String?
-  deletedAt                 DateTime?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  refreshTokens         RefreshToken[]
-  studentProfile        StudentProfile?
-  teacherProfile        TeacherProfile?
-  representativeProfile RepresentativeProfile?
-  institutionMemberships     InstitutionMembership[]
-  academicPeriodTransitions  AcademicPeriodTransition[]
-  selectedAcademicPeriod     AcademicPeriod?            @relation("UserSelectedPeriod", fields: [selectedAcademicPeriodId], references: [id], onDelete: SetNull)
+  id                                String                     @id @default(uuid())
+  email                             String                     @unique
+  passwordHash                      String
+  firstName                         String
+  lastName                          String
+  role                              Role                       @default(STUDENT)
+  isActive                          Boolean                    @default(true)
+  selectedAcademicPeriodId          String?
+  deletedAt                         DateTime?
+  createdAt                         DateTime                   @default(now())
+  updatedAt                         DateTime                   @updatedAt
+  refreshTokens                     RefreshToken[]
+  studentProfile                    StudentProfile?
+  teacherProfile                    TeacherProfile?
+  representativeProfile             RepresentativeProfile?
+  institutionMemberships            InstitutionMembership[]
+  academicPeriodTransitions         AcademicPeriodTransition[]
+  attendanceRecordsRecorded         AttendanceRecord[]         @relation("AttendanceRecordedBy")
+  attendanceJustificationsSubmitted AttendanceJustification[]  @relation("AttendanceJustificationSubmittedBy")
+  attendanceJustificationsReviewed  AttendanceJustification[]  @relation("AttendanceJustificationReviewedBy")
+  selectedAcademicPeriod            AcademicPeriod?            @relation("UserSelectedPeriod", fields: [selectedAcademicPeriodId], references: [id], onDelete: SetNull)
 
   @@index([role])
   @@index([selectedAcademicPeriodId])
@@ -99,40 +102,54 @@ enum EnrollmentStatus {
   TRANSFERRED
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AttendanceJustificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Institution {
-  id             String             @id @default(uuid())
-  name           String
-  code           String             @unique
-  email          String?
-  phone          String?
-  address        String?
-  region         InstitutionRegion?
-  regime         AcademicRegime?
-  logoUrl        String?
-  primaryColor   String?
-  secondaryColor String?
+  id                     String             @id @default(uuid())
+  name                   String
+  code                   String             @unique
+  email                  String?
+  phone                  String?
+  address                String?
+  region                 InstitutionRegion?
+  regime                 AcademicRegime?
+  logoUrl                String?
+  primaryColor           String?
+  secondaryColor         String?
   isActive               Boolean            @default(true)
   activeAcademicPeriodId String?
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
-  activeAcademicPeriod   AcademicPeriod?            @relation("InstitutionActivePeriod", fields: [activeAcademicPeriodId], references: [id], onDelete: SetNull)
-  studentProfiles        StudentProfile[]
-  teacherProfiles        TeacherProfile[]
-  representativeProfiles RepresentativeProfile[]
-  memberships            InstitutionMembership[]
-  academicLevels         AcademicLevel[]
-  gradeLevels            GradeLevel[]
-  academicPeriods        AcademicPeriod[]
-  courses                Course[]
-  subjects               Subject[]
-  teacherAssignments     TeacherAssignment[]
-  periodTransitions             AcademicPeriodTransition[]
-  gradingSchemes                GradingScheme[]
-  evaluationTerms               EvaluationTerm[]
-  assessmentCategories          AssessmentCategory[]
-  academicEvaluationConfig      InstitutionAcademicConfiguration?
-  assessments                   Assessment[]
+  activeAcademicPeriod     AcademicPeriod?                   @relation("InstitutionActivePeriod", fields: [activeAcademicPeriodId], references: [id], onDelete: SetNull)
+  studentProfiles          StudentProfile[]
+  teacherProfiles          TeacherProfile[]
+  representativeProfiles   RepresentativeProfile[]
+  memberships              InstitutionMembership[]
+  academicLevels           AcademicLevel[]
+  gradeLevels              GradeLevel[]
+  academicPeriods          AcademicPeriod[]
+  courses                  Course[]
+  subjects                 Subject[]
+  teacherAssignments       TeacherAssignment[]
+  periodTransitions        AcademicPeriodTransition[]
+  gradingSchemes           GradingScheme[]
+  evaluationTerms          EvaluationTerm[]
+  assessmentCategories     AssessmentCategory[]
+  academicEvaluationConfig InstitutionAcademicConfiguration?
+  assessments              Assessment[]
+  attendanceRecords        AttendanceRecord[]
 
   @@index([isActive])
   @@index([activeAcademicPeriodId])
@@ -142,15 +159,15 @@ model Institution {
 }
 
 model InstitutionMembership {
-  id            String                   @id @default(uuid())
+  id            String                    @id @default(uuid())
   institutionId String
   userId        String
   role          InstitutionMembershipRole
-  isActive      Boolean                  @default(true)
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  institution   Institution              @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive      Boolean                   @default(true)
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  institution   Institution               @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([institutionId, userId])
   @@index([institutionId])
@@ -162,22 +179,22 @@ model InstitutionMembership {
 
 /// Permanent student entity (1:1 with User account role STUDENT).
 model StudentProfile {
-  id               String       @id @default(uuid())
-  registrationNumber String     @unique @default(dbgenerated("('MAT-'::text || (gen_random_uuid())::text)"))
-  userId           String       @unique
-  institutionId    String?
-  nationalId       String?      @unique
-  birthDate        DateTime?    @db.Date
-  gender           Gender?
-  phone            String?
-  address          String?
-  emergencyContact String?
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  institution      Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  enrollments      Enrollment[]
+  id                 String       @id @default(uuid())
+  registrationNumber String       @unique @default(dbgenerated("('MAT-'::text || (gen_random_uuid())::text)"))
+  userId             String       @unique
+  institutionId      String?
+  nationalId         String?      @unique
+  birthDate          DateTime?    @db.Date
+  gender             Gender?
+  phone              String?
+  address            String?
+  emergencyContact   String?
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution        Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  enrollments        Enrollment[]
 
   @@index([institutionId])
   @@index([isActive])
@@ -228,28 +245,29 @@ enum AcademicPeriodStatus {
 }
 
 model AcademicPeriod {
-  id            String               @id @default(uuid())
-  name          String
-  institutionId String?
-  regime        AcademicRegime
-  startDate     DateTime             @db.Date
-  endDate       DateTime             @db.Date
-  isActive      Boolean              @default(false)
-  status        AcademicPeriodStatus @default(PLANNED)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  institution            Institution?           @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  activeForInstitutions  Institution[]          @relation("InstitutionActivePeriod")
+  id                     String                             @id @default(uuid())
+  name                   String
+  institutionId          String?
+  regime                 AcademicRegime
+  startDate              DateTime                           @db.Date
+  endDate                DateTime                           @db.Date
+  isActive               Boolean                            @default(false)
+  status                 AcademicPeriodStatus               @default(PLANNED)
+  createdAt              DateTime                           @default(now())
+  updatedAt              DateTime                           @updatedAt
+  institution            Institution?                       @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  activeForInstitutions  Institution[]                      @relation("InstitutionActivePeriod")
   terms                  AcademicTerm[]
   courses                Course[]
   teacherAssignments     TeacherAssignment[]
-  transitionsFrom        AcademicPeriodTransition[] @relation("TransitionFromPeriod")
-  transitionsTo          AcademicPeriodTransition[] @relation("TransitionToPeriod")
-  selectedByUsers        User[]                     @relation("UserSelectedPeriod")
+  transitionsFrom        AcademicPeriodTransition[]         @relation("TransitionFromPeriod")
+  transitionsTo          AcademicPeriodTransition[]         @relation("TransitionToPeriod")
+  selectedByUsers        User[]                             @relation("UserSelectedPeriod")
   enrollments            Enrollment[]
   evaluationTerms        EvaluationTerm[]
   evaluationConfigActive InstitutionAcademicConfiguration[] @relation("ConfigActivePeriod")
   assessments            Assessment[]
+  attendanceRecords      AttendanceRecord[]
 
   @@index([institutionId])
   @@index([regime])
@@ -282,18 +300,18 @@ model AcademicTerm {
 // Academic structure — reusable levels/grades; period-scoped classroom courses
 // ---------------------------------------------------------------------------
 model AcademicLevel {
-  id             String        @id @default(uuid())
-  name           String
-  code           String
-  order          Int
-  description    String?
-  institutionId  String?
-  isSystem       Boolean       @default(false)
-  isActive       Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  institution    Institution?  @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  gradeLevels    GradeLevel[]
+  id            String       @id @default(uuid())
+  name          String
+  code          String
+  order         Int
+  description   String?
+  institutionId String?
+  isSystem      Boolean      @default(false)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  gradeLevels   GradeLevel[]
 
   @@index([institutionId])
   @@index([isActive])
@@ -303,19 +321,19 @@ model AcademicLevel {
 }
 
 model GradeLevel {
-  id              String        @id @default(uuid())
-  name            String
-  code            String
-  order           Int
-  description     String?
-  academicLevelId String
-  institutionId   String?
-  isSystem        Boolean       @default(false)
-  isActive        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  academicLevel   AcademicLevel @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
-  institution        Institution?         @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  id                 String              @id @default(uuid())
+  name               String
+  code               String
+  order              Int
+  description        String?
+  academicLevelId    String
+  institutionId      String?
+  isSystem           Boolean             @default(false)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  academicLevel      AcademicLevel       @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
+  institution        Institution?        @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   courses            Course[]
   subjectGradeLevels SubjectGradeLevel[]
 
@@ -329,21 +347,22 @@ model GradeLevel {
 
 /// Classroom / parallel group offering for a grade within an academic period.
 model Course {
-  id               String         @id @default(uuid())
-  name             String
-  section          String
-  capacity         Int?
-  institutionId    String?
-  academicPeriodId String
-  gradeLevelId     String
-  isActive         Boolean        @default(true)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  id                 String              @id @default(uuid())
+  name               String
+  section            String
+  capacity           Int?
+  institutionId      String?
+  academicPeriodId   String
+  gradeLevelId       String
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   institution        Institution?        @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   academicPeriod     AcademicPeriod      @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
   gradeLevel         GradeLevel          @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
   teacherAssignments TeacherAssignment[]
   enrollments        Enrollment[]
+  attendanceRecords  AttendanceRecord[]
 
   @@unique([academicPeriodId, gradeLevelId, section])
   @@index([institutionId])
@@ -402,7 +421,7 @@ model TeacherAssignment {
   academicPeriodId String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  institution    Institution?   @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  institution      Institution?   @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   teacher          TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   subject          Subject        @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -422,18 +441,19 @@ model TeacherAssignment {
 
 /// Student enrollment in a classroom course for an academic period (historical status tracked).
 model Enrollment {
-  id               String           @id @default(uuid())
-  studentId        String
-  courseId         String
-  academicPeriodId String
-  enrollmentDate   DateTime         @db.Date
-  status           EnrollmentStatus @default(ACTIVE)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  student          StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course           Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  academicPeriod   AcademicPeriod   @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
-  grades           Grade[]
+  id                String             @id @default(uuid())
+  studentId         String
+  courseId          String
+  academicPeriodId  String
+  enrollmentDate    DateTime           @db.Date
+  status            EnrollmentStatus   @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  student           StudentProfile     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course            Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  academicPeriod    AcademicPeriod     @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
+  grades            Grade[]
+  attendanceRecords AttendanceRecord[]
 
   @@unique([studentId, courseId, academicPeriodId])
   @@index([studentId])
@@ -444,22 +464,71 @@ model Enrollment {
   @@map("enrollments")
 }
 
+/// Daily course-level attendance. `date` is a school calendar date, not an instant.
+model AttendanceRecord {
+  id               String                    @id @default(uuid())
+  institutionId    String
+  academicPeriodId String
+  courseId         String
+  enrollmentId     String
+  date             DateTime                  @db.Date
+  status           AttendanceStatus
+  notes            String?                   @db.VarChar(500)
+  recordedByUserId String
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  institution      Institution               @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  academicPeriod   AcademicPeriod            @relation(fields: [academicPeriodId], references: [id], onDelete: Restrict)
+  course           Course                    @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  enrollment       Enrollment                @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  recordedByUser   User                      @relation("AttendanceRecordedBy", fields: [recordedByUserId], references: [id], onDelete: Restrict)
+  justifications   AttendanceJustification[]
+
+  @@unique([enrollmentId, date])
+  @@index([institutionId, date])
+  @@index([academicPeriodId, courseId, date])
+  @@index([courseId, date])
+  @@index([recordedByUserId])
+  @@map("attendance_records")
+}
+
+model AttendanceJustification {
+  id                 String                        @id @default(uuid())
+  attendanceRecordId String
+  reason             String                        @db.VarChar(1000)
+  status             AttendanceJustificationStatus @default(PENDING)
+  submittedByUserId  String
+  reviewedByUserId   String?
+  reviewedAt         DateTime?
+  reviewComment      String?                       @db.VarChar(1000)
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+  attendanceRecord   AttendanceRecord              @relation(fields: [attendanceRecordId], references: [id], onDelete: Restrict)
+  submittedByUser    User                          @relation("AttendanceJustificationSubmittedBy", fields: [submittedByUserId], references: [id], onDelete: Restrict)
+  reviewedByUser     User?                         @relation("AttendanceJustificationReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([attendanceRecordId, status])
+  @@index([submittedByUserId])
+  @@index([reviewedByUserId])
+  @@map("attendance_justifications")
+}
+
 /// Audit record for academic year transitions — historical data is never mutated.
 model AcademicPeriodTransition {
-  id                   String      @id @default(uuid())
+  id                   String         @id @default(uuid())
   institutionId        String
   fromAcademicPeriodId String
   toAcademicPeriodId   String
   executedById         String
-  copiedCourses        Boolean     @default(false)
-  copiedAssignments    Boolean     @default(false)
-  copiedStructures     Boolean     @default(false)
-  copiedTerms          Boolean     @default(false)
-  createdAt            DateTime    @default(now())
-  institution          Institution   @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  copiedCourses        Boolean        @default(false)
+  copiedAssignments    Boolean        @default(false)
+  copiedStructures     Boolean        @default(false)
+  copiedTerms          Boolean        @default(false)
+  createdAt            DateTime       @default(now())
+  institution          Institution    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   fromPeriod           AcademicPeriod @relation("TransitionFromPeriod", fields: [fromAcademicPeriodId], references: [id], onDelete: Restrict)
   toPeriod             AcademicPeriod @relation("TransitionToPeriod", fields: [toAcademicPeriodId], references: [id], onDelete: Restrict)
-  executedBy           User          @relation(fields: [executedById], references: [id], onDelete: Restrict)
+  executedBy           User           @relation(fields: [executedById], references: [id], onDelete: Restrict)
 
   @@index([institutionId])
   @@index([fromAcademicPeriodId])
@@ -494,10 +563,10 @@ model GradingScheme {
   updatedAt     DateTime @updatedAt
 
   institution    Institution?                       @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  gradeScales       GradeScale[]
-  configurations    InstitutionAcademicConfiguration[]
-  platformConfig    PlatformAcademicEvaluationConfig?
-  gradeSnapshots    Grade[]
+  gradeScales    GradeScale[]
+  configurations InstitutionAcademicConfiguration[]
+  platformConfig PlatformAcademicEvaluationConfig?
+  gradeSnapshots Grade[]
 
   @@index([institutionId])
   @@index([institutionId, isDefault])
@@ -541,7 +610,7 @@ model AssessmentCategory {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  institution Institution  @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   assessments Assessment[]
 
   @@unique([institutionId, name])

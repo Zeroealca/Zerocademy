@@ -128,7 +128,9 @@ export class AcademicPerformanceService {
 
     const terms = config.academicTerms
       .filter((term) =>
-        query.academicTermId ? term.academicTermId === query.academicTermId : true,
+        query.academicTermId
+          ? term.academicTermId === query.academicTermId
+          : true,
       )
       .map((term) => {
         const result = computeTermAverage(
@@ -195,7 +197,9 @@ export class AcademicPerformanceService {
       query.academicPeriodId,
     );
 
-    const gradedSubjects = subjects.filter((subject) => subject.average !== null);
+    const gradedSubjects = subjects.filter(
+      (subject) => subject.average !== null,
+    );
     const overallAverage = computeWeightedAverage(
       gradedSubjects.map((subject) => ({
         value: subject.average,
@@ -224,7 +228,8 @@ export class AcademicPerformanceService {
       enrollmentId: enrollment.enrollmentId,
       overallAverage: roundedOverall,
       subjectCount: subjects.length,
-      passingSubjectCount: subjects.filter((subject) => subject.isPassing).length,
+      passingSubjectCount: subjects.filter((subject) => subject.isPassing)
+        .length,
       subjects,
     };
   }
@@ -362,10 +367,7 @@ export class AcademicPerformanceService {
         studentId: enrollment.studentId,
         studentName: enrollment.studentName,
         subjectAverage: result.average,
-        isPassing: isPassing(
-          result.average,
-          config.institution.passingScore,
-        ),
+        isPassing: isPassing(result.average, config.institution.passingScore),
       };
     });
 
@@ -436,7 +438,9 @@ export class AcademicPerformanceService {
       query.academicPeriodId,
     );
 
-    const gradedSubjects = subjects.filter((subject) => subject.average !== null);
+    const gradedSubjects = subjects.filter(
+      (subject) => subject.average !== null,
+    );
     const overallAverage = computeWeightedAverage(
       gradedSubjects.map((subject) => ({
         value: subject.average,
@@ -479,7 +483,8 @@ export class AcademicPerformanceService {
     }
 
     const institutionId =
-      query.institutionId ?? (await resolveActorInstitutionId(this.prisma, actor));
+      query.institutionId ??
+      (await resolveActorInstitutionId(this.prisma, actor));
 
     if (!institutionId) {
       throw new NotFoundException('Institution not found');
@@ -633,10 +638,27 @@ export class AcademicPerformanceService {
     return this.getTeacherStudentPerformance(actor, query);
   }
 
-  private async buildSubjectAveragesForEnrollment(
+  private buildSubjectAveragesForEnrollment(
     enrollmentId: string,
     institutionId: string,
     academicPeriodId: string,
+  ): Promise<SubjectAverageResponseDto[]> {
+    return this.getEnrollmentSubjectAverages(
+      enrollmentId,
+      institutionId,
+      academicPeriodId,
+    );
+  }
+
+  /**
+   * Calculates all subject results for an enrollment in one bulk grade query.
+   * `courseId` additionally includes assigned subjects that do not yet have grades.
+   */
+  async getEnrollmentSubjectAverages(
+    enrollmentId: string,
+    institutionId: string,
+    academicPeriodId: string,
+    courseId?: string,
   ): Promise<SubjectAverageResponseDto[]> {
     const config = await resolveCalculationConfig(
       this.prisma,
@@ -651,33 +673,57 @@ export class AcademicPerformanceService {
       academicPeriodId,
     );
 
-    const subjects = await loadDistinctSubjectsForEnrollment(
+    const gradedSubjects = await loadDistinctSubjectsForEnrollment(
       this.prisma,
       enrollmentId,
       academicPeriodId,
     );
 
-    return subjects.map((subject) => {
-      const result = computeSubjectAverage(
-        grades,
-        subject.subjectId,
-        subject.subjectName,
-        config.academicTerms,
-        config.categories,
-        config.institution,
-      );
+    const assignedSubjects = courseId
+      ? await this.prisma.teacherAssignment.findMany({
+          where: { courseId, academicPeriodId },
+          select: {
+            subjectId: true,
+            subject: { select: { name: true } },
+          },
+          orderBy: { subject: { name: 'asc' } },
+        })
+      : [];
 
-      return {
-        subjectId: result.subjectId,
-        subjectName: result.subjectName,
-        average: result.average,
-        isPassing: isPassing(
-          result.average,
-          config.institution.passingScore,
-        ),
-        terms: result.terms,
-      };
-    });
+    const subjects = new Map<
+      string,
+      { subjectId: string; subjectName: string }
+    >();
+    for (const subject of gradedSubjects) {
+      subjects.set(subject.subjectId, subject);
+    }
+    for (const assignment of assignedSubjects) {
+      subjects.set(assignment.subjectId, {
+        subjectId: assignment.subjectId,
+        subjectName: assignment.subject.name,
+      });
+    }
+
+    return [...subjects.values()]
+      .sort((left, right) => left.subjectName.localeCompare(right.subjectName))
+      .map((subject) => {
+        const result = computeSubjectAverage(
+          grades,
+          subject.subjectId,
+          subject.subjectName,
+          config.academicTerms,
+          config.categories,
+          config.institution,
+        );
+
+        return {
+          subjectId: result.subjectId,
+          subjectName: result.subjectName,
+          average: result.average,
+          isPassing: isPassing(result.average, config.institution.passingScore),
+          terms: result.terms,
+        };
+      });
   }
 
   private logCalculationRequest(

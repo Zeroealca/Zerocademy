@@ -75,6 +75,8 @@ npm run docker:up
 - [assessments.md](./assessments.md)
 - [grading-workflow.md](./grading-workflow.md)
 - [grade-calculation-engine.md](./grade-calculation-engine.md)
+- [report-cards.md](./report-cards.md)
+- [attendance.md](./attendance.md)
 - [academic-periods-frontend.md](./academic-periods-frontend.md)
 - [subjects.md](./subjects.md)
 - [teacher-assignments.md](./teacher-assignments.md)

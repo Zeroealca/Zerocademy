@@ -71,7 +71,9 @@ export function canViewAcademicStructure(role: UserRole | undefined): boolean {
 }
 
 /** Institution operations: courses, teacher assignments (ADMIN only). */
-export function canManageAcademicStructure(role: UserRole | undefined): boolean {
+export function canManageAcademicStructure(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
 }
 
@@ -83,25 +85,35 @@ export function canManageInstitutions(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
 }
 
-export function canManageInstitutionSettings(role: UserRole | undefined): boolean {
+export function canManageInstitutionSettings(
+  role: UserRole | undefined,
+): boolean {
   return hasRole(role, INSTITUTION_VIEW_ROLES);
 }
 
-export function canViewInstitutionMemberships(role: UserRole | undefined): boolean {
+export function canViewInstitutionMemberships(
+  role: UserRole | undefined,
+): boolean {
   return hasRole(role, INSTITUTION_VIEW_ROLES);
 }
 
-export function canManageInstitutionMemberships(role: UserRole | undefined): boolean {
+export function canManageInstitutionMemberships(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, PLATFORM_CALENDAR_ROLES);
 }
 
-export function canViewAcademicTransitions(role: UserRole | undefined): boolean {
+export function canViewAcademicTransitions(
+  role: UserRole | undefined,
+): boolean {
   return hasRole(role, [...INSTITUTION_VIEW_ROLES, "TEACHER"]);
 }
 
 const ACADEMIC_TRANSITION_MANAGE_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
 
-export function canManageAcademicTransitions(role: UserRole | undefined): boolean {
+export function canManageAcademicTransitions(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, ACADEMIC_TRANSITION_MANAGE_ROLES);
 }
 
@@ -125,7 +137,9 @@ export function canViewEnrollments(role: UserRole | undefined): boolean {
 }
 
 /** Student self-service: own enrollment history. */
-export function canViewOwnEnrollmentHistory(role: UserRole | undefined): boolean {
+export function canViewOwnEnrollmentHistory(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, ["STUDENT"]);
 }
 
@@ -163,7 +177,9 @@ export function canViewAcademicEvaluation(role: UserRole | undefined): boolean {
   return hasRole(role, ["ADMIN", "TEACHER"]);
 }
 
-export function canManageAcademicEvaluation(role: UserRole | undefined): boolean {
+export function canManageAcademicEvaluation(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
 }
 
@@ -201,10 +217,33 @@ export function canViewAcademicPerformanceAdmin(
   return hasRole(role, ["ADMIN"]);
 }
 
-export function canViewAcademicPerformance(role: UserRole | undefined): boolean {
+export function canViewAcademicPerformance(
+  role: UserRole | undefined,
+): boolean {
   return (
     canViewAcademicPerformanceStudent(role) ||
     canViewAcademicPerformanceTeacher(role) ||
     canViewAcademicPerformanceAdmin(role)
   );
+}
+
+/** Academic report cards: student self-service and scoped staff access. */
+export function canViewOwnReportCard(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["STUDENT"]);
+}
+
+export function canViewReportCards(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER", "STUDENT"]);
+}
+
+export function canViewAttendance(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER"]);
+}
+
+export function canManageAttendance(role: UserRole | undefined): boolean {
+  return canViewAttendance(role);
+}
+
+export function canViewOwnAttendance(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["STUDENT"]);
 }

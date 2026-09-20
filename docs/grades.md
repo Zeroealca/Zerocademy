@@ -11,7 +11,7 @@ The grades module records **student scores** against teacher-created **assessmen
 
 **Phase 2 (implemented):** grade calculation engine and academic performance queries — see [grade-calculation-engine.md](./grade-calculation-engine.md).
 
-**Still out of scope:** report cards, promotions, PDF exports, recovery exams, ministry reports.
+**Still out of scope:** PDF exports, promotions, recovery exams, and ministry reports. The read-only report-card view is available through the `reports` domain; see [report-cards.md](./report-cards.md).
 
 ## Architecture
 
@@ -103,6 +103,7 @@ API: `/v1/academic-performance/*` — see [grade-calculation-engine.md](./grade-
 - `gradingSchemeId` on `Grade` supports configuration snapshots for report cards
 - Assessments retain historical FK graph for analytics and transcripts
 - Promotions and ministry exports will consume engine output without schema breaking changes
+- Read-only report cards consume calculated results without duplicating grade logic; see [report-cards.md](./report-cards.md)
 
 ## Related documentation
 

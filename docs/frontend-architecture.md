@@ -36,6 +36,8 @@ FrontendZerocademy/src/
 │   ├── academic-evaluation/    # Grading engine configuration UI
 │   ├── grades/                 # Assessments, grade entry, student grades
 │   ├── academic-performance/   # Averages dashboards and performance views
+│   ├── reports/                # Report-card view, print actions, PDF download
+│   ├── attendance/             # Daily roster and batch attendance entry
 │   └── dashboard/
 ├── components/
 │   ├── ui/                 # Shared primitives
@@ -102,6 +104,8 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/academic-performance/student-performance` | Protected — TEACHER, ADMIN |
 | `/academic-performance/institution` | Protected — ADMIN |
 | `/academic-performance/course-performance` | Protected — ADMIN |
+| `/report-cards` | Protected — STUDENT (own report), TEACHER, ADMIN, SUPER_ADMIN (scoped reports) |
+| `/attendance` | Protected — TEACHER, ADMIN, SUPER_ADMIN |
 
 ## Environment
 
@@ -116,3 +120,5 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 - Transitions: [academic-transitions.md](./academic-transitions.md)
 - Academic periods UI: [academic-periods-frontend.md](./academic-periods-frontend.md)
 - UI guidelines: [ui-guidelines.md](./ui-guidelines.md)
+- Report cards: [report-cards.md](./report-cards.md)
+- Attendance: [attendance.md](./attendance.md)

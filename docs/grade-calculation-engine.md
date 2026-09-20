@@ -6,7 +6,7 @@ The grade calculation engine computes academic performance averages from existin
 
 **In scope:** category averages, academic term averages, subject averages, role-scoped performance queries.
 
-**Out of scope:** PDF generation, report cards, promotion rules, recovery exams, ministry reports.
+**Out of scope:** PDF generation, promotion rules, recovery exams, and ministry reports. The first read-only report-card consumer is documented in [report-cards.md](./report-cards.md).
 
 ## Calculation hierarchy
 
@@ -28,7 +28,7 @@ Subject Average
 |----------|---------|
 | **Dynamic (chosen)** | Averages computed on each API request from live grades + configuration |
 | Cached | Rejected — requires invalidation on grade/config changes |
-| Persisted | Deferred — report cards will introduce snapshot tables when needed |
+| Persisted | Deferred — official/closure-time report cards will introduce snapshot tables when needed |
 
 **Rationale:** Grades and weights change frequently during a period. Dynamic calculation guarantees correctness without migration overhead or cache invalidation complexity. `Grade.gradingSchemeId` already supports future immutable snapshots for transcripts.
 
@@ -143,11 +143,11 @@ Structured events on `AcademicPerformanceModule`:
 
 - Calculations are per-request; typical class sizes are acceptable without caching
 - Grade queries use indexed FK paths (`enrollmentId`, `academicPeriodId`)
-- Future optimization: materialized views or snapshot tables when report cards ship
+- Future optimization: materialized views or snapshot tables for official report cards
 
 ## Future extensibility
 
-- **Report cards:** persist computed averages + config snapshot per period closure
+- **Official report cards:** persist computed averages + config snapshot per period closure
 - **Promotions:** consume subject averages + passing rules from configuration
 - **Analytics:** aggregate engine output without changing grade schema
 - **Ministry exports:** map engine output to external formats via configuration

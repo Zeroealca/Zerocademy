@@ -37,7 +37,9 @@ BackendZerocademy/src/
     ├── academic-period-transitions/
     ├── academic-evaluation/   # Grading schemes, evaluation terms, categories
     ├── grades/                # Assessments and grade entries (phase 1)
-    └── academic-performance/  # Grade calculation engine and performance queries
+    ├── academic-performance/  # Grade calculation engine and performance queries
+    ├── attendance/            # Daily course attendance and transactional batch entry
+    └── reports/               # Read-only report cards and in-memory PDF exports
 ```
 
 ## Dependency rules
@@ -102,3 +104,5 @@ See [rbac.md](./rbac.md) for role responsibilities and future permission expansi
 - [auth.md](./auth.md) — JWT and session flows
 - [database.md](./database.md) — Prisma schema
 - [api-flow.md](./api-flow.md) — End-to-end sequences
+- [report-cards.md](./report-cards.md) — report-card data and PDF delivery
+- [attendance.md](./attendance.md) — daily attendance architecture and API
