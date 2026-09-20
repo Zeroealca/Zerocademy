@@ -501,10 +501,33 @@ model AcademicPlan {
   academicTerm        AcademicTerm       @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
   createdByUser       User               @relation("AcademicPlanCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   publishedByUser     User?              @relation("AcademicPlanPublishedBy", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  units               AcademicUnit[]
 
   @@index([teacherAssignmentId, status])
   @@index([academicTermId])
   @@map("academic_plans")
+}
+
+model AcademicUnit {
+  id              String       @id @default(uuid())
+  academicPlanId  String
+  title           String       @db.VarChar(200)
+  description     String?      @db.VarChar(2000)
+  objectives      String?      @db.Text
+  contents        String?      @db.Text
+  activities      String?      @db.Text
+  resources       String?      @db.Text
+  evaluationNotes String?      @db.Text
+  startDate       DateTime?    @db.Date
+  endDate         DateTime?    @db.Date
+  position        Int
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  academicPlan    AcademicPlan @relation(fields: [academicPlanId], references: [id], onDelete: Cascade)
+
+  @@unique([academicPlanId, position])
+  @@index([academicPlanId, position])
+  @@map("academic_units")
 }
 
 /// Student enrollment in a classroom course for an academic period (historical status tracked).

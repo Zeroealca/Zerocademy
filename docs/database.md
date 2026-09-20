@@ -131,9 +131,11 @@ Reusable subject catalog and period-scoped teacher staffing. See [subjects.md](.
 
 Unique: `Subject.code` (global partial index); `Subject(institutionId, code)` when scoped; `TeacherAssignment(teacherId, subjectId, courseId, academicPeriodId)`.
 
-### Academic planning (not yet deployed)
+### Academic planning (Phases 1A and 2A)
 
-The Prisma source contains an `AcademicPlan` foundation associated with `TeacherAssignment`, `AcademicTerm`, and creator/publication users. It has no committed migration, Nest module, API contract, or frontend route yet, so it is not an operational feature or a database table in deployed environments. [DEMY-91](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-91) tracks the complete Phase 1 implementation.
+`AcademicPlan` is a teacher-assignment-scoped planning record associated with one `AcademicTerm`, creator user, and optional publication user. The `DRAFT` → `PUBLISHED` lifecycle is implemented by the backend API; its migration creates `academic_plans` with restrictive foreign keys and assignment/status plus term indexes. The frontend workspace remains Phase 1B.
+
+`AcademicUnit` belongs to an `AcademicPlan` and records ordered instructional content. Its unique `(academicPlanId, position)` constraint and supporting index preserve a deterministic per-plan order; `academic_units` is created by the Phase 2A migration. See [academic-planning.md](./academic-planning.md).
 
 ### Academic evaluation configuration
 
@@ -214,6 +216,8 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20260919090000_attendance_daily_phase1` | Daily attendance records and roster integrity |
 | `20260919093000_attendance_justifications_phase3` | Attendance justifications and review audit metadata |
 | `20260919110000_representative_student_relationships` | Representative–student authorization relationships |
+| `20260920100000_academic_planning_phase1` | Academic plans and publish lifecycle |
+| `20260920110000_academic_units_phase2` | Ordered academic units per plan |
 
 Never edit applied migration SQL retroactively.
 

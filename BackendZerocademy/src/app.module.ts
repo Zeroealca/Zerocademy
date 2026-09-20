@@ -29,6 +29,7 @@ import { AcademicPerformanceModule } from './modules/academic-performance/academ
 import { ReportsModule } from './modules/reports/reports.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { RepresentativesModule } from './modules/representatives/representatives.module';
+import { PlanningModule } from './modules/planning/planning.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { RepresentativesModule } from './modules/representatives/representatives
     ReportsModule,
     AttendanceModule,
     RepresentativesModule,
+    PlanningModule,
   ],
   controllers: [AppController],
   providers: [
