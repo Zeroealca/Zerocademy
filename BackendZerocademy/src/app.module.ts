@@ -28,6 +28,7 @@ import { GradesModule } from './modules/grades/grades.module';
 import { AcademicPerformanceModule } from './modules/academic-performance/academic-performance.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
+import { RepresentativesModule } from './modules/representatives/representatives.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { AttendanceModule } from './modules/attendance/attendance.module';
     AcademicPerformanceModule,
     ReportsModule,
     AttendanceModule,
+    RepresentativesModule,
   ],
   controllers: [AppController],
   providers: [

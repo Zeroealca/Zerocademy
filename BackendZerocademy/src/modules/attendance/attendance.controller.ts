@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -47,6 +47,18 @@ export class AttendanceController {
     @Query() query: MyAttendanceHistoryQueryDto,
   ): Promise<MyAttendanceHistoryResponseDto> {
     return this.attendanceReportsService.getMyHistory(actor, query);
+  }
+
+  @Get('students/:studentId/history')
+  @ApiRequireRolesStrict(Role.REPRESENTATIVE)
+  @ApiOperation({ summary: 'Get attendance history for an associated student' })
+  @ApiOkResponse({ type: MyAttendanceHistoryResponseDto })
+  getRepresentativeStudentHistory(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('studentId', ParseUUIDPipe) studentId: string,
+    @Query() query: MyAttendanceHistoryQueryDto,
+  ): Promise<MyAttendanceHistoryResponseDto> {
+    return this.attendanceReportsService.getStudentHistory(actor, studentId, query);
   }
 
   @Get('course-summary')

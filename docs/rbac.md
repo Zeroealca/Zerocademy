@@ -49,7 +49,7 @@ Granular permissions and ABAC remain future work.
 
 ### REPRESENTATIVE
 
-Read-only linked students (unchanged foundation).
+Read-only access to students with an active `RepresentativeStudent` relationship. Representatives can view associated student profiles, grades, performance, report cards/PDFs, attendance history, and factual justification status. They cannot change academic data or submit/review attendance justifications.
 
 ## Architecture
 

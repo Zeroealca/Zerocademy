@@ -415,6 +415,18 @@ export class GradesService {
       return where;
     }
 
+    if (actor.role === Role.REPRESENTATIVE) {
+      where.enrollment = {
+        ...(where.enrollment as Prisma.EnrollmentWhereInput),
+        student: {
+          representativeStudentRelations: {
+            some: { representativeUserId: actor.id, isActive: true },
+          },
+        },
+      };
+      return where;
+    }
+
     if (actor.role === Role.ADMIN) {
       const institutionId = await resolveActorInstitutionId(
         this.prisma,

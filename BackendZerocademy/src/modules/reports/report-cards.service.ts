@@ -10,6 +10,7 @@ import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scop
 import { PrismaService } from '../../prisma/prisma.service';
 import { AcademicPerformanceService } from '../academic-performance/academic-performance.service';
 import { assertTeacherCanAccessCourse } from '../academic-performance/academic-performance.validation';
+import { assertActorCanAccessStudent } from '../students/student-scope.util';
 import { computeWeightedAverage } from '../academic-performance/grade-calculation/grade-calculation.engine';
 import { resolveCalculationConfig } from '../academic-performance/grade-calculation/grade-calculation.config-resolver';
 import { applyRounding } from '../academic-performance/grade-calculation/rounding.util';
@@ -50,7 +51,6 @@ export class ReportCardsService {
         'Students can only access their own report card',
       );
     }
-
     return this.buildReportCard(actor, studentId, query.academicPeriodId);
   }
 
@@ -59,6 +59,14 @@ export class ReportCardsService {
     studentId: string,
     academicPeriodId: string,
   ): Promise<ReportCardResponseDto> {
+    if (actor.role === Role.REPRESENTATIVE) {
+      const student = await this.prisma.studentProfile.findUnique({
+        where: { id: studentId },
+        select: { id: true, userId: true, institutionId: true },
+      });
+      if (!student) throw new NotFoundException('Student enrollment not found');
+      await assertActorCanAccessStudent(this.prisma, actor, student);
+    }
     const enrollment = await this.prisma.enrollment.findFirst({
       where: { studentId, academicPeriodId },
       select: {
@@ -218,6 +226,7 @@ export class ReportCardsService {
     if (actor.role === Role.STUDENT) {
       return;
     }
+    if (actor.role === Role.REPRESENTATIVE) return;
     if (actor.role === Role.TEACHER) {
       await assertTeacherCanAccessCourse(
         this.prisma,

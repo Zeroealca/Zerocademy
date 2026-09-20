@@ -60,7 +60,7 @@ export class ReportCardsController {
   }
 
   @Get(':studentId')
-  @ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER)
+  @ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER, Role.REPRESENTATIVE)
   @ApiOperation({
     summary: 'Get a student report card within the actor academic scope',
   })
@@ -82,7 +82,7 @@ export class ReportCardsController {
   }
 
   @Get(':studentId/pdf')
-  @ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER)
+  @ApiRequireRoles(Role.SUPER_ADMIN, Role.ADMIN, Role.TEACHER, Role.REPRESENTATIVE)
   @ApiOperation({ summary: 'Download a scoped student report card as PDF' })
   @ApiOkResponse({
     description: 'PDF document',

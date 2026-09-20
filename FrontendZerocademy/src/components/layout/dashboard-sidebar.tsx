@@ -18,6 +18,7 @@ import {
   UserRound,
   LayoutDashboard,
   Users,
+  HeartHandshake,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,6 +39,7 @@ import {
   canViewInstitutions,
   canViewOwnEnrollmentHistory,
   canViewStudents,
+  canViewRepresentativePortal,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -138,6 +140,11 @@ const myAttendanceNavItem = {
   label: "Mi asistencia",
   icon: ClipboardCheck,
 };
+const representativeNavItem = {
+  href: "/representative",
+  label: "Mis estudiantes",
+  icon: HeartHandshake,
+};
 
 const academicStructureNavItem = {
   href: "/academic-structure",
@@ -156,6 +163,10 @@ export function DashboardSidebar() {
   const currentUser = useAuthStore((state) => state.user);
 
   const navItems = [...baseNavItems];
+
+  if (canViewRepresentativePortal(currentUser?.role)) {
+    navItems.push(representativeNavItem);
+  }
 
   if (canManageAcademicPeriods(currentUser?.role)) {
     navItems.push(academicPeriodsNavItem);

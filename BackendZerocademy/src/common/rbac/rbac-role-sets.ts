@@ -6,6 +6,7 @@ export const PLATFORM_READ_ROLES = [
   Role.ADMIN,
   Role.TEACHER,
   Role.STUDENT,
+  Role.REPRESENTATIVE,
 ] as const;
 
 /** Manage global academic calendar (periods, activation). */
@@ -42,7 +43,10 @@ export const STUDENT_ENROLLMENT_READ_ROLES = [
   Role.ADMIN,
   Role.TEACHER,
   Role.STUDENT,
+  Role.REPRESENTATIVE,
 ] as const;
+
+export const REPRESENTATIVE_MANAGEMENT_ROLES = [Role.ADMIN] as const;
 
 /** Read academic evaluation configuration (grading schemes, terms, categories). */
 export const ACADEMIC_EVALUATION_READ_ROLES = [
@@ -75,6 +79,7 @@ export const GRADES_READ_ROLES = [
   Role.ADMIN,
   Role.TEACHER,
   Role.STUDENT,
+  Role.REPRESENTATIVE,
 ] as const;
 
 /** Create and update grades — TEACHER only (strict). */

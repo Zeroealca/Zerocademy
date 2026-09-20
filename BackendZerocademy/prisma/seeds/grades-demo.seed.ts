@@ -8,6 +8,7 @@ import {
   InstitutionMembershipRole,
   InstitutionRegion,
   Role,
+  RepresentativeRelationshipType,
   RoundingStrategy,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -691,6 +692,25 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
       enrollmentDate: slot.enrollmentDate,
     });
     counters.updated += 1;
+  }
+
+  for (const [index, student] of primaryStudentProfiles.slice(0, 2).entries()) {
+    await ctx.prisma.representativeStudent.upsert({
+      where: {
+        representativeUserId_studentId: {
+          representativeUserId,
+          studentId: student.id,
+        },
+      },
+      create: {
+        representativeUserId,
+        studentId: student.id,
+        relationshipType: RepresentativeRelationshipType.LEGAL_GUARDIAN,
+        isPrimary: index === 0,
+        isActive: true,
+      },
+      update: { isActive: true, isPrimary: index === 0 },
+    });
   }
 
   const firstTerm = currentTerms[0];

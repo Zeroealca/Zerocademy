@@ -79,3 +79,38 @@ body {
   color: hsl(var(--foreground));
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  aside,
+  header,
+  nav,
+  button,
+  select,
+  input,
+  .print\:hidden {
+    display: none !important;
+  }
+  .report-card-document {
+    color: #111 !important;
+    break-inside: avoid;
+  }
+  .report-card-document table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+  .report-card-document thead {
+    display: table-header-group;
+  }
+  .report-card-document tr {
+    break-inside: avoid;
+  }
+}

@@ -6,6 +6,7 @@ import {
 import { Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { resolveActorInstitutionId } from '../../common/rbac/academic-scope.util';
+import { assertActorCanAccessStudent } from '../students/student-scope.util';
 import { RoleUtils } from '../../common/rbac/role.utils';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -407,6 +408,16 @@ export class AcademicPerformanceService {
       throw new ForbiddenException('Access denied');
     }
 
+    if (actor.role === Role.REPRESENTATIVE) {
+      if (!query.studentId) throw new NotFoundException('Student not found');
+      const student = await this.prisma.studentProfile.findUnique({
+        where: { id: query.studentId },
+        select: { id: true, userId: true, institutionId: true },
+      });
+      if (!student) throw new NotFoundException('Student not found');
+      await assertActorCanAccessStudent(this.prisma, actor, student);
+    }
+
     const enrollment = await resolveStudentEnrollment(
       this.prisma,
       actor,
@@ -424,7 +435,7 @@ export class AcademicPerformanceService {
       );
     } else if (actor.role === Role.TEACHER) {
       throw new ForbiddenException('Teachers must specify a course scope');
-    } else {
+    } else if (actor.role !== Role.REPRESENTATIVE) {
       await assertActorCanAccessInstitution(
         this.prisma,
         actor,

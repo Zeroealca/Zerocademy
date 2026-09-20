@@ -31,7 +31,7 @@ function getAssignableRoles(actorRole: UserRole | undefined): UserRole[] {
   }
 
   if (actorRole === "ADMIN") {
-    return USER_ROLES.filter((role) => role !== "SUPER_ADMIN");
+    return ["STUDENT", "REPRESENTATIVE"];
   }
 
   return [];

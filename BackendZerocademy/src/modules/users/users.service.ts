@@ -46,6 +46,7 @@ export class UsersService {
       await assertActorCanAccessInstitution(this.prisma, actor, query.institutionId);
       where.AND = [{ OR: [
         { teacherProfile: { institutionId: query.institutionId } },
+        { representativeProfile: { institutionId: query.institutionId } },
         { institutionMemberships: { some: { institutionId: query.institutionId, isActive: true, ...(query.role === Role.TEACHER ? { role: 'TEACHER' as const } : {}) } } },
       ] }];
     }

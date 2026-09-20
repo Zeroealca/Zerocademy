@@ -4,11 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  AttendanceJustificationStatus,
-  AttendanceStatus,
-  Role,
-} from '@prisma/client';
+import { AttendanceStatus, Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -23,6 +19,7 @@ import type {
   MyAttendanceHistoryResponseDto,
 } from './dto/attendance-report-response.dto';
 import { AttendanceService } from './attendance.service';
+import { assertActorCanAccessStudent } from '../students/student-scope.util';
 
 type StatusCount = { status: AttendanceStatus; _count: { _all: number } };
 
@@ -40,6 +37,20 @@ export class AttendanceReportsService {
   ): Promise<MyAttendanceHistoryResponseDto> {
     if (actor.role !== Role.STUDENT || !actor.profileId)
       throw new NotFoundException('Attendance history not found');
+    return this.getStudentHistory(actor, actor.profileId, query);
+  }
+
+  async getStudentHistory(
+    actor: AuthenticatedUser,
+    studentId: string,
+    query: MyAttendanceHistoryQueryDto,
+  ): Promise<MyAttendanceHistoryResponseDto> {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { id: studentId },
+      select: { id: true, userId: true, institutionId: true },
+    });
+    if (!student) throw new NotFoundException('Attendance history not found');
+    await assertActorCanAccessStudent(this.prisma, actor, student);
     this.assertRange(query.startDate, query.endDate);
     const date = query.startDate
       ? {
@@ -49,7 +60,7 @@ export class AttendanceReportsService {
       : undefined;
     const scope = {
       enrollment: {
-        studentId: actor.profileId,
+        studentId,
         academicPeriodId: query.academicPeriodId,
       },
       ...(date ? { date } : {}),
@@ -63,7 +74,6 @@ export class AttendanceReportsService {
         notes: true,
         course: { select: { name: true, section: true } },
         justifications: {
-          where: { status: AttendanceJustificationStatus.PENDING },
           select: { id: true, status: true },
           take: 1,
         },
@@ -82,6 +92,7 @@ export class AttendanceReportsService {
       userId: actor.id,
       metadata: {
         academicPeriodId: query.academicPeriodId,
+        studentId,
         recordCount: records.length,
       },
     });

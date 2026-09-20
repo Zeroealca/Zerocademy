@@ -80,7 +80,7 @@ export class RoleUtils {
     }
 
     if (actorRole === Role.ADMIN) {
-      return [Role.STUDENT];
+      return [Role.STUDENT, Role.REPRESENTATIVE];
     }
 
     return [];

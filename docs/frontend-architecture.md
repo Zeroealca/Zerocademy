@@ -106,6 +106,7 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/academic-performance/course-performance` | Protected — ADMIN |
 | `/report-cards` | Protected — STUDENT (own report), TEACHER, ADMIN, SUPER_ADMIN (scoped reports) |
 | `/attendance` | Protected — TEACHER, ADMIN, SUPER_ADMIN |
+| `/representative` | Protected — REPRESENTATIVE; linked-student academic portal |
 
 ## Environment
 

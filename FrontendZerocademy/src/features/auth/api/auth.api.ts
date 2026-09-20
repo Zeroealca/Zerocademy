@@ -15,6 +15,7 @@ export interface LoginPayload {
 }
 
 export function loginRequest(payload: LoginPayload): Promise<AuthTokensResponse> {
+  console.log("loginRequest payload:", payload);
   return apiClient<AuthTokensResponse>("/v1/auth/login", {
     method: "POST",
     body: payload,

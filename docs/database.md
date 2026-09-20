@@ -36,6 +36,8 @@ Separated from `User` so authentication stays lean and domain models can evolve 
 | `TeacherProfile` | `TEACHER` | 1:1 with `User`, optional `institutionId` |
 | `RepresentativeProfile` | `REPRESENTATIVE` | 1:1 with `User`, optional `institutionId` |
 
+`RepresentativeStudent` is the historical, explicit M:N authorization link between a representative `User` and `StudentProfile`. It has a unique representative/student pair, active-state indexes in both directions, relationship type, and a database partial unique index for one active primary representative per student. See [representatives.md](./representatives.md).
+
 Profiles are auto-provisioned when an admin creates a user with an academic role.
 
 ### Institution

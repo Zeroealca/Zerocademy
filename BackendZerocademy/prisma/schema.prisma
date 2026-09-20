@@ -24,6 +24,14 @@ enum Role {
   REPRESENTATIVE
 }
 
+enum RepresentativeRelationshipType {
+  MOTHER
+  FATHER
+  LEGAL_GUARDIAN
+  GRANDPARENT
+  OTHER
+}
+
 // ---------------------------------------------------------------------------
 // Authentication account — credentials and RBAC role only (no academic fields)
 // ---------------------------------------------------------------------------
@@ -48,6 +56,7 @@ model User {
   attendanceRecordsRecorded         AttendanceRecord[]         @relation("AttendanceRecordedBy")
   attendanceJustificationsSubmitted AttendanceJustification[]  @relation("AttendanceJustificationSubmittedBy")
   attendanceJustificationsReviewed  AttendanceJustification[]  @relation("AttendanceJustificationReviewedBy")
+  representativeStudentRelations    RepresentativeStudent[]    @relation("RepresentativeStudentRepresentative")
   selectedAcademicPeriod            AcademicPeriod?            @relation("UserSelectedPeriod", fields: [selectedAcademicPeriodId], references: [id], onDelete: SetNull)
 
   @@index([role])
@@ -195,6 +204,7 @@ model StudentProfile {
   user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   institution        Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   enrollments        Enrollment[]
+  representativeStudentRelations RepresentativeStudent[]
 
   @@index([institutionId])
   @@index([isActive])
@@ -227,6 +237,25 @@ model RepresentativeProfile {
 
   @@index([institutionId])
   @@map("representative_profiles")
+}
+
+/// Authorized, historical relationship between a representative account and a student.
+model RepresentativeStudent {
+  id                   String                         @id @default(uuid())
+  representativeUserId String
+  studentId            String
+  relationshipType     RepresentativeRelationshipType
+  isPrimary            Boolean                        @default(false)
+  isActive             Boolean                        @default(true)
+  createdAt            DateTime                       @default(now())
+  updatedAt            DateTime                       @updatedAt
+  representativeUser   User                           @relation("RepresentativeStudentRepresentative", fields: [representativeUserId], references: [id], onDelete: Restrict)
+  student              StudentProfile                 @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  @@unique([representativeUserId, studentId])
+  @@index([representativeUserId, isActive])
+  @@index([studentId, isActive])
+  @@map("representative_students")
 }
 
 // ---------------------------------------------------------------------------

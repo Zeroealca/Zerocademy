@@ -112,6 +112,7 @@ Operational data:
 - Assessments **Demo Unit 1 Exam** and **Tarea en clase 1** with sample grades
 - `AcademicPeriodTransition` audit from 2024-2025 → 2025-2026
 - Revoked `RefreshToken` row (hash only; not a usable JWT)
+- Representative relationships: the demo representative is actively linked to Student 1 and Student 2
 
 Requires Ecuador catalog and platform evaluation defaults (the grades-demo runner executes catalog seeds first).
 

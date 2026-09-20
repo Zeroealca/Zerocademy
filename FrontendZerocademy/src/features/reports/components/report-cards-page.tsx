@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ import { useAuthStore } from "@/stores/use-auth-store";
 
 export function ReportCardsPage() {
   const role = useAuthStore((state) => state.user?.role);
+  const searchParams = useSearchParams();
   const effectivePeriodId = useEffectiveAcademicPeriodId();
   const [academicPeriodId, setAcademicPeriodId] = useState("");
   const selectedAcademicPeriodId = academicPeriodId || effectivePeriodId || "";
@@ -35,9 +37,13 @@ export function ReportCardsPage() {
     search: studentSearch || undefined,
   });
   const mine = useMyReportCard(selectedAcademicPeriodId);
-  const selected = useStudentReportCard(studentId, selectedAcademicPeriodId);
+  const requestedStudentId =
+    role === "REPRESENTATIVE" ? searchParams.get("studentId") ?? "" : "";
+  const resolvedStudentId = studentId || requestedStudentId;
+  const selected = useStudentReportCard(resolvedStudentId, selectedAcademicPeriodId);
   const isStudent = canViewOwnReportCard(role);
   const report = isStudent ? mine : selected;
+
 
   const downloadPdf = async () => {
     if (!report.data) return;
@@ -109,7 +115,7 @@ export function ReportCardsPage() {
             />
             <Select
               id="student"
-              value={studentId}
+              value={resolvedStudentId}
               onChange={(event) => setStudentId(event.target.value)}
               disabled={!selectedAcademicPeriodId || students.isLoading}
             >

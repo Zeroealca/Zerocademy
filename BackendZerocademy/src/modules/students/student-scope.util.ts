@@ -22,6 +22,10 @@ export async function buildStudentListWhere(
 
   if (actor.role === Role.STUDENT) {
     where.userId = actor.id;
+  } else if (actor.role === Role.REPRESENTATIVE) {
+    where.representativeStudentRelations = {
+      some: { representativeUserId: actor.id, isActive: true },
+    };
   } else if (actor.role === Role.TEACHER) {
     if (!actor.profileId) {
       throw new ForbiddenException('Teacher profile is required');
@@ -113,6 +117,21 @@ export async function assertActorCanAccessStudent(
 ): Promise<void> {
   if (actor.role === Role.STUDENT) {
     if (student.userId !== actor.id) {
+      throw new NotFoundException('Student not found');
+    }
+    return;
+  }
+
+  if (actor.role === Role.REPRESENTATIVE) {
+    const relationship = await prisma.representativeStudent.findFirst({
+      where: {
+        representativeUserId: actor.id,
+        studentId: student.id,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    if (!relationship) {
       throw new NotFoundException('Student not found');
     }
     return;

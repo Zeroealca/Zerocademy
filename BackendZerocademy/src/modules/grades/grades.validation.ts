@@ -302,7 +302,7 @@ export async function assertActorCanAccessGrade(
   prisma: PrismaService,
   actor: AuthenticatedUser,
   grade: {
-    enrollment: { student: { userId: string } };
+    enrollment: { student: { id: string; userId: string } };
     assessment: {
       institutionId: string;
       teacherAssignment: { teacherId: string };
@@ -317,6 +317,19 @@ export async function assertActorCanAccessGrade(
     if (grade.enrollment.student.userId !== actor.id) {
       throw new NotFoundException('Grade not found');
     }
+    return;
+  }
+
+  if (actor.role === Role.REPRESENTATIVE) {
+    const relationship = await prisma.representativeStudent.findFirst({
+      where: {
+        representativeUserId: actor.id,
+        studentId: grade.enrollment.student.id,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    if (!relationship) throw new NotFoundException('Grade not found');
     return;
   }
 

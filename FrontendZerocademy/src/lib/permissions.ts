@@ -3,7 +3,7 @@ import type { UserRole } from "@/stores/use-auth-store";
 const PLATFORM_CALENDAR_ROLES: UserRole[] = ["SUPER_ADMIN"];
 const INSTITUTION_OPS_ROLES: UserRole[] = ["ADMIN"];
 const INSTITUTION_VIEW_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
-const PERIOD_CONTEXT_ROLES: UserRole[] = ["ADMIN", "TEACHER", "STUDENT"];
+const PERIOD_CONTEXT_ROLES: UserRole[] = ["ADMIN", "TEACHER", "STUDENT", "REPRESENTATIVE"];
 const INSTITUTION_OPS_VIEW_ROLES: UserRole[] = ["ADMIN", "TEACHER"];
 const USER_ADMIN_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
 
@@ -145,7 +145,7 @@ export function canViewOwnEnrollmentHistory(
 
 /** Grades module — students (own data), teachers, admins (monitoring). */
 export function canViewGrades(role: UserRole | undefined): boolean {
-  return hasRoleStrict(role, ["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN"]);
+  return hasRoleStrict(role, ["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN", "REPRESENTATIVE"]);
 }
 
 export function canViewOwnGrades(role: UserRole | undefined): boolean {
@@ -233,7 +233,11 @@ export function canViewOwnReportCard(role: UserRole | undefined): boolean {
 }
 
 export function canViewReportCards(role: UserRole | undefined): boolean {
-  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER", "STUDENT"]);
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER", "STUDENT", "REPRESENTATIVE"]);
+}
+
+export function canViewRepresentativePortal(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["REPRESENTATIVE"]);
 }
 
 export function canViewAttendance(role: UserRole | undefined): boolean {

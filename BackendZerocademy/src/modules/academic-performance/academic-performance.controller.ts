@@ -4,6 +4,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiRequireRolesStrict } from '../../common/decorators/api';
 import {
@@ -84,6 +85,17 @@ export class AcademicPerformanceController {
       actor,
       query,
     );
+  }
+
+  @Get('representative/student-performance')
+  @ApiRequireRolesStrict(Role.REPRESENTATIVE)
+  @ApiOperation({ summary: 'Associated student performance for a representative' })
+  @ApiOkResponse({ type: TeacherStudentPerformanceResponseDto })
+  getRepresentativeStudentPerformance(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Query() query: TeacherStudentPerformanceQueryDto,
+  ): Promise<TeacherStudentPerformanceResponseDto> {
+    return this.academicPerformanceService.getTeacherStudentPerformance(actor, query);
   }
 
   @Get('teacher/course-averages')
