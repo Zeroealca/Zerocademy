@@ -4,3 +4,38 @@ export interface AcademicPlansFilters { page:number; limit:number; academicPerio
 export interface AcademicPlansListResponse { data:AcademicPlan[]; meta:{page:number;limit:number;total:number;totalPages:number}; }
 export interface AcademicPlanInput { teacherAssignmentId:string; academicTermId:string; title:string; description?:string; startDate?:string; endDate?:string; objectives?:string; contents?:string; activities?:string; resources?:string; evaluationNotes?:string; notes?:string; }
 export type UpdateAcademicPlanInput = Omit<Partial<AcademicPlanInput>, "teacherAssignmentId">;
+
+export interface AcademicUnit {
+  id: string;
+  academicPlanId: string;
+  title: string;
+  description: string | null;
+  objectives: string | null;
+  contents: string | null;
+  activities: string | null;
+  resources: string | null;
+  evaluationNotes: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AcademicUnitInput {
+  title: string;
+  description?: string;
+  objectives?: string;
+  contents?: string;
+  activities?: string;
+  resources?: string;
+  evaluationNotes?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export type UpdateAcademicUnitInput = Partial<AcademicUnitInput>;
+
+export interface ReorderAcademicUnitsInput {
+  unitIds: string[];
+}
