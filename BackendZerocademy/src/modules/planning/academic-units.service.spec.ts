@@ -14,6 +14,31 @@ const actor: AuthenticatedUser = {
   profileId: 'teacher-profile',
   institutionId: 'institution',
 };
+const admin: AuthenticatedUser = {
+  ...actor,
+  id: 'admin-user',
+  role: Role.ADMIN,
+  profileId: 'admin-profile',
+};
+const student: AuthenticatedUser = {
+  ...actor,
+  id: 'student-user',
+  role: Role.STUDENT,
+  profileId: 'student-profile',
+};
+const representative: AuthenticatedUser = {
+  ...actor,
+  id: 'representative-user',
+  role: Role.REPRESENTATIVE,
+  profileId: 'representative-profile',
+};
+const superAdmin: AuthenticatedUser = {
+  ...actor,
+  id: 'super-admin-user',
+  role: Role.SUPER_ADMIN,
+  profileId: 'super-admin-profile',
+  institutionId: 'other-institution',
+};
 
 type PrismaMock = {
   academicPlan: { findUnique: jest.Mock };
@@ -32,6 +57,7 @@ type TransactionOperation = (transaction: PrismaMock) => Promise<unknown>;
 describe('AcademicUnitsService', () => {
   let service: AcademicUnitsService;
   let prisma: PrismaMock;
+  let logger: { log: jest.Mock };
 
   beforeEach(() => {
     prisma = {
@@ -81,9 +107,10 @@ describe('AcademicUnitsService', () => {
         operation(prisma),
       ),
     };
+    logger = { log: jest.fn() };
     service = new AcademicUnitsService(
       prisma as unknown as PrismaService,
-      { log: jest.fn() } as unknown as AppLoggerService,
+      logger as unknown as AppLoggerService,
     );
   });
 
@@ -99,6 +126,170 @@ describe('AcademicUnitsService', () => {
     expect(prisma.academicUnit.findMany).toHaveBeenCalledWith({
       where: { academicPlanId: 'plan' },
       orderBy: { position: 'asc' },
+    });
+  });
+
+  it('lists units for an admin in the plan institution', async () => {
+    await expect(service.list(admin, 'plan')).resolves.toEqual([
+      { id: 'unit-a', title: 'Unit A', position: 1 },
+      { id: 'unit-b', title: 'Unit B', position: 2 },
+    ]);
+  });
+
+  it('does not let an admin create units', async () => {
+    await expect(
+      service.create(admin, 'plan', { title: 'Unit C' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.academicUnit.create).not.toHaveBeenCalled();
+  });
+
+  it('does not let an admin read units from another institution', async () => {
+    prisma.academicPlan.findUnique.mockResolvedValue({
+      id: 'plan',
+      status: AcademicPlanStatus.DRAFT,
+      teacherAssignment: {
+        teacherId: 'teacher-profile',
+        institutionId: 'other-institution',
+        academicPeriod: { status: 'ACTIVE' },
+      },
+    });
+
+    await expect(service.list(admin, 'plan')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(prisma.academicUnit.findMany).not.toHaveBeenCalled();
+  });
+
+  it('lists units for a super admin', async () => {
+    prisma.academicPlan.findUnique.mockResolvedValue({
+      id: 'plan',
+      status: AcademicPlanStatus.DRAFT,
+      teacherAssignment: {
+        teacherId: 'teacher-profile',
+        institutionId: 'other-institution',
+        academicPeriod: { status: 'ACTIVE' },
+      },
+    });
+
+    await expect(service.list(superAdmin, 'plan')).resolves.toEqual([
+      { id: 'unit-a', title: 'Unit A', position: 1 },
+      { id: 'unit-b', title: 'Unit B', position: 2 },
+    ]);
+  });
+
+  it.each([
+    ['student', student],
+    ['representative', representative],
+  ])(
+    'does not let a %s read academic units',
+    async (_role, unauthorizedActor) => {
+      await expect(
+        service.list(unauthorizedActor, 'plan'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(prisma.academicUnit.findMany).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ['published plan', AcademicPlanStatus.PUBLISHED, 'ACTIVE'],
+    ['closed academic period', AcademicPlanStatus.DRAFT, 'CLOSED'],
+  ])(
+    'keeps units readable for a %s',
+    async (_scenario, status, periodStatus) => {
+      prisma.academicPlan.findUnique.mockResolvedValue({
+        id: 'plan',
+        status,
+        teacherAssignment: {
+          teacherId: 'teacher-profile',
+          institutionId: 'institution',
+          academicPeriod: { status: periodStatus },
+        },
+      });
+
+      await expect(service.list(actor, 'plan')).resolves.toEqual([
+        { id: 'unit-a', title: 'Unit A', position: 1 },
+        { id: 'unit-b', title: 'Unit B', position: 2 },
+      ]);
+    },
+  );
+
+  it('accepts a unit date range contained within its academic plan', async () => {
+    prisma.academicPlan.findUnique.mockResolvedValue({
+      id: 'plan',
+      status: AcademicPlanStatus.DRAFT,
+      startDate: new Date('2026-09-01T00:00:00.000Z'),
+      endDate: new Date('2026-11-30T00:00:00.000Z'),
+      teacherAssignment: {
+        teacherId: 'teacher-profile',
+        institutionId: 'institution',
+        academicPeriod: { status: 'ACTIVE' },
+      },
+    });
+
+    await service.create(actor, 'plan', {
+      title: 'Unit C',
+      startDate: '2026-09-10',
+      endDate: '2026-09-25',
+    });
+
+    expect(prisma.academicUnit.create).toHaveBeenCalledWith({
+      data: {
+        academicPlanId: 'plan',
+        position: 1,
+        title: 'Unit C',
+        startDate: new Date('2026-09-10T00:00:00.000Z'),
+        endDate: new Date('2026-09-25T00:00:00.000Z'),
+      },
+    });
+  });
+
+  it.each([
+    ['reversed', '2026-10-20', '2026-10-10'],
+    ['before the plan', '2026-08-25', '2026-09-10'],
+    ['after the plan', '2026-11-20', '2026-12-05'],
+  ])('rejects a unit range %s', async (_scenario, startDate, endDate) => {
+    prisma.academicPlan.findUnique.mockResolvedValue({
+      id: 'plan',
+      status: AcademicPlanStatus.DRAFT,
+      startDate: new Date('2026-09-01T00:00:00.000Z'),
+      endDate: new Date('2026-11-30T00:00:00.000Z'),
+      teacherAssignment: {
+        teacherId: 'teacher-profile',
+        institutionId: 'institution',
+        academicPeriod: { status: 'ACTIVE' },
+      },
+    });
+
+    await expect(
+      service.create(actor, 'plan', { title: 'Unit C', startDate, endDate }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.academicUnit.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts unit dates equal to the academic plan boundaries on update', async () => {
+    prisma.academicPlan.findUnique.mockResolvedValue({
+      id: 'plan',
+      status: AcademicPlanStatus.DRAFT,
+      startDate: new Date('2026-09-01T00:00:00.000Z'),
+      endDate: new Date('2026-11-30T00:00:00.000Z'),
+      teacherAssignment: {
+        teacherId: 'teacher-profile',
+        institutionId: 'institution',
+        academicPeriod: { status: 'ACTIVE' },
+      },
+    });
+
+    await service.update(actor, 'plan', 'unit-c', {
+      startDate: '2026-09-01',
+      endDate: '2026-11-30',
+    });
+
+    expect(prisma.academicUnit.update).toHaveBeenCalledWith({
+      where: { id: 'unit-c' },
+      data: {
+        startDate: new Date('2026-09-01T00:00:00.000Z'),
+        endDate: new Date('2026-11-30T00:00:00.000Z'),
+      },
     });
   });
 
@@ -122,6 +313,13 @@ describe('AcademicUnitsService', () => {
         title: 'Unit C',
         description: 'Description',
       },
+    });
+    expect(logger.log).toHaveBeenCalledWith({
+      context: 'AcademicUnitsService',
+      event: 'ACADEMIC_UNIT_CREATED',
+      message: 'ACADEMIC_UNIT_CREATED',
+      userId: actor.id,
+      metadata: { academicPlanId: 'plan', academicUnitId: 'unit-c' },
     });
   });
 
@@ -211,6 +409,13 @@ describe('AcademicUnitsService', () => {
       where: { id: 'unit-c' },
       data: { title: 'Updated Unit', description: 'Updated description' },
     });
+    expect(logger.log).toHaveBeenCalledWith({
+      context: 'AcademicUnitsService',
+      event: 'ACADEMIC_UNIT_UPDATED',
+      message: 'ACADEMIC_UNIT_UPDATED',
+      userId: actor.id,
+      metadata: { academicPlanId: 'plan', academicUnitId: 'unit-c' },
+    });
   });
 
   it('does not update an academic unit on another teacher’s plan', async () => {
@@ -286,6 +491,13 @@ describe('AcademicUnitsService', () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.academicUnit.delete).toHaveBeenCalledWith({
       where: { id: 'unit-c' },
+    });
+    expect(logger.log).toHaveBeenCalledWith({
+      context: 'AcademicUnitsService',
+      event: 'ACADEMIC_UNIT_DELETED',
+      message: 'ACADEMIC_UNIT_DELETED',
+      userId: actor.id,
+      metadata: { academicPlanId: 'plan', academicUnitId: 'unit-c' },
     });
   });
 
@@ -410,6 +622,13 @@ describe('AcademicUnitsService', () => {
     expect(prisma.academicUnit.update).toHaveBeenNthCalledWith(6, {
       where: { id: 'unit-b' },
       data: { position: 3 },
+    });
+    expect(logger.log).toHaveBeenCalledWith({
+      context: 'AcademicUnitsService',
+      event: 'ACADEMIC_UNITS_REORDERED',
+      message: 'Academic units reordered',
+      userId: actor.id,
+      metadata: { academicPlanId: 'plan', count: 3 },
     });
   });
 
@@ -536,5 +755,6 @@ describe('AcademicUnitsService', () => {
     ).rejects.toThrow('reorder transaction failed');
     expect(prisma.academicUnit.delete).not.toHaveBeenCalled();
     expect(prisma.academicUnit.update).not.toHaveBeenCalled();
+    expect(logger.log).not.toHaveBeenCalled();
   });
 });
