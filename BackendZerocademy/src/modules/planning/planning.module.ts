@@ -3,10 +3,16 @@ import { PlanningController } from './planning.controller';
 import { PlanningService } from './planning.service';
 import { AcademicUnitsController } from './academic-units.controller';
 import { AcademicUnitsService } from './academic-units.service';
+import { LessonPlansController } from './lesson-plans.controller';
+import { LessonPlansService } from './lesson-plans.service';
 
 @Module({
-  controllers: [PlanningController, AcademicUnitsController],
-  providers: [PlanningService, AcademicUnitsService],
+  controllers: [
+    PlanningController,
+    AcademicUnitsController,
+    LessonPlansController,
+  ],
+  providers: [PlanningService, AcademicUnitsService, LessonPlansService],
   exports: [PlanningService],
 })
 export class PlanningModule {}
