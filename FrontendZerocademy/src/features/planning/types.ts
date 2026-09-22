@@ -39,3 +39,40 @@ export type UpdateAcademicUnitInput = Partial<AcademicUnitInput>;
 export interface ReorderAcademicUnitsInput {
   unitIds: string[];
 }
+
+export interface LessonPlan {
+  id: string;
+  academicUnitId: string;
+  title: string;
+  lessonDate: string;
+  durationMinutes: number | null;
+  objectives: string | null;
+  introduction: string | null;
+  development: string | null;
+  closure: string | null;
+  resources: string | null;
+  evaluationStrategy: string | null;
+  notes: string | null;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonPlanInput {
+  title: string;
+  lessonDate: string;
+  durationMinutes?: number;
+  objectives?: string;
+  introduction?: string;
+  development?: string;
+  closure?: string;
+  resources?: string;
+  evaluationStrategy?: string;
+  notes?: string;
+}
+
+export type UpdateLessonPlanInput = Partial<LessonPlanInput>;
+
+export interface ReorderLessonPlansInput {
+  lessonPlanIds: string[];
+}
