@@ -2,10 +2,10 @@
 
 ## Monorepo
 
-| App | Path | Role |
-|-----|------|------|
-| API | `BackendZerocademy/` | Business rules, auth, persistence |
-| UI | `FrontendZerocademy/` | Presentation, client validation, caching |
+| App | Path                  | Role                                     |
+| --- | --------------------- | ---------------------------------------- |
+| API | `BackendZerocademy/`  | Business rules, auth, persistence        |
+| UI  | `FrontendZerocademy/` | Presentation, client validation, caching |
 
 Package manager: **npm workspaces** (root `package.json`).
 
@@ -13,31 +13,31 @@ Package manager: **npm workspaces** (root `package.json`).
 
 Canonical domains (from root `agent.md`):
 
-| Domain | Backend module | Frontend feature |
-|--------|----------------|------------------|
-| Auth | `auth` | `auth` |
-| Users | `users` | `users` |
-| Academic periods | `academic-periods` | `academic-periods` |
-| Subjects | `subjects` | `subjects` |
-| Teacher assignments | `teacher-assignments` | `teacher-assignments` |
-| Institutions | `institutions` | `institutions`, `institution-settings` |
-| Academic evaluation | `academic-evaluation` | `academic-evaluation` |
-| Grades | `grades` | `grades` |
-| Academic performance | `academic-performance` | `academic-performance` |
-| Students, Teachers, Attendance, … | Partial / planned | Partial / planned |
+| Domain                            | Backend module         | Frontend feature                       |
+| --------------------------------- | ---------------------- | -------------------------------------- |
+| Auth                              | `auth`                 | `auth`                                 |
+| Users                             | `users`                | `users`                                |
+| Academic periods                  | `academic-periods`     | `academic-periods`                     |
+| Subjects                          | `subjects`             | `subjects`                             |
+| Teacher assignments               | `teacher-assignments`  | `teacher-assignments`                  |
+| Institutions                      | `institutions`         | `institutions`, `institution-settings` |
+| Academic evaluation               | `academic-evaluation`  | `academic-evaluation`                  |
+| Grades                            | `grades`               | `grades`                               |
+| Academic performance              | `academic-performance` | `academic-performance`                 |
+| Students, Teachers, Attendance, … | Partial / planned      | Partial / planned                      |
 
-**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Dashboard shell.
+**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit frontend workspace, Dashboard shell.
 
 ## Boundaries
 
-| Concern | Owner |
-|---------|--------|
-| JWT issuance / validation | Backend |
-| Password hashing | Backend |
-| Role enforcement | Backend |
-| Permission UI gating | Frontend (cosmetic) |
-| Rendering / routing | Frontend |
-| Server state cache | Frontend (TanStack Query) |
+| Concern                   | Owner                     |
+| ------------------------- | ------------------------- |
+| JWT issuance / validation | Backend                   |
+| Password hashing          | Backend                   |
+| Role enforcement          | Backend                   |
+| Permission UI gating      | Frontend (cosmetic)       |
+| Rendering / routing       | Frontend                  |
+| Server state cache        | Frontend (TanStack Query) |
 
 ## API contract
 
@@ -80,6 +80,7 @@ npm run docker:up
 - [academic-periods-frontend.md](./academic-periods-frontend.md)
 - [subjects.md](./subjects.md)
 - [teacher-assignments.md](./teacher-assignments.md)
+- [academic-planning.md](./academic-planning.md)
 - [curriculum.md](./curriculum.md)
 - [seeds.md](./seeds.md)
 - [ui-guidelines.md](./ui-guidelines.md)
@@ -88,11 +89,11 @@ npm run docker:up
 
 ## AI guidance
 
-| Layer | Location |
-|-------|----------|
-| Architecture & global rules | `agent.md`, `BackendZerocademy/agent.md`, `FrontendZerocademy/agent.md` |
-| Implementation workflows | `.cursor/skills/*/SKILL.md` |
-| Workflow docs | [ai-workflow.md](./ai-workflow.md), [cursor-skills.md](./cursor-skills.md), [development-workflow.md](./development-workflow.md) |
+| Layer                       | Location                                                                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture & global rules | `agent.md`, `BackendZerocademy/agent.md`, `FrontendZerocademy/agent.md`                                                          |
+| Implementation workflows    | `.cursor/skills/*/SKILL.md`                                                                                                      |
+| Workflow docs               | [ai-workflow.md](./ai-workflow.md), [cursor-skills.md](./cursor-skills.md), [development-workflow.md](./development-workflow.md) |
 
 Agents read **agent files** for principles and **skills** for scaffolding, CRUD, RBAC, docs sync, and reviews.
 

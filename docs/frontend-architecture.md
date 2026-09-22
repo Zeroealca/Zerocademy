@@ -34,6 +34,7 @@ FrontendZerocademy/src/
 │   ├── institution-memberships/
 │   ├── academic-period-transitions/
 │   ├── academic-evaluation/    # Grading engine configuration UI
+│   ├── planning/               # AcademicPlan/AcademicUnit workspace and LessonPlan API/query contracts
 │   ├── grades/                 # Assessments, grade entry, student grades
 │   ├── academic-performance/   # Averages dashboards and performance views
 │   ├── reports/                # Report-card view, print actions, PDF download
@@ -68,12 +69,12 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 
 ## State management
 
-| Concern | Tool |
-|---------|------|
-| API data | TanStack Query |
+| Concern      | Tool                                |
+| ------------ | ----------------------------------- |
+| API data     | TanStack Query                      |
 | Auth session | Zustand (`zerocademy-auth` persist) |
-| Theme | next-themes (`class` on `<html>`) |
-| Forms | react-hook-form |
+| Theme        | next-themes (`class` on `<html>`)   |
+| Forms        | react-hook-form                     |
 
 ## Theme system
 
@@ -84,29 +85,31 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 
 ## Routing
 
-| Route | Access |
-|-------|--------|
-| `/` | Redirects to `/dashboard` |
-| `/login` | Public |
-| `/dashboard` | Protected (`AuthGuard`) |
-| `/users` | Protected — ADMIN, SUPER_ADMIN. Directory: search, role, active state, sort by role/status, pagination |
-| `/academic-periods` | Protected — view: ADMIN, SUPER_ADMIN, TEACHER |
-| `/academic-periods/new`, `…/edit` | Protected — ADMIN, SUPER_ADMIN |
-| `/institutions` | Protected — view: ADMIN, SUPER_ADMIN |
-| `/institutions/new`, `…/edit` | Protected — SUPER_ADMIN |
-| `/institutions/[id]/settings` | Protected — settings/branding: ADMIN, SUPER_ADMIN |
-| `/institutions/[id]/members` | Protected — memberships: ADMIN, SUPER_ADMIN |
-| `/institutions/[id]/transitions` | Protected — view: ADMIN, SUPER_ADMIN, TEACHER; wizard: ADMIN, SUPER_ADMIN |
-| `/academic-performance` | Protected — role-based hub (STUDENT, TEACHER, ADMIN) |
-| `/academic-performance/my-averages` | Protected — STUDENT |
-| `/academic-performance/course-averages` | Protected — TEACHER, ADMIN |
-| `/academic-performance/subject-performance` | Protected — TEACHER, ADMIN |
-| `/academic-performance/student-performance` | Protected — TEACHER, ADMIN |
-| `/academic-performance/institution` | Protected — ADMIN |
-| `/academic-performance/course-performance` | Protected — ADMIN |
-| `/report-cards` | Protected — STUDENT (own report), TEACHER, ADMIN, SUPER_ADMIN (scoped reports) |
-| `/attendance` | Protected — TEACHER, ADMIN, SUPER_ADMIN |
-| `/representative` | Protected — REPRESENTATIVE; linked-student academic portal |
+| Route                                       | Access                                                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `/`                                         | Redirects to `/dashboard`                                                                              |
+| `/login`                                    | Public                                                                                                 |
+| `/dashboard`                                | Protected (`AuthGuard`)                                                                                |
+| `/users`                                    | Protected — ADMIN, SUPER_ADMIN. Directory: search, role, active state, sort by role/status, pagination |
+| `/academic-periods`                         | Protected — view: ADMIN, SUPER_ADMIN, TEACHER                                                          |
+| `/academic-periods/new`, `…/edit`           | Protected — ADMIN, SUPER_ADMIN                                                                         |
+| `/academic-plans`                           | Protected — SUPER_ADMIN, ADMIN, TEACHER; teacher drafts are mutable and staff oversight is read-only   |
+| `/academic-plans/[id]`                      | Protected — scoped plan detail with ordered AcademicUnit section; LessonPlan typed API and TanStack Query contracts exist, while UI remains pending |
+| `/institutions`                             | Protected — view: ADMIN, SUPER_ADMIN                                                                   |
+| `/institutions/new`, `…/edit`               | Protected — SUPER_ADMIN                                                                                |
+| `/institutions/[id]/settings`               | Protected — settings/branding: ADMIN, SUPER_ADMIN                                                      |
+| `/institutions/[id]/members`                | Protected — memberships: ADMIN, SUPER_ADMIN                                                            |
+| `/institutions/[id]/transitions`            | Protected — view: ADMIN, SUPER_ADMIN, TEACHER; wizard: ADMIN, SUPER_ADMIN                              |
+| `/academic-performance`                     | Protected — role-based hub (STUDENT, TEACHER, ADMIN)                                                   |
+| `/academic-performance/my-averages`         | Protected — STUDENT                                                                                    |
+| `/academic-performance/course-averages`     | Protected — TEACHER, ADMIN                                                                             |
+| `/academic-performance/subject-performance` | Protected — TEACHER, ADMIN                                                                             |
+| `/academic-performance/student-performance` | Protected — TEACHER, ADMIN                                                                             |
+| `/academic-performance/institution`         | Protected — ADMIN                                                                                      |
+| `/academic-performance/course-performance`  | Protected — ADMIN                                                                                      |
+| `/report-cards`                             | Protected — STUDENT (own report), TEACHER, ADMIN, SUPER_ADMIN (scoped reports)                         |
+| `/attendance`                               | Protected — TEACHER, ADMIN, SUPER_ADMIN                                                                |
+| `/representative`                           | Protected — REPRESENTATIVE; linked-student academic portal                                             |
 
 ## Environment
 
@@ -123,3 +126,4 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 - UI guidelines: [ui-guidelines.md](./ui-guidelines.md)
 - Report cards: [report-cards.md](./report-cards.md)
 - Attendance: [attendance.md](./attendance.md)
+- Academic planning: [academic-planning.md](./academic-planning.md)
