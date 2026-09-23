@@ -74,7 +74,7 @@ La plantilla estándar incluye estas bandas:
 
 1. Abra **Esquemas de calificación**.
 2. Cree un esquema o use el generado por la plantilla Ecuador.
-3. Revise o ajuste las **escalas** (rangos no deben solaparse).
+3. En cada esquema, pulse **Ver bandas**. Añada, edite o quite las bandas cualitativas y pulse **Guardar bandas**. Los rangos son inclusivos, usan hasta dos decimales y deben cubrir toda la escala numérica sin huecos ni solapes. Si falla la validación, las bandas anteriores permanecen intactas.
 4. Marque un esquema como **predeterminado** si su institución tiene varios.
 
 ---

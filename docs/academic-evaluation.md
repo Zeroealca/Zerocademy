@@ -60,7 +60,7 @@ Initialized via:
 ## Business rules
 
 1. Institutions may define multiple grading schemes; one may be marked `isDefault`.
-2. Grade scale ranges must not overlap and must fit inside the parent scheme range.
+2. Grade scale ranges must not overlap, must fit inside the parent scheme range, and a configured set must cover the entire range without gaps at 0.01 precision. The full set is saved atomically via `PUT /v1/grading-schemes/:schemeId/grade-scales`.
 3. Active evaluation term weights per period must sum to **100** (±0.01 tolerance).
 4. Active assessment category weights per institution must sum to **100** (±0.01 tolerance).
 5. Historical configurations are preserved — schemes linked to `InstitutionAcademicConfiguration` cannot be deleted; deactivation is blocked while referenced.

@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -18,6 +19,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiRequireRoles } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   ACADEMIC_EVALUATION_PLATFORM_WRITE_ROLES,
   ACADEMIC_EVALUATION_READ_ROLES,
@@ -26,6 +29,7 @@ import {
 import { CreateGradeScaleDto } from './dto/create-grade-scale.dto';
 import { GradeScaleResponseDto } from './dto/grade-scale-response.dto';
 import { UpdateGradeScaleDto } from './dto/update-grade-scale.dto';
+import { ReplaceGradeScalesDto } from './dto/replace-grade-scales.dto';
 import { GradeScalesService } from './grade-scales.service';
 
 @ApiTags('grade-scales')
@@ -41,6 +45,18 @@ export class GradeScalesController {
     @Param('schemeId', ParseUUIDPipe) schemeId: string,
   ): Promise<GradeScaleResponseDto[]> {
     return this.gradeScalesService.findAllByScheme(schemeId);
+  }
+
+  @Put()
+  @ApiRequireRoles(...ACADEMIC_EVALUATION_WRITE_ROLES)
+  @ApiOperation({ summary: 'Replace all grade scales with complete, gap-free coverage' })
+  @ApiOkResponse({ type: [GradeScaleResponseDto] })
+  replaceAll(
+    @Param('schemeId', ParseUUIDPipe) schemeId: string,
+    @Body() dto: ReplaceGradeScalesDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<GradeScaleResponseDto[]> {
+    return this.gradeScalesService.replaceAll(schemeId, dto, actor);
   }
 
   @Post()

@@ -24,6 +24,7 @@ import {
   fetchPlatformAcademicEvaluation,
   initializePlatformEcuadorDefaults,
   reorderEvaluationTerms,
+  replaceGradeScales,
   updateAssessmentCategory,
   updateAssessmentCategoryTemplate,
   updateEvaluationTerm,
@@ -170,6 +171,11 @@ export function useAcademicEvaluationMutations() {
         schemeId: string;
         payload: CreateGradeScaleInput;
       }) => createGradeScale(schemeId, payload),
+      onSuccess: invalidateAll,
+    }),
+    replaceGradeScales: useMutation({
+      mutationFn: ({ schemeId, scales }: { schemeId: string; scales: CreateGradeScaleInput[] }) =>
+        replaceGradeScales(schemeId, scales),
       onSuccess: invalidateAll,
     }),
     updateGradeScale: useMutation({

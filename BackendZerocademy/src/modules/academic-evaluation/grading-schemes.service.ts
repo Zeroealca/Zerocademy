@@ -13,6 +13,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   assertInstitutionExistsAndActive,
+  assertCompleteGradeScaleCoverage,
   assertValidDecimalPlaces,
   assertValidGradingRange,
 } from './academic-evaluation.validation';
@@ -135,6 +136,19 @@ export class GradingSchemesService {
 
     assertValidGradingRange(minScore, maxScore, passingScore);
     assertValidDecimalPlaces(decimalPlaces);
+    if (existing.gradeScales.length > 0 &&
+      (minScore !== Number(existing.minScore) || maxScore !== Number(existing.maxScore))) {
+      assertCompleteGradeScaleCoverage(
+        existing.gradeScales.map((scale) => ({
+          code: scale.code,
+          order: scale.order,
+          minValue: Number(scale.minValue),
+          maxValue: Number(scale.maxValue),
+        })),
+        minScore,
+        maxScore,
+      );
+    }
 
     if (dto.isDefault) {
       await this.clearDefaultFlag(existing.institutionId, id);

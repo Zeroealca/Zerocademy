@@ -168,6 +168,16 @@ export function fetchGradeScales(schemeId: string): Promise<GradeScale[]> {
   );
 }
 
+export function replaceGradeScales(
+  schemeId: string,
+  scales: CreateGradeScaleInput[],
+): Promise<GradeScale[]> {
+  return apiClient<GradeScale[]>(
+    `/v1/grading-schemes/${schemeId}/grade-scales`,
+    { method: "PUT", body: { scales } },
+  );
+}
+
 export function createGradeScale(
   schemeId: string,
   payload: CreateGradeScaleInput,

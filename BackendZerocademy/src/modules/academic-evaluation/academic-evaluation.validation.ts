@@ -81,6 +81,50 @@ export function assertNoOverlappingGradeScales(
   }
 }
 
+/** Decimal grade bounds are stored with two fractional digits. */
+export function assertCompleteGradeScaleCoverage(
+  scales: GradeScaleInput[],
+  schemeMin: number,
+  schemeMax: number,
+): void {
+  assertNoOverlappingGradeScales(scales, schemeMin, schemeMax);
+  if (scales.length === 0) {
+    throw new BadRequestException('Grade scales must cover the entire grading scheme range');
+  }
+
+  const toCents = (value: number): number => {
+    const cents = Math.round(value * 100);
+    if (!Number.isFinite(value) || Math.abs(value * 100 - cents) > 1e-7) {
+      throw new BadRequestException('Grade scale bounds must have at most two decimal places');
+    }
+    return cents;
+  };
+
+  const sorted = [...scales].sort((a, b) => a.minValue - b.minValue);
+  let next = toCents(schemeMin);
+  const codes = new Set<string>();
+  const orders = new Set<number>();
+  for (const scale of sorted) {
+    const code = scale.code.trim().toUpperCase();
+    if (codes.has(code) || orders.has(scale.order)) {
+      throw new BadRequestException('Grade scale codes and orders must be unique');
+    }
+    codes.add(code);
+    orders.add(scale.order);
+    const start = toCents(scale.minValue);
+    const end = toCents(scale.maxValue);
+    if (start !== next) {
+      throw new BadRequestException(
+        `Grade scales leave a gap before "${scale.code}" (expected ${ (next / 100).toFixed(2) })`,
+      );
+    }
+    next = end + 1;
+  }
+  if (next !== toCents(schemeMax) + 1) {
+    throw new BadRequestException('Grade scales must cover the grading scheme maximum score');
+  }
+}
+
 export function assertWeightsSumToTarget(
   weights: number[],
   label: string,

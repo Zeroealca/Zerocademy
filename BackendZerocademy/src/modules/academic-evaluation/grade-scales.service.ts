@@ -7,14 +7,17 @@ import {
 import { Prisma } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
-  assertNoOverlappingGradeScales,
+  assertCompleteGradeScaleCoverage,
   decimalToNumber,
 } from './academic-evaluation.validation';
 import { ACADEMIC_EVALUATION_CONTEXT } from './constants';
 import { CreateGradeScaleDto } from './dto/create-grade-scale.dto';
 import { GradeScaleResponseDto } from './dto/grade-scale-response.dto';
 import { UpdateGradeScaleDto } from './dto/update-grade-scale.dto';
+import { ReplaceGradeScalesDto } from './dto/replace-grade-scales.dto';
 import { toGradeScaleResponseDto } from './mappers/academic-evaluation.mapper';
 
 @Injectable()
@@ -33,6 +36,53 @@ export class GradeScalesService {
     });
 
     return scales.map(toGradeScaleResponseDto);
+  }
+
+  async replaceAll(
+    schemeId: string,
+    dto: ReplaceGradeScalesDto,
+    actor: AuthenticatedUser,
+  ): Promise<GradeScaleResponseDto[]> {
+    const scheme = await this.assertSchemeExists(schemeId);
+    if (!scheme.institutionId) {
+      throw new BadRequestException('Global grading scheme scales cannot be edited here');
+    }
+    await assertActorCanAccessInstitution(this.prisma, actor, scheme.institutionId);
+    const scales = dto.scales.map((scale) => ({
+      code: scale.code.trim().toUpperCase(),
+      description: scale.description.trim(),
+      minValue: scale.minValue,
+      maxValue: scale.maxValue,
+      order: scale.order,
+    }));
+    assertCompleteGradeScaleCoverage(
+      scales,
+      decimalToNumber(scheme.minScore),
+      decimalToNumber(scheme.maxScore),
+    );
+
+    try {
+      const saved = await this.prisma.$transaction(async (transaction) => {
+        await transaction.gradeScale.deleteMany({ where: { gradingSchemeId: schemeId } });
+        await transaction.gradeScale.createMany({
+          data: scales.map((scale) => ({ ...scale, gradingSchemeId: schemeId })),
+        });
+        return transaction.gradeScale.findMany({
+          where: { gradingSchemeId: schemeId },
+          orderBy: { order: 'asc' },
+        });
+      });
+      this.logger.log({
+        context: ACADEMIC_EVALUATION_CONTEXT,
+        event: 'GRADE_SCALES_REPLACED',
+        message: 'Complete grade scale set saved',
+        metadata: { schemeId, count: saved.length },
+      });
+      return saved.map(toGradeScaleResponseDto);
+    } catch (error) {
+      this.mapPrismaError(error);
+      throw error;
+    }
   }
 
   async create(
@@ -60,7 +110,7 @@ export class GradeScalesService {
       },
     ];
 
-    assertNoOverlappingGradeScales(
+    assertCompleteGradeScaleCoverage(
       candidateScales,
       decimalToNumber(scheme.minScore),
       decimalToNumber(scheme.maxScore),
@@ -120,7 +170,7 @@ export class GradeScalesService {
       },
     ];
 
-    assertNoOverlappingGradeScales(
+    assertCompleteGradeScaleCoverage(
       candidateScales,
       decimalToNumber(scheme.minScore),
       decimalToNumber(scheme.maxScore),
@@ -152,7 +202,21 @@ export class GradeScalesService {
   }
 
   async remove(schemeId: string, scaleId: string): Promise<void> {
+    const scheme = await this.assertSchemeExists(schemeId);
     await this.findScaleOrThrow(schemeId, scaleId);
+    const remaining = await this.prisma.gradeScale.findMany({
+      where: { gradingSchemeId: schemeId, NOT: { id: scaleId } },
+    });
+    assertCompleteGradeScaleCoverage(
+      remaining.map((scale) => ({
+        code: scale.code,
+        order: scale.order,
+        minValue: decimalToNumber(scale.minValue),
+        maxValue: decimalToNumber(scale.maxValue),
+      })),
+      decimalToNumber(scheme.minScore),
+      decimalToNumber(scheme.maxScore),
+    );
     await this.prisma.gradeScale.delete({ where: { id: scaleId } });
 
     this.logger.log({
