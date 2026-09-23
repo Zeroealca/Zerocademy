@@ -131,6 +131,13 @@ enum AcademicPlanStatus {
   PUBLISHED
 }
 
+/// Operational state of an actual teaching occurrence, independent of AcademicPlan publication.
+enum ClassSessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
 model Institution {
   id                     String             @id @default(uuid())
   name                   String
@@ -465,6 +472,7 @@ model TeacherAssignment {
   academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
   assessments      Assessment[]
   academicPlans    AcademicPlan[]
+  classSessions    ClassSession[]
 
   @@unique([teacherId, subjectId, courseId, academicPeriodId])
   @@unique([subjectId, courseId, academicPeriodId], map: "teacher_assignments_subject_course_period_key")
@@ -548,10 +556,30 @@ model LessonPlan {
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
   academicUnit       AcademicUnit @relation(fields: [academicUnitId], references: [id], onDelete: Cascade)
+  classSessions      ClassSession[]
 
   @@unique([academicUnitId, position])
   @@index([academicUnitId, position])
   @@map("lesson_plans")
+}
+
+/// An actual teaching occurrence. Academic context is derived from its TeacherAssignment.
+model ClassSession {
+  id                  String             @id @default(uuid())
+  teacherAssignmentId String
+  lessonPlanId        String?
+  status              ClassSessionStatus @default(SCHEDULED)
+  scheduledDate       DateTime?          @db.Date
+  occurredOn          DateTime?          @db.Date
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  teacherAssignment   TeacherAssignment  @relation(fields: [teacherAssignmentId], references: [id], onDelete: Restrict)
+  lessonPlan          LessonPlan?        @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+
+  @@index([teacherAssignmentId, scheduledDate])
+  @@index([teacherAssignmentId, occurredOn])
+  @@index([lessonPlanId])
+  @@map("class_sessions")
 }
 
 /// Student enrollment in a classroom course for an academic period (historical status tracked).

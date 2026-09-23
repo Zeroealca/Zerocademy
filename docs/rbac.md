@@ -104,7 +104,7 @@ Returns `selectedPeriod`, `effectivePeriod`, and `activeByRegime`.
 - Catalog nav (levels, grades, subjects): SUPER_ADMIN write; ADMIN/TEACHER view operations via courses
 - Students / enrollments (institution): ADMIN write; TEACHER read (scoped); hidden from SUPER_ADMIN on strict routes
 - **STUDENT** nav: `Mis matrículas` (`/my-enrollments`), `Notas` (`/grades`) only — no `/students` or `/enrollments` admin list
-- **Academic Planning / AcademicUnit / LessonPlan:** TEACHER can mutate only own open-period `DRAFT` plans; ADMIN and SUPER_ADMIN have scoped read-only access; STUDENT and REPRESENTATIVE have no Academic Planning route or API access. Frontend controls are UX-only and the backend enforces this policy. LessonPlan currently has backend API coverage only; its UI is deferred.
+- **Academic Planning / AcademicUnit / LessonPlan:** TEACHER can mutate only own open-period `DRAFT` plans; ADMIN and SUPER_ADMIN have scoped read-only access; STUDENT and REPRESENTATIVE have no Academic Planning route or API access. Frontend controls are UX-only and the backend enforces this policy. LessonPlans render within their parent units, with mutation controls limited to the mutable teacher context.
 
 ## JWT payload
 

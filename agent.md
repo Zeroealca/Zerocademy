@@ -49,6 +49,7 @@ One bounded context per row. Implement in the mapped folders only.
 | Subjects | Subject catalog, curricula links | `subjects` | `subjects` |
 | Teacher assignments | Staffing: teacher + subject + course + period | `teacher-assignments` | `teacher-assignments` |
 | Planning | Schedules, class groups, academic structure | `planning` | `planning` |
+| Academic execution | Actual teaching occurrences and their operational lifecycle | `academic-execution` | — *(pending)* |
 | Grades | Assessments, entry, transcripts | `grades` | `grades` |
 | Academic performance | Grade calculation engine, averages, performance queries | `academic-performance` | `academic-performance` |
 | Attendance | Records, absences, justifications | `attendance` | `attendance` |

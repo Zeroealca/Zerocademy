@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AcademicUnitForm } from "@/features/planning/components/academic-unit-form";
+import { LessonPlansSection } from "@/features/planning/components/lesson-plans-section";
 import {
   useAcademicUnits,
   useCreateAcademicUnit,
@@ -151,7 +152,8 @@ export function AcademicUnitsSection({
         <div className="grid gap-3">
           {units.map((unit, index) => (
             <Card key={unit.id}>
-              <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-start sm:justify-between">
+              <CardContent className="space-y-4 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-1">
                   <p className="text-sm font-medium text-muted-foreground">Unidad {unit.position}</p>
                   <h3 className="font-semibold">{unit.title}</h3>
@@ -200,6 +202,12 @@ export function AcademicUnitsSection({
                     </Button>
                   </div>
                 ) : null}
+                </div>
+                <LessonPlansSection
+                  academicPlanId={academicPlanId}
+                  academicUnit={unit}
+                  canManage={canManage}
+                />
               </CardContent>
             </Card>
           ))}

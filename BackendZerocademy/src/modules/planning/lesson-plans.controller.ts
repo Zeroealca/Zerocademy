@@ -50,7 +50,11 @@ export class LessonPlansController {
     @Param('planId', ParseUUIDPipe) planId: string,
     @Param('unitId', ParseUUIDPipe) unitId: string,
   ) {
-    return this.lessons.list(actor, planId, unitId);
+    return this.lessons
+      .list(actor, planId, unitId)
+      .then((lessons) =>
+        lessons.map((lesson) => LessonPlanResponseDto.from(lesson)),
+      );
   }
 
   @Get(':lessonPlanId')
@@ -63,7 +67,9 @@ export class LessonPlansController {
     @Param('unitId', ParseUUIDPipe) unitId: string,
     @Param('lessonPlanId', ParseUUIDPipe) lessonPlanId: string,
   ) {
-    return this.lessons.one(actor, planId, unitId, lessonPlanId);
+    return this.lessons
+      .one(actor, planId, unitId, lessonPlanId)
+      .then((lesson) => LessonPlanResponseDto.from(lesson));
   }
 
   @Post()
@@ -76,7 +82,9 @@ export class LessonPlansController {
     @Param('unitId', ParseUUIDPipe) unitId: string,
     @Body() dto: CreateLessonPlanDto,
   ) {
-    return this.lessons.create(actor, planId, unitId, dto);
+    return this.lessons
+      .create(actor, planId, unitId, dto)
+      .then((lesson) => LessonPlanResponseDto.from(lesson));
   }
 
   @Patch('reorder')
@@ -108,7 +116,9 @@ export class LessonPlansController {
     @Param('lessonPlanId', ParseUUIDPipe) lessonPlanId: string,
     @Body() dto: UpdateLessonPlanDto,
   ) {
-    return this.lessons.update(actor, planId, unitId, lessonPlanId, dto);
+    return this.lessons
+      .update(actor, planId, unitId, lessonPlanId, dto)
+      .then((lesson) => LessonPlanResponseDto.from(lesson));
   }
 
   @Delete(':lessonPlanId')

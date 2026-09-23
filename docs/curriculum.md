@@ -79,6 +79,10 @@ Rules live in `prisma/seeds/curriculum/ecuador.data.ts` — not in NestJS servic
 | Curriculum versioning | Future `CurriculumVersion` model + seed bundles per version |
 | Override national catalog | Institution-scoped `Subject` / links without changing system rows |
 
+## Boundary with planning and execution
+
+Curriculum versioning is independent catalog governance, not a child of `TeacherAssignment`, `AcademicPlan`, `AcademicUnit`, `LessonPlan`, or `ClassSession`. A future version may inform planning through references or validation, but the current Planning Phase 2C Teaching Session Foundation is not blocked by it. This keeps Ecuador reference data configurable and avoids coupling a teaching occurrence to one Ministry format, pedagogical methodology, or grading model.
+
 ## Related
 
 - [seeds.md](./seeds.md) — execution and idempotency

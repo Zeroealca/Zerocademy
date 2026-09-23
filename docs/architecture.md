@@ -20,13 +20,14 @@ Canonical domains (from root `agent.md`):
 | Academic periods                  | `academic-periods`     | `academic-periods`                     |
 | Subjects                          | `subjects`             | `subjects`                             |
 | Teacher assignments               | `teacher-assignments`  | `teacher-assignments`                  |
+| Academic execution                | `academic-execution`   | — *(pending)*                           |
 | Institutions                      | `institutions`         | `institutions`, `institution-settings` |
 | Academic evaluation               | `academic-evaluation`  | `academic-evaluation`                  |
 | Grades                            | `grades`               | `grades`                               |
 | Academic performance              | `academic-performance` | `academic-performance`                 |
 | Students, Teachers, Attendance, … | Partial / planned      | Partial / planned                      |
 
-**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit frontend workspace, Dashboard shell.
+**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, and the Academic Execution ClassSession persistence foundation, Dashboard shell.
 
 ## Boundaries
 

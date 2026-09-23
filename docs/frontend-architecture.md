@@ -34,7 +34,7 @@ FrontendZerocademy/src/
 │   ├── institution-memberships/
 │   ├── academic-period-transitions/
 │   ├── academic-evaluation/    # Grading engine configuration UI
-│   ├── planning/               # AcademicPlan/AcademicUnit workspace and LessonPlan API/query contracts
+│   ├── planning/               # AcademicPlan/AcademicUnit workspace and nested LessonPlan UI
 │   ├── grades/                 # Assessments, grade entry, student grades
 │   ├── academic-performance/   # Averages dashboards and performance views
 │   ├── reports/                # Report-card view, print actions, PDF download
@@ -94,7 +94,7 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/academic-periods`                         | Protected — view: ADMIN, SUPER_ADMIN, TEACHER                                                          |
 | `/academic-periods/new`, `…/edit`           | Protected — ADMIN, SUPER_ADMIN                                                                         |
 | `/academic-plans`                           | Protected — SUPER_ADMIN, ADMIN, TEACHER; teacher drafts are mutable and staff oversight is read-only   |
-| `/academic-plans/[id]`                      | Protected — scoped plan detail with ordered AcademicUnit section; LessonPlan typed API and TanStack Query contracts exist, while UI remains pending |
+| `/academic-plans/[id]`                      | Protected — scoped plan detail with ordered AcademicUnit and nested LessonPlan sections; LessonPlans support compact display, forms, deletion, and Move Up/Down controls in mutable teacher contexts |
 | `/institutions`                             | Protected — view: ADMIN, SUPER_ADMIN                                                                   |
 | `/institutions/new`, `…/edit`               | Protected — SUPER_ADMIN                                                                                |
 | `/institutions/[id]/settings`               | Protected — settings/branding: ADMIN, SUPER_ADMIN                                                      |

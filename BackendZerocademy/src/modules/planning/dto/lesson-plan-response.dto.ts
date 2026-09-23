@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { LessonPlan } from '@prisma/client';
 
 export class LessonPlanResponseDto {
+  static from(lessonPlan: LessonPlan): LessonPlanResponseDto {
+    return {
+      ...lessonPlan,
+      lessonDate: lessonPlan.lessonDate.toISOString().slice(0, 10),
+      createdAt: lessonPlan.createdAt.toISOString(),
+      updatedAt: lessonPlan.updatedAt.toISOString(),
+    };
+  }
+
   @ApiProperty({ format: 'uuid' })
   id: string;
 

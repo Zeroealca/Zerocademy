@@ -44,7 +44,9 @@ Every submitted enrollment must be active, belong to the exact course and academ
 
 ## Future extensibility
 
-Future work can add exports, notifications, and a session/subject layer without changing the enrollment-based historical record.
+Future work can add exports, notifications, and a session/subject layer without changing the enrollment-based historical record. The Academic Execution `ClassSession` persistence foundation now exists: it is owned by `TeacherAssignment` and may optionally link to a planning-only `LessonPlan`; see [academic-planning.md](./academic-planning.md). It represents an actual teaching occurrence, not a daily attendance row.
+
+The current attendance contract does **not** yet reference `ClassSession`: it remains course-level and enrollment/date-unique. A future session/subject attendance phase must explicitly choose its record ownership and uniqueness rules before adding a session relationship, so multiple subject sessions on one calendar day cannot silently conflict with the present `@@unique([enrollmentId, date])` invariant.
 
 ## Phase 2 reporting
 

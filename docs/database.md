@@ -139,6 +139,14 @@ Unique: `Subject.code` (global partial index); `Subject(institutionId, code)` wh
 
 `LessonPlan` belongs to an `AcademicUnit` and records a required title and lesson calendar date, optional instructional content and duration, and an ordered `position`. Its `lessonDate` is stored as a database `DATE`; the parent-unit cascade foreign key plus unique/indexed `(academicUnitId, position)` preserve ownership and deterministic per-unit ordering. `lesson_plans` is created by the Phase 2B migration. See [academic-planning.md](./academic-planning.md).
 
+### Academic execution (Phase 2C.1)
+
+`ClassSession` records an actual teaching occurrence and belongs to a required `TeacherAssignment`; teacher, subject, course, academic-period, and institution context remain derived through that assignment. It may optionally reference a `LessonPlan`, but the foundation service validates that the lesson's plan uses the same assignment. The optional LessonPlan foreign key uses `SET NULL` so deleting planned content does not erase execution history; the required assignment foreign key uses `RESTRICT` so historical sessions prevent assignment deletion.
+
+`ClassSessionStatus` is `SCHEDULED`, `COMPLETED`, or `CANCELLED`, independent of `AcademicPlanStatus`. `scheduledDate` and `occurredOn` are optional PostgreSQL `DATE` fields; their status requirements and academic-period bounds are enforced by the foundation service. Indexes support assignment plus scheduled/actual calendar-date queries and optional LessonPlan linkage. There is deliberately no assignment/date uniqueness constraint, Attendance relation, timetable data, or session roster in this phase.
+
+Phase 2C.2 exposes this model only through nested assignment routes. Lists are deterministically ordered by `scheduledDate` then `createdAt`; no delete route exists because cancellation preserves execution history.
+
 ### Academic evaluation configuration
 
 Configurable grading engine foundation. See [academic-evaluation.md](./academic-evaluation.md).
@@ -221,6 +229,7 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20260920100000_academic_planning_phase1`             | Academic plans and publish lifecycle                                         |
 | `20260920110000_academic_units_phase2`                | Ordered academic units per plan                                              |
 | `20260921090000_lesson_plans_phase2b`                 | Ordered lesson plans per academic unit                                       |
+| `20260923090000_class_sessions_phase2c1`              | ClassSession execution persistence and operational lifecycle foundation      |
 
 Never edit applied migration SQL retroactively.
 

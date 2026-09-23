@@ -80,6 +80,7 @@ Structured events (`TeacherAssignmentsService`):
 ## Extensibility
 
 - Institution scoping can filter teachers and courses by `institutionId` on profiles.
+- `ClassSession` Academic Execution records now use the assignment as their required owner; they derive teaching context instead of duplicating it. Assignment deletion is restricted while historical sessions exist.
 - Future scheduling reads assignments without schema changes.
 - Workload limits or co-teaching can be modeled with additional columns or a child table.
 
