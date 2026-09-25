@@ -1,5 +1,5 @@
-import { NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ClassSessionStatus, Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -60,6 +60,7 @@ describe('ClassSessionsFoundationService read contract', () => {
   const prisma = {
     teacherAssignment: { findFirst: jest.fn() },
     institutionMembership: { findFirst: jest.fn() },
+    lessonPlan: { findFirst: jest.fn() },
     classSession: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -67,11 +68,13 @@ describe('ClassSessionsFoundationService read contract', () => {
       update: jest.fn(),
     },
   };
+  const logger = { log: jest.fn() };
 
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.teacherAssignment.findFirst.mockResolvedValue(assignment);
     prisma.institutionMembership.findFirst.mockResolvedValue(null);
+    prisma.lessonPlan.findFirst.mockResolvedValue({ id: 'lesson-plan-a' });
     prisma.classSession.findMany.mockResolvedValue([
       { id: 'session-a1', teacherAssignmentId: 'assignment-a' },
       { id: 'session-a2', teacherAssignmentId: 'assignment-a' },
@@ -96,7 +99,7 @@ describe('ClassSessionsFoundationService read contract', () => {
     );
     service = new ClassSessionsFoundationService(
       prisma as unknown as PrismaService,
-      { log: jest.fn() } as unknown as AppLoggerService,
+      logger as unknown as AppLoggerService,
     );
   });
 
@@ -222,6 +225,46 @@ describe('ClassSessionsFoundationService read contract', () => {
       }),
     ).resolves.toMatchObject({ teacherAssignmentId: 'assignment-a' });
   });
+  it('logs CLASS_SESSION_CREATED after a successful class session persistence', async () => {
+    await service.create(teacherA, {
+      teacherAssignmentId: 'assignment-a',
+      scheduledDate: '2026-06-15',
+    });
+
+    expect(prisma.classSession.create.mock.invocationCallOrder[0]).toBeLessThan(
+      logger.log.mock.invocationCallOrder[0],
+    );
+    expect(logger.log).toHaveBeenCalledWith({
+      context: 'ClassSessionsFoundationService',
+      event: 'CLASS_SESSION_CREATED',
+      message: 'CLASS_SESSION_CREATED',
+      userId: 'a',
+      metadata: {
+        classSessionId: 'created',
+        teacherAssignmentId: 'assignment-a',
+        status: ClassSessionStatus.SCHEDULED,
+      },
+    });
+    expect(logger.log).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'CLASS_SESSION_UPDATED' }),
+    );
+  });
+  it('does not log CLASS_SESSION_CREATED when class session persistence fails', async () => {
+    prisma.classSession.create.mockRejectedValue(
+      new Error('Class session persistence failed'),
+    );
+
+    await expect(
+      service.create(teacherA, {
+        teacherAssignmentId: 'assignment-a',
+        scheduledDate: '2026-06-15',
+      }),
+    ).rejects.toThrow('Class session persistence failed');
+
+    expect(logger.log).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'CLASS_SESSION_CREATED' }),
+    );
+  });
   it.each([teacherB, adminA, superAdmin, student, representative])(
     'denies %s create access',
     async (actor) => {
@@ -233,10 +276,268 @@ describe('ClassSessionsFoundationService read contract', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     },
   );
+  it('rejects class session creation during a closed academic period before persistence', async () => {
+    prisma.teacherAssignment.findFirst.mockResolvedValue({
+      ...assignment,
+      academicPeriod: { ...assignment.academicPeriod, status: 'CLOSED' },
+    });
+
+    await expect(
+      service.create(teacherA, {
+        teacherAssignmentId: 'assignment-a',
+        scheduledDate: '2026-06-15',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
+  });
+  it('rejects class session creation during an archived academic period before persistence', async () => {
+    prisma.teacherAssignment.findFirst.mockResolvedValue({
+      ...assignment,
+      academicPeriod: { ...assignment.academicPeriod, status: 'ARCHIVED' },
+    });
+
+    await expect(
+      service.create(teacherA, {
+        teacherAssignmentId: 'assignment-a',
+        scheduledDate: '2026-06-15',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
+  });
+  it('rejects class session creation with a scheduled date before the academic period', async () => {
+    await expect(
+      service.create(teacherA, {
+        teacherAssignmentId: 'assignment-a',
+        scheduledDate: '2025-12-31',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
+  });
   it('lets the owning teacher update a correctly nested session', async () => {
     await expect(
       service.update(teacherA, 'assignment-a', 'session-a1', {}),
     ).resolves.toMatchObject({ id: 'session-a1' });
+  });
+  it('logs CLASS_SESSION_UPDATED after a successful class session persistence', async () => {
+    await service.update(teacherA, 'assignment-a', 'session-a1', {});
+
+    expect(prisma.classSession.update.mock.invocationCallOrder[0]).toBeLessThan(
+      logger.log.mock.invocationCallOrder[0],
+    );
+    expect(logger.log).toHaveBeenCalledWith({
+      context: 'ClassSessionsFoundationService',
+      event: 'CLASS_SESSION_UPDATED',
+      message: 'CLASS_SESSION_UPDATED',
+      userId: 'a',
+      metadata: {
+        classSessionId: 'session-a1',
+        teacherAssignmentId: 'assignment-a',
+        status: ClassSessionStatus.SCHEDULED,
+      },
+    });
+    expect(logger.log).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'CLASS_SESSION_CREATED' }),
+    );
+  });
+  it('does not log CLASS_SESSION_UPDATED when class session persistence fails', async () => {
+    prisma.classSession.update.mockRejectedValue(
+      new Error('Class session persistence failed'),
+    );
+
+    await expect(
+      service.update(teacherA, 'assignment-a', 'session-a1', {}),
+    ).rejects.toThrow('Class session persistence failed');
+
+    expect(logger.log).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'CLASS_SESSION_UPDATED' }),
+    );
+  });
+  it('rejects a completed PATCH when the final merged state has no occurrence date', async () => {
+    await expect(
+      service.update(teacherA, 'assignment-a', 'session-a1', {
+        status: ClassSessionStatus.COMPLETED,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.classSession.update).not.toHaveBeenCalled();
+  });
+  it('persists a completed PATCH when the final merged state has an occurrence date', async () => {
+    await expect(
+      service.update(teacherA, 'assignment-a', 'session-a1', {
+        status: ClassSessionStatus.COMPLETED,
+        occurredOn: '2026-06-16',
+      }),
+    ).resolves.toMatchObject({
+      status: ClassSessionStatus.COMPLETED,
+      occurredOn: new Date('2026-06-16T00:00:00.000Z'),
+    });
+
+    expect(prisma.classSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-a1' },
+      data: {
+        status: ClassSessionStatus.COMPLETED,
+        scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+        occurredOn: new Date('2026-06-16T00:00:00.000Z'),
+        lessonPlanId: null,
+      },
+    });
+  });
+  it('preserves omitted fields when PATCH changes only the scheduled date', async () => {
+    prisma.classSession.findFirst.mockResolvedValue({
+      id: 'session-a1',
+      teacherAssignmentId: 'assignment-a',
+      lessonPlanId: 'lesson-plan-a',
+      status: ClassSessionStatus.SCHEDULED,
+      scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+      occurredOn: null,
+    });
+
+    await service.update(teacherA, 'assignment-a', 'session-a1', {
+      scheduledDate: '2026-06-16',
+    });
+
+    expect(prisma.classSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-a1' },
+      data: {
+        status: ClassSessionStatus.SCHEDULED,
+        scheduledDate: new Date('2026-06-16T00:00:00.000Z'),
+        occurredOn: null,
+        lessonPlanId: 'lesson-plan-a',
+      },
+    });
+  });
+  it('preserves the lesson plan relation when lessonPlanId is omitted from PATCH', async () => {
+    prisma.classSession.findFirst.mockResolvedValue({
+      id: 'session-a1',
+      teacherAssignmentId: 'assignment-a',
+      lessonPlanId: 'lesson-plan-a',
+      status: ClassSessionStatus.SCHEDULED,
+      scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+      occurredOn: null,
+    });
+
+    await service.update(teacherA, 'assignment-a', 'session-a1', {});
+
+    expect(prisma.classSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-a1' },
+      data: {
+        status: ClassSessionStatus.SCHEDULED,
+        scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+        occurredOn: null,
+        lessonPlanId: 'lesson-plan-a',
+      },
+    });
+  });
+  it('clears the lesson plan relation when lessonPlanId is explicitly null in PATCH', async () => {
+    prisma.classSession.findFirst.mockResolvedValue({
+      id: 'session-a1',
+      teacherAssignmentId: 'assignment-a',
+      lessonPlanId: 'lesson-plan-a',
+      status: ClassSessionStatus.SCHEDULED,
+      scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+      occurredOn: null,
+    });
+
+    await service.update(teacherA, 'assignment-a', 'session-a1', {
+      lessonPlanId: null,
+    });
+
+    expect(prisma.classSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-a1' },
+      data: {
+        status: ClassSessionStatus.SCHEDULED,
+        scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+        occurredOn: null,
+        lessonPlanId: null,
+      },
+    });
+  });
+  it('replaces the lesson plan with one compatible with the class session teacher assignment', async () => {
+    prisma.classSession.findFirst.mockResolvedValue({
+      id: 'session-a1',
+      teacherAssignmentId: 'assignment-a',
+      lessonPlanId: 'lesson-plan-a1',
+      status: ClassSessionStatus.SCHEDULED,
+      scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+      occurredOn: null,
+    });
+    prisma.lessonPlan.findFirst.mockResolvedValue({ id: 'lesson-plan-a2' });
+
+    await expect(
+      service.update(teacherA, 'assignment-a', 'session-a1', {
+        lessonPlanId: 'lesson-plan-a2',
+      }),
+    ).resolves.toMatchObject({
+      teacherAssignmentId: 'assignment-a',
+      lessonPlanId: 'lesson-plan-a2',
+    });
+
+    expect(prisma.lessonPlan.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'lesson-plan-a2',
+        academicUnit: {
+          academicPlan: { teacherAssignmentId: 'assignment-a' },
+        },
+      },
+      select: { id: true },
+    });
+    expect(prisma.classSession.update).toHaveBeenCalledWith({
+      where: { id: 'session-a1' },
+      data: {
+        status: ClassSessionStatus.SCHEDULED,
+        scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+        occurredOn: null,
+        lessonPlanId: 'lesson-plan-a2',
+      },
+    });
+  });
+  it('rejects a lesson plan replacement from another teacher assignment before persistence', async () => {
+    prisma.classSession.findFirst.mockResolvedValue({
+      id: 'session-a1',
+      teacherAssignmentId: 'assignment-a',
+      lessonPlanId: 'lesson-plan-a1',
+      status: ClassSessionStatus.SCHEDULED,
+      scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+      occurredOn: null,
+    });
+    prisma.lessonPlan.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.update(teacherA, 'assignment-a', 'session-a1', {
+        lessonPlanId: 'lesson-plan-b',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.lessonPlan.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'lesson-plan-b',
+        academicUnit: {
+          academicPlan: { teacherAssignmentId: 'assignment-a' },
+        },
+      },
+      select: { id: true },
+    });
+    expect(prisma.classSession.update).not.toHaveBeenCalled();
+  });
+  it('does not resolve a class session through a different teacher assignment during PATCH', async () => {
+    prisma.teacherAssignment.findFirst.mockResolvedValue({
+      ...assignment,
+      id: 'assignment-b',
+      teacherId: 'teacher-a',
+    });
+    prisma.classSession.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.update(teacherA, 'assignment-b', 'session-a1', {}),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(prisma.classSession.findFirst).toHaveBeenCalledWith({
+      where: { id: 'session-a1', teacherAssignmentId: 'assignment-b' },
+    });
+    expect(prisma.classSession.update).not.toHaveBeenCalled();
   });
   it.each([teacherB, adminA, superAdmin, student, representative])(
     'denies %s update access',

@@ -139,13 +139,13 @@ Unique: `Subject.code` (global partial index); `Subject(institutionId, code)` wh
 
 `LessonPlan` belongs to an `AcademicUnit` and records a required title and lesson calendar date, optional instructional content and duration, and an ordered `position`. Its `lessonDate` is stored as a database `DATE`; the parent-unit cascade foreign key plus unique/indexed `(academicUnitId, position)` preserve ownership and deterministic per-unit ordering. `lesson_plans` is created by the Phase 2B migration. See [academic-planning.md](./academic-planning.md).
 
-### Academic execution (Phase 2C.1)
+### Academic execution (Phase 2C)
 
 `ClassSession` records an actual teaching occurrence and belongs to a required `TeacherAssignment`; teacher, subject, course, academic-period, and institution context remain derived through that assignment. It may optionally reference a `LessonPlan`, but the foundation service validates that the lesson's plan uses the same assignment. The optional LessonPlan foreign key uses `SET NULL` so deleting planned content does not erase execution history; the required assignment foreign key uses `RESTRICT` so historical sessions prevent assignment deletion.
 
-`ClassSessionStatus` is `SCHEDULED`, `COMPLETED`, or `CANCELLED`, independent of `AcademicPlanStatus`. `scheduledDate` and `occurredOn` are optional PostgreSQL `DATE` fields; their status requirements and academic-period bounds are enforced by the foundation service. Indexes support assignment plus scheduled/actual calendar-date queries and optional LessonPlan linkage. There is deliberately no assignment/date uniqueness constraint, Attendance relation, timetable data, or session roster in this phase.
+`ClassSessionStatus` is `SCHEDULED`, `COMPLETED`, or `CANCELLED`, independent of `AcademicPlanStatus`. `scheduledDate` and `occurredOn` are optional PostgreSQL `DATE` fields; `SCHEDULED`/`CANCELLED` require `scheduledDate`, `COMPLETED` requires `occurredOn`, and supplied values must be within the TeacherAssignment AcademicPeriod. The API serializes both as `YYYY-MM-DD`; `createdAt` and `updatedAt` remain timestamps. The `(teacherAssignmentId, scheduledDate)`, `(teacherAssignmentId, occurredOn)`, and `lessonPlanId` indexes support the model's assignment/date lookup and optional relation. There is deliberately no assignment/date uniqueness constraint, Attendance relation, timetable data, or session roster in this phase.
 
-Phase 2C.2 exposes this model only through nested assignment routes. Lists are deterministically ordered by `scheduledDate` then `createdAt`; no delete route exists because cancellation preserves execution history.
+Phase 2C.2 exposes this model only through nested assignment routes. Lists are deterministically ordered by `scheduledDate ASC NULLS LAST`, then `createdAt`; no delete route exists because cancellation preserves execution history. PATCH preserves omitted fields, accepts explicit null to clear the optional LessonPlan relation, and validates non-null LessonPlan replacements through the same TeacherAssignment hierarchy.
 
 ### Academic evaluation configuration
 

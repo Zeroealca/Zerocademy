@@ -27,9 +27,18 @@ Canonical domains (from root `agent.md`):
 | Academic performance              | `academic-performance` | `academic-performance`                 |
 | Students, Teachers, Attendance, … | Partial / planned      | Partial / planned                      |
 
-**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, and the Academic Execution ClassSession persistence foundation, Dashboard shell.
+**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, the Academic Execution ClassSession backend/API contract, and Dashboard shell.
 
 ## Boundaries
+
+Academic Planning and Academic Execution remain separate graphs:
+
+```text
+Planning:  TeacherAssignment → AcademicPlan → AcademicUnit → LessonPlan
+Execution: TeacherAssignment → ClassSession → optional LessonPlan reference
+```
+
+`ClassSession` represents an actual teaching occurrence; it is not an AttendanceRecord. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it.
 
 | Concern                   | Owner                     |
 | ------------------------- | ------------------------- |
