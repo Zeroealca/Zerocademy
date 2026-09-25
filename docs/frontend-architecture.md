@@ -35,6 +35,7 @@ FrontendZerocademy/src/
 │   ├── academic-period-transitions/
 │   ├── academic-evaluation/    # Grading engine configuration UI
 │   ├── planning/               # AcademicPlan/AcademicUnit workspace and nested LessonPlan UI
+│   ├── academic-execution/     # ClassSession API contracts; query integration and UI pending
 │   ├── grades/                 # Assessments, grade entry, student grades
 │   ├── academic-performance/   # Averages dashboards and performance views
 │   ├── reports/                # Report-card view, print actions, PDF download

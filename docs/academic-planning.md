@@ -8,7 +8,7 @@ Academic Planning Phase 1A is implemented as a backend feature. Phase 1B provide
 
 **Phase 2C is the Teaching Session Foundation.** It introduces the domain primitive for a real teaching occurrence: a `ClassSession` owned by a `TeacherAssignment`. It is the next phase because Attendance explicitly defers subject/session attendance until a timetable/session domain exists, while the completed LessonPlan feature deliberately remains planning-only. The phase is an **Academic Execution** capability adjacent to Planning; it is not a new pedagogical child in the `AcademicPlan → AcademicUnit → LessonPlan` tree.
 
-**Phase 2C.1 and 2C.2 are technically complete.** Phase 2C.2 exposes the assignment-scoped backend API at `/v1/teacher-assignments/:teacherAssignmentId/class-sessions`; Phase 2C remains in progress pending contract hardening and frontend phases.
+**Phase 2C.1, 2C.2, and 2C.3 are technically complete.** Phase 2C.2 exposes the assignment-scoped backend API at `/v1/teacher-assignments/:teacherAssignmentId/class-sessions`, and Phase 2C.3 hardens its service and OpenAPI contracts. Phase 2C.4 is in progress: 2C.4a provides frontend ClassSession types and an API client, while query integration and UI remain pending.
 
 The relationship is intentionally asymmetric:
 
@@ -40,12 +40,14 @@ Dates retain distinct semantics. `LessonPlan.lessonDate` is a planned pedagogica
 
 Authorization follows the existing ownership direction: an owning `TEACHER` may create and manage sessions only for that teacher's assignment in an open period; `ADMIN` and `SUPER_ADMIN` have scoped operational/history reads unless a later execution policy explicitly grants a mutation; `STUDENT` and `REPRESENTATIVE` receive no direct Phase 2C access. Student and representative access to their existing attendance history is unchanged.
 
+The implemented API exposes only `GET /`, `GET /:classSessionId`, `POST /`, and `PATCH /:classSessionId` below `/v1/teacher-assignments/:teacherAssignmentId/class-sessions`. Its list order is deterministic: `scheduledDate ASC NULLS LAST → createdAt ASC`, so dated sessions appear chronologically before undated sessions. PATCH validates the final merged state: omitted fields are retained, an omitted `lessonPlanId` retains its relation, explicit `lessonPlanId: null` clears it, and a replacement LessonPlan must inherit the same TeacherAssignment. Successful mutations emit `CLASS_SESSION_CREATED` or `CLASS_SESSION_UPDATED` only after persistence succeeds, with safe identifiers and status metadata. Swagger documents the request/response DTOs, enum, nullable calendar-date fields, ISO timestamps, and standard API errors. DELETE and list filters remain intentionally absent.
+
 #### Phase 2C roadmap
 
 - **2C.1 — Domain and persistence foundation (technically complete):** `ClassSession` persistence, additive migration, operational status, assignment ownership, optional scoped LessonPlan reference, date semantics, and focused invariant tests are complete.
 - **2C.2 — Backend behavior and API (technically complete):** assignment-scoped list, detail, create, and update endpoints enforce ownership, staff read scope, period mutability, parent-reference compatibility, and final-state lifecycle validation. DELETE is intentionally deferred because physical deletion of historical execution records is not approved.
-- **2C.3 — Backend contract hardening:** add focused service/controller tests for IDOR, lifecycle transitions, date semantics, optional LessonPlan linkage, and audit logging.
-- **2C.4 — Frontend contracts and data access:** add typed session API contracts and assignment-scoped TanStack Query integration without reusing LessonPlan mutations.
+- **2C.3 — Backend contract hardening (technically complete):** focused service, controller/OpenAPI, and response-DTO tests cover nested isolation, lifecycle/date invariants, PATCH semantics, optional LessonPlan linkage, deterministic ordering, and audit logging.
+- **2C.4 — Frontend contracts and data access (in progress):** 2C.4a provides `academic-execution` ClassSession response/create/update types and assignment-scoped list, detail, create, and update API-client methods. TanStack Query keys, queries, mutations, and cache invalidation remain 2C.4b work.
 - **2C.5 — Execution workspace UI:** provide teacher session creation/management and authorized read-only staff views with Spanish UI, states, and lifecycle-aware controls.
 - **2C.6 — Verification and closure:** run focused backend/frontend checks, validate documentation and authorization, and record the operational boundary with Attendance.
 
