@@ -182,6 +182,15 @@ export function canViewAcademicPlanning(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER"]);
 }
 
+/** Academic Execution: assignment-scoped ClassSession read workspace. */
+export function canViewAcademicExecution(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER"]);
+}
+
+export function canManageAcademicExecution(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["TEACHER"]);
+}
+
 export function canManageAcademicPlanning(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, ["TEACHER"]);
 }

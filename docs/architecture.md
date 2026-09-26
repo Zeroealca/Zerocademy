@@ -20,7 +20,7 @@ Canonical domains (from root `agent.md`):
 | Academic periods                  | `academic-periods`     | `academic-periods`                     |
 | Subjects                          | `subjects`             | `subjects`                             |
 | Teacher assignments               | `teacher-assignments`  | `teacher-assignments`                  |
-| Academic execution                | `academic-execution`   | — *(pending)*                           |
+| Academic execution                | `academic-execution`   | `academic-execution`                    |
 | Institutions                      | `institutions`         | `institutions`, `institution-settings` |
 | Academic evaluation               | `academic-evaluation`  | `academic-evaluation`                  |
 | Grades                            | `grades`               | `grades`                               |
