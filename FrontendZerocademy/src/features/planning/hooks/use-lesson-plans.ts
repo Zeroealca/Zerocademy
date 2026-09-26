@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createLessonPlan,
   deleteLessonPlan,
+  fetchAcademicPlanLessonPlans,
   fetchLessonPlan,
   fetchLessonPlans,
   reorderLessonPlans,
@@ -24,6 +25,14 @@ export function useLessonPlans(
     queryKey: lessonPlansKeys.list(academicPlanId, academicUnitId),
     queryFn: () => fetchLessonPlans(academicPlanId, academicUnitId),
     enabled: Boolean(academicPlanId && academicUnitId),
+  });
+}
+
+export function useAcademicPlanLessonPlans(academicPlanId: string) {
+  return useQuery({
+    queryKey: lessonPlansKeys.aggregateList(academicPlanId),
+    queryFn: () => fetchAcademicPlanLessonPlans(academicPlanId),
+    enabled: Boolean(academicPlanId),
   });
 }
 

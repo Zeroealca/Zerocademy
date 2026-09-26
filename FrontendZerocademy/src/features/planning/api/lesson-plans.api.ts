@@ -1,10 +1,14 @@
 import { apiClient } from "@/lib/api-client";
 import type {
+  AcademicPlanLessonPlan,
   LessonPlan,
   LessonPlanInput,
   ReorderLessonPlansInput,
   UpdateLessonPlanInput,
 } from "@/features/planning/types";
+
+const academicPlanLessonPlansPath = (academicPlanId: string) =>
+  `/v1/academic-plans/${academicPlanId}/lesson-plans`;
 
 const lessonPlansPath = (academicPlanId: string, academicUnitId: string) =>
   `/v1/academic-plans/${academicPlanId}/units/${academicUnitId}/lesson-plans`;
@@ -13,6 +17,11 @@ export const fetchLessonPlans = (
   academicPlanId: string,
   academicUnitId: string,
 ) => apiClient<LessonPlan[]>(lessonPlansPath(academicPlanId, academicUnitId));
+
+export const fetchAcademicPlanLessonPlans = (academicPlanId: string) =>
+  apiClient<AcademicPlanLessonPlan[]>(
+    academicPlanLessonPlansPath(academicPlanId),
+  );
 
 export const fetchLessonPlan = (
   academicPlanId: string,

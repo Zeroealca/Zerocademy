@@ -3,6 +3,8 @@ export const lessonPlansKeys = {
   plans: () => [...lessonPlansKeys.all, "plan"] as const,
   plan: (academicPlanId: string) =>
     [...lessonPlansKeys.plans(), academicPlanId] as const,
+  aggregateList: (academicPlanId: string) =>
+    [...lessonPlansKeys.plan(academicPlanId), "aggregate", "list"] as const,
   units: (academicPlanId: string) =>
     [...lessonPlansKeys.plan(academicPlanId), "unit"] as const,
   unit: (academicPlanId: string, academicUnitId: string) =>

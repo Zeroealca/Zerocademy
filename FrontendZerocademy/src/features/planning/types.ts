@@ -58,6 +58,10 @@ export interface LessonPlan {
   updatedAt: string;
 }
 
+export interface AcademicPlanLessonPlan extends LessonPlan {
+  academicUnitTitle: string;
+}
+
 export interface LessonPlanInput {
   title: string;
   lessonDate: string;

@@ -100,7 +100,7 @@ function ClassSessionsList({ academicPlanId, plan }: { academicPlanId: string; p
           </div>
           {canCreate && !creating ? <Button onClick={() => setCreating(true)}>Crear sesión</Button> : null}
         </div>
-        {creating ? <Card><CardHeader><CardTitle className="text-base">Nueva sesión de clase</CardTitle></CardHeader><CardContent><ClassSessionForm onCancel={() => setCreating(false)} onSuccess={() => setCreating(false)} teacherAssignmentId={plan.teacherAssignmentId}/></CardContent></Card> : null}
+        {creating ? <Card><CardHeader><CardTitle className="text-base">Nueva sesión de clase</CardTitle></CardHeader><CardContent><ClassSessionForm academicPlanId={academicPlanId} onCancel={() => setCreating(false)} onSuccess={() => setCreating(false)} teacherAssignmentId={plan.teacherAssignmentId}/></CardContent></Card> : null}
 
         {sessionsQuery.isLoading ? <Card><CardContent className="p-6 text-sm text-muted-foreground" aria-live="polite">Cargando sesiones de clase…</CardContent></Card> : null}
         {sessionsQuery.isError ? <Card><CardContent className="space-y-3 p-6 text-sm text-destructive" role="alert"><p>No se pudieron cargar las sesiones de clase.</p><Button onClick={() => sessionsQuery.refetch()} size="sm" variant="outline">Reintentar</Button></CardContent></Card> : null}

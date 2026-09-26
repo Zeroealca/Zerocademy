@@ -31,6 +31,9 @@ type LessonTextFields = Pick<
   | 'notes'
 >;
 type UnitContext = Awaited<ReturnType<LessonPlansService['findUnitOrThrow']>>;
+type AggregateLessonPlan = LessonPlan & {
+  academicUnit: { title: string };
+};
 
 @Injectable()
 export class LessonPlansService {
@@ -48,6 +51,22 @@ export class LessonPlansService {
     return this.prisma.lessonPlan.findMany({
       where: { academicUnitId: unitId },
       orderBy: { position: 'asc' },
+    });
+  }
+
+  async listForAcademicPlan(
+    actor: AuthenticatedUser,
+    planId: string,
+  ): Promise<AggregateLessonPlan[]> {
+    await this.findPlanForReadOrThrow(actor, planId);
+
+    return this.prisma.lessonPlan.findMany({
+      where: { academicUnit: { academicPlanId: planId } },
+      include: { academicUnit: { select: { title: true } } },
+      orderBy: [
+        { academicUnit: { position: 'asc' } },
+        { position: 'asc' },
+      ],
     });
   }
 
@@ -236,6 +255,35 @@ export class LessonPlansService {
       }
     }
     return unit;
+  }
+
+  private async findPlanForReadOrThrow(
+    actor: AuthenticatedUser,
+    planId: string,
+  ) {
+    const plan = await this.prisma.academicPlan.findUnique({
+      where: { id: planId },
+      select: {
+        teacherAssignment: {
+          select: { teacherId: true, institutionId: true },
+        },
+      },
+    });
+    if (!plan) throw new NotFoundException('Academic plan not found');
+
+    const assignment = plan.teacherAssignment;
+    if (actor.role === Role.TEACHER && actor.profileId === assignment.teacherId)
+      return;
+    if (actor.role === Role.ADMIN && assignment.institutionId) {
+      await assertActorCanAccessInstitution(
+        this.prisma,
+        actor,
+        assignment.institutionId,
+      );
+      return;
+    }
+    if (actor.role !== Role.SUPER_ADMIN)
+      throw new NotFoundException('Academic plan not found');
   }
 
   private async findNestedLessonOrThrow(unitId: string, lessonPlanId: string) {

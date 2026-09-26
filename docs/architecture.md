@@ -40,6 +40,8 @@ Execution: TeacherAssignment → ClassSession → optional LessonPlan reference
 
 `ClassSession` represents an actual teaching occurrence; it is not an AttendanceRecord. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it.
 
+For the execution create flow, Planning also exposes the narrow read projection `GET /v1/academic-plans/:planId/lesson-plans`. It is scoped through the AcademicPlan and its TeacherAssignment, applies the existing Planning read authorization, and returns LessonPlans in AcademicUnit/LessonPlan pedagogical order with parent-unit label metadata. It avoids client-side per-unit LessonPlan loading; Unit-scoped LessonPlan CRUD remains unchanged.
+
 | Concern                   | Owner                     |
 | ------------------------- | ------------------------- |
 | JWT issuance / validation | Backend                   |
