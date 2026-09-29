@@ -35,7 +35,7 @@ FrontendZerocademy/src/
 │   ├── academic-period-transitions/
 │   ├── academic-evaluation/    # Grading engine configuration UI
 │   ├── planning/               # AcademicPlan/AcademicUnit workspace and nested LessonPlan UI
-│   ├── academic-execution/     # ClassSession API, assignment-scoped TanStack Query, read workspace, and create form
+│   ├── academic-execution/     # ClassSession API, assignment-scoped TanStack Query, read workspace, and create/edit forms
 │   ├── grades/                 # Assessments, grade entry, student grades
 │   ├── academic-performance/   # Averages dashboards and performance views
 │   ├── reports/                # Report-card view, print actions, PDF download
@@ -77,6 +77,12 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | Theme        | next-themes (`class` on `<html>`)   |
 | Forms        | react-hook-form                     |
 
+### Academic Execution integration
+
+The `/academic-plans/:planId/execution` workspace composes Planning context with the assignment-scoped `academic-execution` feature. It uses TanStack Query for both ClassSession data and the aggregate AcademicPlan LessonPlan read; no ClassSession server state is stored in Zustand. The aggregate query key is scoped to the AcademicPlan ID and calls `GET /v1/academic-plans/:planId/lesson-plans`, allowing a direct workspace load to retrieve compatible LessonPlans in one request rather than one request per AcademicUnit.
+
+The TEACHER-only ClassSession create and inline edit forms delegate writes to the existing `useCreateClassSession` and `useUpdateClassSession` mutations. The update form initializes from its selected ClassSession, sends only changed fields, and keeps the PATCH distinction for `lessonPlanId`: unchanged is omitted, an explicit clear is `null`, and a replacement is a UUID. Date fields may be replaced but are not presented as clearable because the current PATCH contract supports only omission or a `YYYY-MM-DD` value. Effective final-state client validation requires `scheduledDate` for SCHEDULED/CANCELLED and `occurredOn` for COMPLETED, while backend authorization and lifecycle validation remain authoritative. Both mutations remain scoped to the route's `TeacherAssignment`; update invalidates only its list and the affected detail. ADMIN and SUPER_ADMIN receive the same read workspace without mutation controls; STUDENT and REPRESENTATIVE are excluded. No ClassSession server state is stored in Zustand.
+
 ## Theme system
 
 - CSS variables in `globals.css` for light and `.dark` themes.
@@ -96,7 +102,7 @@ No `fetch` in presentational components. No business rules in UI (grades, permis
 | `/academic-periods/new`, `…/edit`           | Protected — ADMIN, SUPER_ADMIN                                                                         |
 | `/academic-plans`                           | Protected — SUPER_ADMIN, ADMIN, TEACHER; teacher drafts are mutable and staff oversight is read-only   |
 | `/academic-plans/[id]`                      | Protected — scoped plan detail with ordered AcademicUnit and nested LessonPlan sections; LessonPlans support compact display, forms, deletion, and Move Up/Down controls in mutable teacher contexts |
-| `/academic-plans/[id]/execution`            | Protected — assignment-scoped ClassSession read workspace for TEACHER, ADMIN, and SUPER_ADMIN; create/edit deferred |
+| `/academic-plans/[id]/execution`            | Protected — assignment-scoped ClassSession workspace for TEACHER, ADMIN, and SUPER_ADMIN; owning TEACHER can create and edit, staff readers remain read-only |
 | `/institutions`                             | Protected — view: ADMIN, SUPER_ADMIN                                                                   |
 | `/institutions/new`, `…/edit`               | Protected — SUPER_ADMIN                                                                                |
 | `/institutions/[id]/settings`               | Protected — settings/branding: ADMIN, SUPER_ADMIN                                                      |

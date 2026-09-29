@@ -27,7 +27,7 @@ Canonical domains (from root `agent.md`):
 | Academic performance              | `academic-performance` | `academic-performance`                 |
 | Students, Teachers, Attendance, … | Partial / planned      | Partial / planned                      |
 
-**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, the Academic Execution ClassSession backend/API contract, and Dashboard shell.
+**Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, the Academic Execution ClassSession backend/API contract and execution workspace, and Dashboard shell.
 
 ## Boundaries
 
@@ -39,6 +39,10 @@ Execution: TeacherAssignment → ClassSession → optional LessonPlan reference
 ```
 
 `ClassSession` represents an actual teaching occurrence; it is not an AttendanceRecord. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it.
+
+## Future authorization work
+
+**Authorization & Permissions Architecture Spike** is future work, not part of Phase 2C. It may define a role-bounded permission catalog, effective permissions and reusable profiles, institution-scoped delegation without ADMIN self-escalation, and authorization derived from permission, resource scope, and domain/lifecycle rules.
 
 For the execution create flow, Planning also exposes the narrow read projection `GET /v1/academic-plans/:planId/lesson-plans`. It is scoped through the AcademicPlan and its TeacherAssignment, applies the existing Planning read authorization, and returns LessonPlans in AcademicUnit/LessonPlan pedagogical order with parent-unit label metadata. It avoids client-side per-unit LessonPlan loading; Unit-scoped LessonPlan CRUD remains unchanged.
 

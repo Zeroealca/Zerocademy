@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ClassSessionStatusBadge } from "@/features/academic-execution/components/class-session-status-badge";
+import { ClassSessionEditForm } from "@/features/academic-execution/components/class-session-edit-form";
 import { ClassSessionForm } from "@/features/academic-execution/components/class-session-form";
 import { useClassSessions } from "@/features/academic-execution/hooks/use-class-sessions";
 import { useAcademicPlan, type AcademicPlan } from "@/features/planning";
@@ -75,7 +76,8 @@ function ClassSessionsList({ academicPlanId, plan }: { academicPlanId: string; p
   const sessionsQuery = useClassSessions(plan.teacherAssignmentId);
   const role = useAuthStore((state) => state.user?.role);
   const [creating, setCreating] = useState(false);
-  const canCreate = canManageAcademicExecution(role);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const canManage = canManageAcademicExecution(role);
 
   return (
     <div className="space-y-6">
@@ -98,7 +100,7 @@ function ClassSessionsList({ academicPlanId, plan }: { academicPlanId: string; p
             Registro de las ocurrencias de enseñanza de esta asignación.
           </p>
           </div>
-          {canCreate && !creating ? <Button onClick={() => setCreating(true)}>Crear sesión</Button> : null}
+          {canManage && !creating ? <Button onClick={() => setCreating(true)}>Crear sesión</Button> : null}
         </div>
         {creating ? <Card><CardHeader><CardTitle className="text-base">Nueva sesión de clase</CardTitle></CardHeader><CardContent><ClassSessionForm academicPlanId={academicPlanId} onCancel={() => setCreating(false)} onSuccess={() => setCreating(false)} teacherAssignmentId={plan.teacherAssignmentId}/></CardContent></Card> : null}
 
@@ -115,6 +117,8 @@ function ClassSessionsList({ academicPlanId, plan }: { academicPlanId: string; p
               <DateField label="Fecha programada" value={formatDateOnly(session.scheduledDate, "Sin fecha programada")} />
               <DateField label="Fecha realizada" value={formatDateOnly(session.occurredOn, "Sin fecha registrada")} />
               <DateField label="Plan de clase" value={session.lessonPlanId ? "Plan de clase asociado" : "Sin planificación asociada"} className="sm:col-span-2" />
+              {canManage && editingSessionId !== session.id ? <Button className="sm:col-span-2 sm:w-fit" onClick={() => setEditingSessionId(session.id)} size="sm" variant="outline">Editar sesión</Button> : null}
+              {canManage && editingSessionId === session.id ? <div className="sm:col-span-2"><ClassSessionEditForm academicPlanId={academicPlanId} key={session.id} onCancel={() => setEditingSessionId(null)} onSuccess={() => setEditingSessionId(null)} session={session}/></div> : null}
             </CardContent>
           </Card>)}
         </div> : null}
