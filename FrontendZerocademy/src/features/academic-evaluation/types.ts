@@ -45,6 +45,10 @@ export interface EvaluationTerm {
   updatedAt: string;
 }
 
+export interface UpdateEvaluationTermWeightsInput {
+  items: Array<{ id: string; weight: number }>;
+}
+
 export interface AssessmentCategory {
   id: string;
   institutionId: string;

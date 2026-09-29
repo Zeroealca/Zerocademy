@@ -18,7 +18,10 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiRequireRoles, ApiRequireRolesStrict } from '../../common/decorators/api';
+import {
+  ApiRequireRoles,
+  ApiRequireRolesStrict,
+} from '../../common/decorators/api';
 import {
   ACADEMIC_EVALUATION_READ_ROLES,
   ACADEMIC_EVALUATION_WRITE_ROLES,
@@ -29,12 +32,15 @@ import { EvaluationTermResponseDto } from './dto/evaluation-term-response.dto';
 import { ListEvaluationTermsQueryDto } from './dto/list-evaluation-terms-query.dto';
 import { ReorderEvaluationTermsDto } from './dto/reorder-evaluation-terms.dto';
 import { UpdateEvaluationTermDto } from './dto/update-evaluation-term.dto';
+import { UpdateEvaluationTermWeightsDto } from './dto/update-evaluation-term-weights.dto';
 import { EvaluationTermsService } from './evaluation-terms.service';
 
 @ApiTags('evaluation-terms')
 @Controller('evaluation-terms')
 export class EvaluationTermsController {
-  constructor(private readonly evaluationTermsService: EvaluationTermsService) {}
+  constructor(
+    private readonly evaluationTermsService: EvaluationTermsService,
+  ) {}
 
   @Get()
   @ApiRequireRoles(...ACADEMIC_EVALUATION_READ_ROLES)
@@ -66,6 +72,25 @@ export class EvaluationTermsController {
     @Body() dto: ReorderEvaluationTermsDto,
   ): Promise<EvaluationTermResponseDto[]> {
     return this.evaluationTermsService.reorder(
+      institutionId,
+      academicPeriodId,
+      dto,
+    );
+  }
+
+  @Patch('weights')
+  @ApiRequireRolesStrict(...ACADEMIC_EVALUATION_WRITE_ROLES)
+  @ApiOperation({
+    summary:
+      'Atomically update all active evaluation term weights for a period',
+  })
+  @ApiOkResponse({ type: [EvaluationTermResponseDto] })
+  updateWeights(
+    @Query('institutionId', ParseUUIDPipe) institutionId: string,
+    @Query('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+    @Body() dto: UpdateEvaluationTermWeightsDto,
+  ): Promise<EvaluationTermResponseDto[]> {
+    return this.evaluationTermsService.updateWeights(
       institutionId,
       academicPeriodId,
       dto,

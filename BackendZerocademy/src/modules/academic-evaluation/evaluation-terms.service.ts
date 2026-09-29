@@ -25,6 +25,7 @@ import { EvaluationTermResponseDto } from './dto/evaluation-term-response.dto';
 import { ListEvaluationTermsQueryDto } from './dto/list-evaluation-terms-query.dto';
 import { ReorderEvaluationTermsDto } from './dto/reorder-evaluation-terms.dto';
 import { UpdateEvaluationTermDto } from './dto/update-evaluation-term.dto';
+import { UpdateEvaluationTermWeightsDto } from './dto/update-evaluation-term-weights.dto';
 import { toEvaluationTermResponseDto } from './mappers/academic-evaluation.mapper';
 
 @Injectable()
@@ -73,7 +74,9 @@ export class EvaluationTermsService {
     return toEvaluationTermResponseDto(term);
   }
 
-  async create(dto: CreateEvaluationTermDto): Promise<EvaluationTermResponseDto> {
+  async create(
+    dto: CreateEvaluationTermDto,
+  ): Promise<EvaluationTermResponseDto> {
     await assertInstitutionExistsAndActive(this.prisma, dto.institutionId);
     await assertAcademicPeriodForInstitution(
       this.prisma,
@@ -112,7 +115,10 @@ export class EvaluationTermsService {
       return toEvaluationTermResponseDto(term);
     } catch (error) {
       this.mapPrismaError(error);
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Evaluation term persistence failed');
     }
   }
 
@@ -124,6 +130,14 @@ export class EvaluationTermsService {
 
     if (dto.weight !== undefined) {
       assertValidWeight(dto.weight, 'Evaluation term');
+    }
+
+    if (dto.weight !== undefined && existing.isActive) {
+      await this.assertProspectiveTermWeights(
+        existing.institutionId,
+        existing.academicPeriodId,
+        new Map([[id, dto.weight]]),
+      );
     }
 
     const term = await this.prisma.evaluationTerm.update({
@@ -141,11 +155,6 @@ export class EvaluationTermsService {
       },
     });
 
-    await this.validateTermWeights(
-      existing.institutionId,
-      existing.academicPeriodId,
-    );
-
     this.logger.log({
       context: ACADEMIC_EVALUATION_CONTEXT,
       event: 'EVALUATION_TERM_UPDATED',
@@ -154,6 +163,65 @@ export class EvaluationTermsService {
     });
 
     return toEvaluationTermResponseDto(term);
+  }
+
+  async updateWeights(
+    institutionId: string,
+    academicPeriodId: string,
+    dto: UpdateEvaluationTermWeightsDto,
+  ): Promise<EvaluationTermResponseDto[]> {
+    await assertInstitutionExistsAndActive(this.prisma, institutionId);
+    await assertAcademicPeriodForInstitution(
+      this.prisma,
+      institutionId,
+      academicPeriodId,
+    );
+
+    const activeTerms = await this.prisma.evaluationTerm.findMany({
+      where: { institutionId, academicPeriodId, isActive: true },
+      select: { id: true, weight: true },
+      orderBy: { order: 'asc' },
+    });
+    const submittedIds = new Set(dto.items.map((item) => item.id));
+
+    if (
+      submittedIds.size !== dto.items.length ||
+      submittedIds.size !== activeTerms.length ||
+      activeTerms.some((term) => !submittedIds.has(term.id))
+    ) {
+      throw new BadRequestException(
+        'Weight updates must include each active evaluation term exactly once',
+      );
+    }
+
+    for (const item of dto.items) {
+      assertValidWeight(item.weight, 'Evaluation term');
+    }
+    assertWeightsSumToTarget(
+      dto.items.map((item) => item.weight),
+      'Evaluation term',
+    );
+
+    const weightsById = new Map(
+      dto.items.map((item) => [item.id, item.weight]),
+    );
+    const updated = await this.prisma.$transaction(
+      activeTerms.map((term) =>
+        this.prisma.evaluationTerm.update({
+          where: { id: term.id },
+          data: { weight: weightsById.get(term.id) },
+        }),
+      ),
+    );
+
+    this.logger.log({
+      context: ACADEMIC_EVALUATION_CONTEXT,
+      event: 'EVALUATION_TERM_WEIGHTS_UPDATED',
+      message: 'Evaluation term weights updated atomically',
+      metadata: { institutionId, academicPeriodId, count: updated.length },
+    });
+
+    return updated.map(toEvaluationTermResponseDto);
   }
 
   async reorder(
@@ -183,7 +251,9 @@ export class EvaluationTermsService {
       }
 
       if (orders.has(item.order)) {
-        throw new BadRequestException('Duplicate order values in reorder payload');
+        throw new BadRequestException(
+          'Duplicate order values in reorder payload',
+        );
       }
 
       orders.add(item.order);
@@ -256,6 +326,24 @@ export class EvaluationTermsService {
 
     assertWeightsSumToTarget(
       activeTerms.map((term) => decimalToNumber(term.weight)),
+      'Evaluation term',
+    );
+  }
+
+  private async assertProspectiveTermWeights(
+    institutionId: string,
+    academicPeriodId: string,
+    overrides: Map<string, number>,
+  ): Promise<void> {
+    const activeTerms = await this.prisma.evaluationTerm.findMany({
+      where: { institutionId, academicPeriodId, isActive: true },
+      select: { id: true, weight: true },
+    });
+
+    assertWeightsSumToTarget(
+      activeTerms.map(
+        (term) => overrides.get(term.id) ?? decimalToNumber(term.weight),
+      ),
       'Evaluation term',
     );
   }

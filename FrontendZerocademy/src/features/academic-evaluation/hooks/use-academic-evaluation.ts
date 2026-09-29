@@ -28,6 +28,7 @@ import {
   updateAssessmentCategory,
   updateAssessmentCategoryTemplate,
   updateEvaluationTerm,
+  updateEvaluationTermWeights,
   updateEvaluationTermTemplate,
   updateGradeScale,
   updateGradingScheme,
@@ -49,6 +50,7 @@ import type {
   UpdateAssessmentCategoryInput,
   UpdateAssessmentCategoryTemplateInput,
   UpdateEvaluationTermInput,
+  UpdateEvaluationTermWeightsInput,
   UpdateEvaluationTermTemplateInput,
   UpdateGradeScaleInput,
   UpdateGradingSchemeInput,
@@ -213,6 +215,18 @@ export function useAcademicEvaluationMutations() {
         id: string;
         payload: UpdateEvaluationTermInput;
       }) => updateEvaluationTerm(id, payload),
+      onSuccess: invalidateAll,
+    }),
+    updateEvaluationTermWeights: useMutation({
+      mutationFn: ({
+        institutionId,
+        academicPeriodId,
+        payload,
+      }: {
+        institutionId: string;
+        academicPeriodId: string;
+        payload: UpdateEvaluationTermWeightsInput;
+      }) => updateEvaluationTermWeights(institutionId, academicPeriodId, payload),
       onSuccess: invalidateAll,
     }),
     reorderEvaluationTerms: useMutation({

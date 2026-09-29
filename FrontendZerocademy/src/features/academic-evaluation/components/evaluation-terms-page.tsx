@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InstitutionScopeSelector } from "@/features/academic-evaluation/components/institution-scope-selector";
+import { EvaluationTermWeightsEditor } from "@/features/academic-evaluation/components/evaluation-term-weights-editor";
 import { WeightProgressBar } from "@/features/academic-evaluation/components/weight-progress-bar";
 import {
   useAcademicEvaluationMutations,
@@ -30,6 +31,7 @@ export function EvaluationTermsPage() {
   const effectivePeriodId = useEffectiveAcademicPeriodId();
   const [institutionId, setInstitutionId] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showWeightsEditor, setShowWeightsEditor] = useState(false);
   const filters =
     institutionId && effectivePeriodId
       ? {
@@ -43,10 +45,14 @@ export function EvaluationTermsPage() {
   const { data, isLoading, refetch } = useEvaluationTerms(filters);
   const mutations = useAcademicEvaluationMutations();
   const terms = data?.data ?? [];
+  const activeTerms = useMemo(
+    () => terms.filter((term) => term.isActive).sort((a, b) => a.order - b.order),
+    [terms],
+  );
 
   const weightTotal = useMemo(
-    () => terms.reduce((sum, term) => sum + term.weight, 0),
-    [terms],
+    () => activeTerms.reduce((sum, term) => sum + term.weight, 0),
+    [activeTerms],
   );
 
   useEffect(() => {
@@ -110,9 +116,20 @@ export function EvaluationTermsPage() {
           </p>
         </div>
         {canManage ? (
-          <Button onClick={() => setShowForm((open) => !open)}>
-            {showForm ? "Cancelar" : "Añadir período"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {activeTerms.length > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowWeightsEditor((open) => !open)}
+              >
+                {showWeightsEditor ? "Cerrar edición" : "Editar porcentajes"}
+              </Button>
+            ) : null}
+            <Button onClick={() => setShowForm((open) => !open)}>
+              {showForm ? "Cancelar" : "Añadir período"}
+            </Button>
+          </div>
         ) : null}
       </header>
 
@@ -146,6 +163,15 @@ export function EvaluationTermsPage() {
             </Button>
           </div>
         </form>
+      ) : null}
+
+      {showWeightsEditor && canManage && institutionId && effectivePeriodId ? (
+        <EvaluationTermWeightsEditor
+          terms={activeTerms}
+          institutionId={institutionId}
+          academicPeriodId={effectivePeriodId}
+          onClose={() => setShowWeightsEditor(false)}
+        />
       ) : null}
 
       {!effectivePeriodId ? (

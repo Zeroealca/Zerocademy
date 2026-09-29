@@ -61,7 +61,7 @@ Initialized via:
 
 1. Institutions may define multiple grading schemes; one may be marked `isDefault`.
 2. Grade scale ranges must not overlap, must fit inside the parent scheme range, and a configured set must cover the entire range without gaps at 0.01 precision. The full set is saved atomically via `PUT /v1/grading-schemes/:schemeId/grade-scales`.
-3. Active evaluation term weights per period must sum to **100** (±0.01 tolerance).
+3. Active evaluation term weights per period must sum to **100** (±0.01 tolerance). The complete active distribution is updated atomically through `PATCH /v1/evaluation-terms/weights`; the UI blocks saving until its draft totals 100%.
 4. Active assessment category weights per institution must sum to **100** (±0.01 tolerance).
 5. Historical configurations are preserved — schemes linked to `InstitutionAcademicConfiguration` cannot be deleted; deactivation is blocked while referenced.
 6. Future grade records will snapshot configuration at entry time (grades module).
@@ -94,7 +94,7 @@ OpenAPI: `http://localhost:3001/api/docs`
 |-------|-------------|
 | `/academic-evaluation` | Dashboard + preview |
 | `/academic-evaluation/grading-schemes` | Scheme management |
-| `/academic-evaluation/evaluation-terms` | Weighted terms + reorder |
+| `/academic-evaluation/evaluation-terms` | Weighted terms, atomic percentage editing, and reorder |
 | `/academic-evaluation/assessment-categories` | Category weights |
 | `/academic-evaluation/configuration` | Institution active config |
 

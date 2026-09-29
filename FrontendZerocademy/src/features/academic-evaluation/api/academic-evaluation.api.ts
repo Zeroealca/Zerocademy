@@ -24,6 +24,7 @@ import type {
   UpdateAssessmentCategoryInput,
   UpdateAssessmentCategoryTemplateInput,
   UpdateEvaluationTermInput,
+  UpdateEvaluationTermWeightsInput,
   UpdateEvaluationTermTemplateInput,
   UpdateGradeScaleInput,
   UpdateGradingSchemeInput,
@@ -233,6 +234,18 @@ export function updateEvaluationTerm(
     method: "PATCH",
     body: payload,
   });
+}
+
+export function updateEvaluationTermWeights(
+  institutionId: string,
+  academicPeriodId: string,
+  payload: UpdateEvaluationTermWeightsInput,
+): Promise<EvaluationTerm[]> {
+  const params = new URLSearchParams({ institutionId, academicPeriodId });
+  return apiClient<EvaluationTerm[]>(
+    `/v1/evaluation-terms/weights?${params.toString()}`,
+    { method: "PATCH", body: payload },
+  );
 }
 
 export function reorderEvaluationTerms(
