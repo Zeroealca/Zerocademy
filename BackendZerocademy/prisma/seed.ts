@@ -4,6 +4,9 @@ import * as bcrypt from 'bcrypt';
 import { runCatalogSeeds } from './seeds';
 import { seedGradesDemo } from './seeds/grades-demo.seed';
 import { seedError, seedLog } from './seeds/seed-logger';
+import { seedPermissionCatalog } from './seeds/permission-catalog.seed';
+import { seedPermissionProfiles } from './seeds/permission-profiles.seed';
+import { seedMembershipPermissionProfileAssignments } from './seeds/membership-permission-profiles.seed';
 
 const prisma = new PrismaClient();
 
@@ -79,6 +82,9 @@ async function main(): Promise<void> {
 
   await seedAdminUser();
   await seedHealthCheck();
+  await seedPermissionCatalog(prisma, { dryRun });
+  await seedPermissionProfiles(prisma, { dryRun });
+  await seedMembershipPermissionProfileAssignments(prisma, { dryRun });
 
   if (!skipCatalog) {
     await runCatalogSeeds(prisma, {

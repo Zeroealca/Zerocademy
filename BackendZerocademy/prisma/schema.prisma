@@ -14,7 +14,7 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// RBAC — system roles (single role per user; permissions layer is future work)
+// RBAC — system roles (single role per user; permission enforcement remains future work)
 // ---------------------------------------------------------------------------
 enum Role {
   SUPER_ADMIN
@@ -22,6 +22,65 @@ enum Role {
   TEACHER
   STUDENT
   REPRESENTATIVE
+}
+
+/// System-owned mirror of the code-defined permission catalog. These rows are
+/// reference data only; they are not consulted by production authorization yet.
+model Permission {
+  id                     String                  @id @default(uuid())
+  key                    String                  @unique
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  roleAllowedPermissions RoleAllowedPermission[]
+  profilePermissions     PermissionProfilePermission[]
+
+  @@map("permissions")
+}
+
+/// System-owned live permission composition. Optional membership assignment is
+/// persistence-only foundation; it is not consulted by production authorization yet.
+model PermissionProfile {
+  id                   String                       @id @default(uuid())
+  key                  String                       @unique
+  name                 String
+  role                 Role
+  isSystem             Boolean                      @default(true)
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  permissions          PermissionProfilePermission[]
+  institutionMemberships InstitutionMembership[]
+
+  @@index([role])
+  @@index([isSystem])
+  @@map("permission_profiles")
+}
+
+/// Current live composition of a permission profile.
+model PermissionProfilePermission {
+  permissionProfileId String
+  permissionId        String
+  createdAt           DateTime          @default(now())
+  permissionProfile   PermissionProfile @relation(fields: [permissionProfileId], references: [id], onDelete: Restrict)
+  permission          Permission        @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+
+  @@id([permissionProfileId, permissionId])
+  @@index([permissionProfileId])
+  @@index([permissionId])
+  @@map("permission_profile_permissions")
+}
+
+/// Current maximum permission boundary for a system Role, synchronized from
+/// ROLE_ALLOWED_PERMISSIONS. It is not an individual user permission grant.
+model RoleAllowedPermission {
+  role         Role
+  permissionId String
+  createdAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict)
+
+  @@id([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
+  @@map("role_allowed_permissions")
 }
 
 enum RepresentativeRelationshipType {
@@ -182,21 +241,25 @@ model Institution {
 }
 
 model InstitutionMembership {
-  id            String                    @id @default(uuid())
-  institutionId String
-  userId        String
-  role          InstitutionMembershipRole
-  isActive      Boolean                   @default(true)
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
-  institution   Institution               @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  user          User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String                    @id @default(uuid())
+  institutionId       String
+  userId              String
+  role                InstitutionMembershipRole
+  isActive            Boolean                   @default(true)
+  /// Optional non-authoritative PermissionProfile assignment (at most one).
+  permissionProfileId String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  institution         Institution               @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionProfile   PermissionProfile?        @relation(fields: [permissionProfileId], references: [id], onDelete: Restrict)
 
   @@unique([institutionId, userId])
   @@index([institutionId])
   @@index([userId])
   @@index([institutionId, role])
   @@index([isActive])
+  @@index([permissionProfileId])
   @@map("institution_memberships")
 }
 

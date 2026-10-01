@@ -10,6 +10,9 @@ export { seedSubjects } from './subjects.seed';
 export { seedSubjectAssignments } from './subject-assignments.seed';
 export { seedEcuadorCurriculum } from './curriculum/ecuador-curriculum.seed';
 export { seedEcuadorEvaluationDefaults } from './ecuador-evaluation.seed';
+export { seedPermissionCatalog } from './permission-catalog.seed';
+export { seedPermissionProfiles } from './permission-profiles.seed';
+export { seedMembershipPermissionProfileAssignments } from './membership-permission-profiles.seed';
 export { seedGradesDemo, DEMO_GRADES_CREDENTIALS } from './grades-demo.seed';
 export type { EcuadorCurriculumSeedOptions } from './curriculum/ecuador-curriculum.seed';
 

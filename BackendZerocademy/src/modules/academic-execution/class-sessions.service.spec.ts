@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClassSessionStatus, Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -69,6 +73,14 @@ describe('ClassSessionsFoundationService read contract', () => {
     },
   };
   const logger = { log: jest.fn() };
+  const permissionEnforcer = {
+    requireMembershipPermission: jest.fn().mockResolvedValue({
+      decision: 'ALLOWED',
+      permission: 'class_sessions.read',
+      legacyCapable: true,
+      profileAwareCapable: true,
+    }),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -97,9 +109,16 @@ describe('ClassSessionsFoundationService read contract', () => {
         ...data,
       }),
     );
+    permissionEnforcer.requireMembershipPermission.mockResolvedValue({
+      decision: 'ALLOWED',
+      permission: 'class_sessions.read',
+      legacyCapable: true,
+      profileAwareCapable: true,
+    });
     service = new ClassSessionsFoundationService(
       prisma as unknown as PrismaService,
       logger as unknown as AppLoggerService,
+      permissionEnforcer as never,
     );
   });
 
@@ -547,4 +566,129 @@ describe('ClassSessionsFoundationService read contract', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     },
   );
+
+  describe('Phase 7 ClassSession READ permission enforcement', () => {
+    it('enforces class_sessions.read after legacy allow for list and detail', async () => {
+      await expect(
+        service.list(teacherA, 'assignment-a'),
+      ).resolves.toHaveLength(2);
+      await expect(
+        service.one(teacherA, 'assignment-a', 'session-a1'),
+      ).resolves.toMatchObject({ id: 'session-a1' });
+
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).toHaveBeenCalledWith({
+        actor: teacherA,
+        institutionId: 'inst-a',
+        permission: 'class_sessions.read',
+        domain: 'academic-execution',
+        resourceType: 'teacherAssignment',
+        resourceId: 'assignment-a',
+      });
+    });
+
+    it('does not evaluate permission when legacy already denies another teacher', async () => {
+      await expect(
+        service.list(teacherB, 'assignment-a'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).not.toHaveBeenCalled();
+      expect(prisma.classSession.findMany).not.toHaveBeenCalled();
+    });
+
+    it('does not broaden legacy denial even if enforcer would allow', async () => {
+      permissionEnforcer.requireMembershipPermission.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'class_sessions.read',
+        legacyCapable: true,
+        profileAwareCapable: true,
+      });
+      await expect(
+        service.list(teacherB, 'assignment-a'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('denies when legacy allows but permission enforcement denies', async () => {
+      permissionEnforcer.requireMembershipPermission.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+      await expect(
+        service.list(teacherA, 'assignment-a'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.one(teacherA, 'assignment-a', 'session-a1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.classSession.findMany).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when permission enforcement reports configuration error', async () => {
+      permissionEnforcer.requireMembershipPermission.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+      await expect(
+        service.list(teacherA, 'assignment-a'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('keeps SUPER_ADMIN reads when enforcement is NOT_APPLICABLE', async () => {
+      permissionEnforcer.requireMembershipPermission.mockResolvedValue({
+        decision: 'NOT_APPLICABLE',
+        permission: 'class_sessions.read',
+        legacyCapable: null,
+        profileAwareCapable: null,
+        reason: 'SUPER_ADMIN_NO_MEMBERSHIP',
+      });
+
+      await expect(
+        service.list(superAdmin, 'assignment-a'),
+      ).resolves.toHaveLength(2);
+      expect(permissionEnforcer.requireMembershipPermission).toHaveBeenCalled();
+    });
+
+    it('preserves capability vs resource-scope separation for another teacher', async () => {
+      permissionEnforcer.requireMembershipPermission.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'class_sessions.read',
+        legacyCapable: true,
+        profileAwareCapable: true,
+      });
+      await expect(
+        service.one(teacherB, 'assignment-a', 'session-a1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('does not run permission enforcement on write paths', async () => {
+      await service.create(teacherA, {
+        teacherAssignmentId: 'assignment-a',
+        scheduledDate: '2026-06-15',
+      });
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('allows null-profile baseline path when enforcer allows', async () => {
+      permissionEnforcer.requireMembershipPermission.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'class_sessions.read',
+        legacyCapable: true,
+        profileAwareCapable: true,
+        permissionProfileKey: null,
+      });
+      await expect(
+        service.list(teacherA, 'assignment-a'),
+      ).resolves.toHaveLength(2);
+      await expect(
+        service.one(adminA, 'assignment-a', 'session-a1'),
+      ).resolves.toMatchObject({ id: 'session-a1' });
+    });
+  });
 });

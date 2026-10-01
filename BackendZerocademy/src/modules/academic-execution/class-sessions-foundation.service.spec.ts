@@ -59,6 +59,11 @@ describe('ClassSessionsFoundationService', () => {
     service = new ClassSessionsFoundationService(
       prisma as unknown as PrismaService,
       logger as unknown as AppLoggerService,
+      {
+        requireMembershipPermission: jest.fn().mockResolvedValue({
+          decision: 'ALLOWED',
+        }),
+      } as never,
     );
   });
 
