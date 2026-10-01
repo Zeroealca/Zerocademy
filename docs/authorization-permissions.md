@@ -136,6 +136,131 @@ Critical invariants:
 
 Still not implemented: ClassSession write enforcement, AcademicPlan/Attendance/Grades permission enforcement, ADMIN delegation, institution-owned profiles, direct membership grants, frontend permission UX, or Role migration onto memberships (DEMY-126).
 
+## Phase 9 ClassSession READ environment validation
+
+**Status (2026-10-01): blocked pending executable environment scenarios and observability access.** Validation used the configured Render API target (`zerocademy-api`, health endpoint version `1.0.0`) and its configured Neon `Zerocademy` database. The deployed health check returned `200` in approximately 0.59 seconds; no deployment commit is exposed by that endpoint, so the Phase 7 source commit cannot be attested from the runtime version alone.
+
+Read-only database verification found all Phase 7 data prerequisites: 91 catalog permissions including `class_sessions.read`; `ADMIN_BASELINE` (47 permissions) and `TEACHER_BASELINE` (28 permissions), both containing that capability; 75 profile-composition rows; and seven active eligible memberships, all assigned a baseline profile (four ADMIN and three TEACHER). Prisma reported all 26 migrations applied and the schema up to date.
+
+The existing seeded SUPER_ADMIN account successfully listed an existing teacher assignment's class-session collection through the deployed endpoint (`200`, array response, about 314 ms). This is consistent with the expected legacy SUPER_ADMIN path, but cannot itself attest the `NOT_APPLICABLE / SUPER_ADMIN_NO_MEMBERSHIP` telemetry outcome because deployed structured logs were not available.
+
+The database currently contains three teacher assignments but **zero class sessions**. Consequently, no environment detail request can be issued, and no safe teacher-owner, different-teacher, same-institution ADMIN, cross-institution ADMIN, STUDENT, or REPRESENTATIVE request can be validated against a session resource. No isolated restrictive-profile or null-profile membership exists (and none was created or modified). Automated coverage remains the evidence for restrictive and null-profile behavior.
+
+No authorization code, migrations, profiles, memberships, or test data were changed. Completion requires a safe environment fixture with at least one class session and non-secret test access for the relevant existing actors, plus access to the deployed `AUTHORIZATION_PERMISSION_ENFORCEMENT` telemetry. The unrelated `grading_schemes_institutionId_isDefault_idx` drift remains out of scope.
+
+## Phase 10 ClassSession WRITE permission enforcement
+
+Phase 10 extends the narrow Phase 7 enforcement boundary to the existing teacher-only write endpoints:
+
+- `POST /v1/teacher-assignments/:teacherAssignmentId/class-sessions` → `class_sessions.create`
+- `PATCH /v1/teacher-assignments/:teacherAssignmentId/class-sessions/:classSessionId` → `class_sessions.update`
+
+For every ClassSession operation, the authorization equation is deliberately additive:
+
+```text
+READ    = legacy resource authorization AND class_sessions.read
+CREATE  = legacy ownership authorization AND class_sessions.create AND lifecycle/domain validation
+UPDATE  = legacy ownership/nesting authorization AND class_sessions.update AND lifecycle/domain validation
+```
+
+Write enforcement executes only after the existing teacher-ownership check (and, for UPDATE, the nested ClassSession lookup). Therefore ADMIN, SUPER_ADMIN, STUDENT, REPRESENTATIVE, and a different TEACHER retain their pre-existing write denials without a permission lookup. An allowed permission never broadens legacy resource scope. The applicable membership is resolved by `(actor.id, assignment.institutionId)` through the shared `MembershipPermissionEnforcer`; missing membership and resolver/configuration failures fail closed, while null-profile memberships retain the Phase 5 baseline fallback.
+
+After permission allow, the existing CLOSED/ARCHIVED period rejection and all ClassSession state, date, and LessonPlan compatibility rules remain authoritative. The shared `AUTHORIZATION_PERMISSION_ENFORCEMENT` event records the canonical CREATE or UPDATE capability with the established `ALLOWED`, `DENIED`, `NOT_APPLICABLE`, or `ERROR` outcomes. No global PermissionsGuard, schema migration, JWT permission claim, frontend permission UX, or ClassSession DELETE enforcement was added. Environment QA remains separate from this code-level phase.
+
+## Phase 11 reusable permission enforcement foundation
+
+The existing `MembershipPermissionEnforcer` is now the explicit reusable backend foundation for membership-backed capability checks. Its public `requireForInstitutionMembership(...)` API accepts an already legacy-authorized actor, an institution identifier derived from authoritative server-side resource data, a strongly typed canonical `Permission`, and safe enforcement telemetry context. It centralizes applicability, active membership selection by `(actor.id, institutionId)`, profile-aware resolution, null-profile fallback, fail-closed normalization, and `AUTHORIZATION_PERMISSION_ENFORCEMENT` telemetry.
+
+The API is deliberately **capability-only**: it cannot load resources, establish ownership, decide nested-resource scope, or grant access after a legacy denial. ClassSession calls it only after its existing resource checks; READ uses it after legacy read authorization, CREATE after teacher ownership, and UPDATE after ownership plus nested-session isolation. Academic-period lifecycle and ClassSession domain validation remain in `ClassSessionsFoundationService` after capability authorization.
+
+No global `PermissionsGuard` or `@RequirePermission` decorator was introduced. The relevant institution context is obtained from `TeacherAssignment`, not from request input; a generic guard would duplicate module-specific resource lookup or trust client-supplied context. The foundation is exported from the existing global RBAC module without a dependency on Academic Execution. No other module is migrated in this phase; environment QA, frontend permission UX, JWT permission claims, legacy-RBAC retirement, and DEMY-126 remain deferred.
+
+## Phase 12 AcademicPlan READ permission enforcement
+
+Phase 12 migrates the coherent detail surface only: `GET /v1/academic-plans/:id` now applies `academic_planning.read` after its existing legacy read authorization. The plan's included `TeacherAssignment` provides the authoritative institution context for `MembershipPermissionEnforcer.requireForInstitutionMembership(...)`; no request-provided institution context is trusted.
+
+The resulting equation is `legacy plan scope AND academic_planning.read`. Owning TEACHER and same-institution ADMIN reads require the capability after ownership/institution checks; a different TEACHER or cross-institution ADMIN retains the existing not-found isolation before permission evaluation. Existing SUPER_ADMIN detail reads remain supported through the enforcer's `NOT_APPLICABLE / SUPER_ADMIN_NO_MEMBERSHIP` path, while STUDENT and REPRESENTATIVE remain legacy-denied. Missing memberships and resolver/configuration failures fail closed; null profiles retain baseline fallback. The shared enforcement event records `academic_planning.read` without adding AcademicPlan-specific telemetry.
+
+`GET /v1/academic-plans` is intentionally unchanged in this slice: a paginated list can span multiple authoritative assignment institutions, and per-row enforcement would introduce N+1 membership resolution. AcademicPlan writes, AcademicUnit, LessonPlan, the aggregate LessonPlan endpoint, frontend permission UX, JWT changes, and environment QA remain deferred.
+
+## Phase 13 AcademicUnit READ permission enforcement
+
+Phase 13 applies the same aggregate-level capability to both nested AcademicUnit reads: `GET /v1/academic-plans/:planId/units` and `GET /v1/academic-plans/:planId/units/:unitId`. The existing `academic_planning.read` key intentionally covers the AcademicPlan → AcademicUnit → LessonPlan planning aggregate; no fragmented `academic_units.read` permission was added.
+
+Each request loads its single authoritative parent chain (`AcademicUnit → AcademicPlan → TeacherAssignment → institutionId`) and performs legacy plan scope first. List enforcement runs once after the parent plan is authorized and before the unit query; detail preserves nested-unit not-found isolation before enforcement. The shared enforcer receives the loaded parent institution, emits the existing enforcement telemetry, retains SUPER_ADMIN `NOT_APPLICABLE`, baseline fallback, and fail-closed behavior. It never grants access to another TEACHER, a cross-institution ADMIN, STUDENT, or REPRESENTATIVE.
+
+AcademicUnit writes, LessonPlan, AcademicPlan writes/list, frontend/JWT changes, and environment QA remain deferred.
+
+## Phase 14 LessonPlan READ permission enforcement
+
+Phase 14 completes the planning aggregate's current READ migration using the same `academic_planning.read` capability. It covers the nested LessonPlan list and detail routes (`GET /v1/academic-plans/:planId/units/:unitId/lesson-plans` and `GET /v1/academic-plans/:planId/units/:unitId/lesson-plans/:lessonPlanId`) plus the single-plan aggregate `GET /v1/academic-plans/:planId/lesson-plans` used by ClassSession selection.
+
+Nested routes load the authoritative `LessonPlan → AcademicUnit → AcademicPlan → TeacherAssignment → institutionId` context, preserve parent and lesson nesting isolation, then require the capability once per request. The aggregate first resolves one authoritative AcademicPlan/TeacherAssignment context and requires the capability once before fetching its lessons. No per-lesson membership lookup, redundant parent load, or new telemetry is introduced. Legacy owner TEACHER, institution-scoped ADMIN, and SUPER_ADMIN behavior remains authoritative; missing membership and resolver errors fail closed for applicable actors, and null profiles retain baseline fallback.
+
+LessonPlan writes, AcademicPlan/AcademicUnit writes, the multi-institution AcademicPlan list, frontend/JWT changes, and environment QA remain deferred.
+
+## Phase 15 AcademicPlan CREATE permission enforcement
+
+`POST /v1/academic-plans` now requires the canonical `academic_planning.create` capability. The service first resolves the teacher-owned `TeacherAssignment`, which supplies the authoritative `institutionId`; it then evaluates membership permission once with `academic-planning` telemetry context (`teacherAssignment`, assignment id), before closed-period, term/date, and persistence work.
+
+The existing strict TEACHER creation boundary remains authoritative, so ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE requests remain legacy-denied and do not evaluate a membership capability. Applicable TEACHER denials, missing memberships, and resolver failures fail closed with no AcademicPlan write. Null permission profiles retain the existing baseline fallback. AcademicPlan update/delete/publish, AcademicUnit and LessonPlan writes, and the multi-institution AcademicPlan list remain unchanged.
+
+## Phase 16 AcademicPlan UPDATE permission enforcement
+
+`PATCH /v1/academic-plans/:id` now requires the canonical `academic_planning.update` capability. The service loads the authoritative `AcademicPlan → TeacherAssignment → institutionId` chain, preserves owner-TEACHER isolation, then evaluates membership permission once with `academic-planning` telemetry context (`academicPlan`, plan id), before draft, academic-period, term/date, and persistence work.
+
+Publication is a separate `POST /v1/academic-plans/:id/publish` operation with separate domain validation and an existing `academic_planning.publish` catalog key; it is deliberately unchanged in this phase. ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE remain legacy-denied on ordinary edits before membership evaluation. Missing membership and resolver failures fail closed, null permission profiles retain baseline fallback, and no persistence occurs after authorization denial. AcademicPlan list, DELETE, publication enforcement, and child writes remain deferred.
+
+Existing lifecycle behavior remains separate: DRAFT plans are editable, PUBLISHED plans are immutable, and CLOSED periods reject edits. Although `ARCHIVED` is an AcademicPeriod status, the current planning service does not impose a separate archived-period edit prohibition; Phase 16 preserves that behavior.
+
+## Phase 17 AcademicPlan publication permission enforcement
+
+`POST /v1/academic-plans/:id/publish` now requires `academic_planning.publish`, not `academic_planning.update`. The service reuses its loaded `AcademicPlan → TeacherAssignment → institutionId` context, checks owner-TEACHER scope first, evaluates membership capability once with `academic-planning` telemetry context (`academicPlan`, plan id), then runs the existing publication lifecycle and completeness checks before its single persistence update.
+
+Publication remains DRAFT-only and rejects CLOSED periods, incomplete plans (title, dates, objectives, contents, and activities), and invalid term/date ranges. Existing behavior permits publication during ARCHIVED periods because the service only blocks CLOSED; Phase 17 preserves this as lifecycle policy outside permission enforcement. ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE remain legacy-denied before membership evaluation. Missing membership and resolver failures fail closed with no publish mutation; null profiles retain TEACHER-baseline fallback. DELETE, child writes, and the multi-institution plan list remain deferred.
+
+## Phase 18 AcademicPlan DELETE permission enforcement
+
+`DELETE /v1/academic-plans/:id` now requires `academic_planning.delete`. The service reuses the loaded `AcademicPlan → TeacherAssignment → institutionId` context, preserves owner-TEACHER isolation, evaluates membership capability once with `academic-planning` telemetry context (`academicPlan`, plan id), then executes the existing DRAFT and period lifecycle checks before hard deletion.
+
+Deletion remains DRAFT-only and rejects CLOSED periods; ARCHIVED periods remain deletable because the existing service only blocks CLOSED. The hard-delete data model cascades `AcademicPlan → AcademicUnit → LessonPlan`, while related `ClassSession.lessonPlanId` values are set null; Phase 18 does not alter that database behavior or add manual child deletion. ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE remain legacy-denied before membership evaluation. Missing membership and resolver failures fail closed with no delete call, and null profiles retain TEACHER-baseline fallback. The plan list and child writes remain deferred.
+
+## Phase 19 AcademicUnit CREATE permission enforcement
+
+`POST /v1/academic-plans/:planId/units` now requires aggregate capability `academic_planning.create`. The service loads the authoritative `AcademicPlan → TeacherAssignment → institutionId` parent, preserves owner-TEACHER draft/non-CLOSED scope, then evaluates membership capability once before unit date validation, transactional next-position calculation, and insertion.
+
+The parent plan remains the resource-scope authority: other teachers, ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE are legacy-denied before permission evaluation. Missing membership and resolver failures fail closed with no Unit persistence; null profiles retain the TEACHER baseline fallback. Plan dates continue to bound Unit dates and the existing transaction assigns the next sibling position. ARCHIVED periods remain creatable under existing Unit lifecycle policy because only CLOSED is blocked. Unit UPDATE, DELETE, and REORDER remain deferred.
+
+## Phase 20 AcademicUnit UPDATE permission enforcement
+
+`PATCH /v1/academic-plans/:planId/units/:unitId` now requires aggregate capability `academic_planning.update`. Parent write scope and nested Unit isolation remain authoritative; the loaded parent plan provides institution context and the existing Unit provides telemetry resource identity before mutable-field/date validation and direct persistence. Reorder remains separate.
+
+Missing membership and resolver failures fail closed with no update. Other teachers and non-TEACHER roles remain legacy-denied before capability evaluation. DRAFT/non-CLOSED parent rules, plan-bounded Unit dates, existing mutable fields, and ARCHIVED-period behavior are unchanged. Unit DELETE and REORDER remain deferred.
+
+## Phase 21 AcademicUnit DELETE permission enforcement
+
+`DELETE /v1/academic-plans/:planId/units/:unitId` now requires aggregate capability `academic_planning.delete`. The service first confirms the authoritative parent-plan write scope, then verifies that the nested Unit belongs to that plan. It evaluates membership capability exactly once against the parent `AcademicPlan → TeacherAssignment → institutionId` before entering the destructive transaction.
+
+The existing transaction hard-deletes the Unit and compacts sibling positions with collision-safe temporary then final positions. Database relationships remain authoritative: the Unit's LessonPlans cascade, and their linked `ClassSession.lessonPlanId` references are set null. Legacy owner-TEACHER isolation, DRAFT-only/non-CLOSED lifecycle checks, and fail-closed missing-membership or resolver-error behavior remain intact; null profiles retain the baseline fallback. ARCHIVED mutability remains the existing Academic Planning policy debt.
+
+## Phase 22 AcademicUnit REORDER permission enforcement
+
+`PATCH /v1/academic-plans/:planId/units/reorder` now requires aggregate capability `academic_planning.update`. Parent write scope supplies the authoritative institution context, and the service evaluates that capability once per request before duplicate and exact-set validation. It does not resolve membership once per Unit.
+
+The existing parent-scoped transaction verifies that the submitted IDs are the complete current Unit set, then uses temporary positions followed by final contiguous positions to avoid unique-key collisions. DRAFT-only/non-CLOSED lifecycle rules, legacy owner isolation, null-profile baseline fallback, and fail-closed behavior for missing contextual membership or resolver/configuration errors are unchanged. ARCHIVED mutability remains deferred to the `ARCHIVED Academic Planning Mutation Policy` debt.
+
+## Phase 23 LessonPlan CREATE and UPDATE permission enforcement
+
+LessonPlan CREATE now requires `academic_planning.create`; ordinary LessonPlan UPDATE requires `academic_planning.update`. Both reuse the authoritative server-loaded `AcademicUnit → AcademicPlan → TeacherAssignment → institutionId` context from `findUnitOrThrow(..., true)`, after existing owner-TEACHER, DRAFT-plan, and non-CLOSED-period checks. CREATE evaluates its capability before lesson-date validation and next-position/create transaction. UPDATE first confirms that the LessonPlan belongs to the requested Unit, then evaluates its capability before mutable-field/date validation and direct persistence.
+
+The capability is additive to neither scope nor lifecycle: it may restrict a legacy-authorized owner but cannot broaden parent ownership or nested-resource isolation. Missing active contextual membership and resolver/configuration errors fail closed; null-profile membership continues to use the TEACHER baseline fallback. Lesson dates remain Unit-bound, ordinary PATCH still excludes parent and position, and ARCHIVED remains mutable because the legacy period gate only blocks CLOSED. DELETE and REORDER remain legacy-only, deliberately deferred because their destructive and bulk transaction boundaries differ.
+
+## Phase 24 LessonPlan DELETE permission enforcement
+
+`DELETE /v1/academic-plans/:planId/units/:unitId/lesson-plans/:lessonPlanId` now requires `academic_planning.delete`. The service loads the existing Unit/Plan/TeacherAssignment/Period context, confirms owner-TEACHER write scope and nested LessonPlan isolation, then evaluates the aggregate delete capability exactly once before starting the destructive transaction.
+
+Deletion remains a hard delete. The existing transaction deletes the LessonPlan and collision-safely compacts remaining sibling positions using temporary then final positions. Database referential behavior remains authoritative: dependent ClassSessions survive and their optional `lessonPlanId` is set null. Missing membership and resolver/configuration failures fail closed before transaction work; null-profile fallback, DRAFT-only/PUBLISHED read-only behavior, CLOSED restriction, and existing ARCHIVED mutability remain unchanged. REORDER remains legacy-only and deferred as its own bulk-operation slice.
+
 ### Finalized product decisions
 
 - Permission Profiles use **live** semantics when they are introduced.
@@ -198,15 +323,15 @@ JWT access token -> JwtStrategy reloads active user from DB
 
 ## Target model and terminology
 
-| English code term | Spanish UI term | Meaning |
-| --- | --- | --- |
-| Role | Rol | Non-configurable security boundary of a user category. |
-| Permission | Permiso | Capability: what action is permitted. |
-| Permission profile | Perfil de permisos | Reusable compatible collection of permissions. |
-| Effective permissions | Permisos efectivos | Resolved capabilities for one membership context. |
-| Delegation authority | Autoridad de delegación | Permissions an actor may assign, bounded by policy. |
-| Resource scope | Alcance de recursos | Which records a valid capability may affect. |
-| Domain/lifecycle rule | Regla de dominio/ciclo de vida | Non-authorization condition that remains mandatory. |
+| English code term     | Spanish UI term                | Meaning                                                |
+| --------------------- | ------------------------------ | ------------------------------------------------------ |
+| Role                  | Rol                            | Non-configurable security boundary of a user category. |
+| Permission            | Permiso                        | Capability: what action is permitted.                  |
+| Permission profile    | Perfil de permisos             | Reusable compatible collection of permissions.         |
+| Effective permissions | Permisos efectivos             | Resolved capabilities for one membership context.      |
+| Delegation authority  | Autoridad de delegación        | Permissions an actor may assign, bounded by policy.    |
+| Resource scope        | Alcance de recursos            | Which records a valid capability may affect.           |
+| Domain/lifecycle rule | Regla de dominio/ciclo de vida | Non-authorization condition that remains mandatory.    |
 
 Permission identifiers use lowercase dot namespaces, stable domain nouns, and business actions rather than routes or HTTP verbs: `students.create`, `academic_planning.publish`, `class_sessions.update`. Plural domain names should follow existing module/public vocabulary; `academic_planning` and `academic_execution` intentionally remain underscores because the identifier is not a URL.
 
@@ -216,13 +341,13 @@ Module visibility is derived from effective permissions: a module can be shown i
 
 The code-defined catalog includes `allowedRoles` for every permission. Permission resolution intersects all grants with the current membership role's catalog; UI filtering is advisory only. A `TEACHER` can never receive `institutions.update` or an administration permission merely because an administrator selected it.
 
-| Actor | May configure | Never may configure |
-| --- | --- | --- |
-| `SUPER_ADMIN` | Compatible `ADMIN` profiles/effective permissions for an active ADMIN membership; system catalog and system profiles through source-controlled deployment | Any permission outside ADMIN's catalog |
-| `ADMIN` with a delegation capability | Compatible lower-role memberships in the same institution, only through its own delegation allow-list | Another ADMIN, itself, a cross-institution recipient, an incompatible profile, or a permission it cannot delegate |
-| `TEACHER`, `STUDENT`, `REPRESENTATIVE` | None in v1 | Any permission assignment |
+| Actor                                  | May configure                                                                                                                                             | Never may configure                                                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `SUPER_ADMIN`                          | Compatible `ADMIN` profiles/effective permissions for an active ADMIN membership; system catalog and system profiles through source-controlled deployment | Any permission outside ADMIN's catalog                                                                            |
+| `ADMIN` with a delegation capability   | Compatible lower-role memberships in the same institution, only through its own delegation allow-list                                                     | Another ADMIN, itself, a cross-institution recipient, an incompatible profile, or a permission it cannot delegate |
+| `TEACHER`, `STUDENT`, `REPRESENTATIVE` | None in v1                                                                                                                                                | Any permission assignment                                                                                         |
 
-Delegation is **not** inferred from every permission. Catalog metadata declares a finite `delegableToRoles` set only for dedicated capabilities such as `permissions.teachers.manage` and `permissions.students.manage`; it also declares a fixed `delegablePermissionIds` set (or named bounded set). On every assignment the service verifies: actor membership is active in the same institution; recipient is not actor; recipient role is eligible; target is not `ADMIN`; requested profile/grants are within the recipient catalog *and* actor delegation set. The assignment service, not the UI, performs all checks in one transaction.
+Delegation is **not** inferred from every permission. Catalog metadata declares a finite `delegableToRoles` set only for dedicated capabilities such as `permissions.teachers.manage` and `permissions.students.manage`; it also declares a fixed `delegablePermissionIds` set (or named bounded set). On every assignment the service verifies: actor membership is active in the same institution; recipient is not actor; recipient role is eligible; target is not `ADMIN`; requested profile/grants are within the recipient catalog _and_ actor delegation set. The assignment service, not the UI, performs all checks in one transaction.
 
 This is deliberately a directed, acyclic delegation graph: SUPER_ADMIN -> ADMIN -> lower roles. There is no `permissions.admins.manage`, no self-assignment, no role editing through this feature, and no delegation derived from a recipient's effective permissions.
 
@@ -232,11 +357,11 @@ This is deliberately a directed, acyclic delegation graph: SUPER_ADMIN -> ADMIN 
 
 `PermissionProfile` remains attached to a membership. Updating a profile changes affected active memberships after the next authorization resolution. Membership-local direct grants are optional additions for exceptional cases; they are still constrained by the role catalog and delegation policy. No explicit deny is introduced.
 
-| Model | Result | Assessment |
-| --- | --- | --- |
-| Live profile | Profile change reaches all assigned memberships | Recommended: reusable, auditable, and practical for institution operations. |
-| Copy-on-assignment | Profile is only a template | Safer from surprise changes but creates drift and makes bulk policy changes costly. |
-| Hybrid with grants and denies | Live profile plus arbitrary overrides | Denies require precedence, explainability, and audit complexity not justified by current evidence. |
+| Model                         | Result                                          | Assessment                                                                                         |
+| ----------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Live profile                  | Profile change reaches all assigned memberships | Recommended: reusable, auditable, and practical for institution operations.                        |
+| Copy-on-assignment            | Profile is only a template                      | Safer from surprise changes but creates drift and makes bulk policy changes costly.                |
+| Hybrid with grants and denies | Live profile plus arbitrary overrides           | Denies require precedence, explainability, and audit complexity not justified by current evidence. |
 
 The recommended model is a constrained hybrid only in the sense of **live profile plus additive grants**. Direct grants must be exceptional, displayed distinctly, and never compensate for a missing baseline profile. A profile change preview must list affected memberships and before/after permissions; confirmation and an audit event are mandatory. This handles the primary live-profile safety concern without deny precedence.
 
@@ -258,12 +383,12 @@ System/bootstrap profiles seeded for current users preserve current role behavio
 
 Permissions answer **what**; scopes answer **which resources**. Domain rules answer **whether this resource is currently valid for the operation**.
 
-| Example | Capability | Resource scope | Domain/lifecycle rules |
-| --- | --- | --- | --- |
-| Update an academic plan | `academic_planning.update` | `OWN_TEACHER_ASSIGNMENTS` | teacher owns plan; plan is `DRAFT`; period is not `CLOSED` (and future policy should also treat `ARCHIVED` read-only). |
-| Create/update a class session | `class_sessions.create` / `.update` | `OWN_TEACHER_ASSIGNMENTS` | assignment period is not `CLOSED`/`ARCHIVED`; dates are in period; linked LessonPlan is compatible. |
-| Read grades | `grades.read` | own student, representative-linked student, own assignments, or own institution according to role | assessment/enrollment relation integrity. |
-| Review attendance justification | `attendance_justifications.review` | `OWN_INSTITUTION` | status is `PENDING`; transition is valid; period state permits the change. |
+| Example                         | Capability                          | Resource scope                                                                                    | Domain/lifecycle rules                                                                                                 |
+| ------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Update an academic plan         | `academic_planning.update`          | `OWN_TEACHER_ASSIGNMENTS`                                                                         | teacher owns plan; plan is `DRAFT`; period is not `CLOSED` (and future policy should also treat `ARCHIVED` read-only). |
+| Create/update a class session   | `class_sessions.create` / `.update` | `OWN_TEACHER_ASSIGNMENTS`                                                                         | assignment period is not `CLOSED`/`ARCHIVED`; dates are in period; linked LessonPlan is compatible.                    |
+| Read grades                     | `grades.read`                       | own student, representative-linked student, own assignments, or own institution according to role | assessment/enrollment relation integrity.                                                                              |
+| Review attendance justification | `attendance_justifications.review`  | `OWN_INSTITUTION`                                                                                 | status is `PENDING`; transition is valid; period state permits the change.                                             |
 
 Current lifecycle gates that remain outside permission resolution include AcademicPeriod `CLOSED`/`ARCHIVED`; AcademicPlan `DRAFT` versus `PUBLISHED`; plan/term/date bounds; ClassSession status/date requirements and assignment-compatible LessonPlan linkage; active enrollment and roster/date integrity; AttendanceJustification pending-only review and one-pending constraint; and active catalog/course/teacher prerequisites. These rules remain in their owning services/validators.
 
@@ -297,15 +422,15 @@ await authorizationService.assertCan(actor, 'academic_planning.update', {
 
 Representative mappings:
 
-| Operation | Guard metadata | Service responsibility |
-| --- | --- | --- |
-| Create student | `students.create` | Resolve target institution/membership; validate tenant and student lifecycle. |
-| Read AcademicPlan | `academic_planning.read` | Own teacher assignment / institutional oversight / platform scope. |
-| Update AcademicPlan | `academic_planning.update` | Own teacher assignment, DRAFT state, period lifecycle. |
-| Create ClassSession | `class_sessions.create` | Own assignment, mutable period, date and LessonPlan compatibility. |
-| Update ClassSession | `class_sessions.update` | Same assignment ownership and mutable-period/domain checks. |
-| Read grades | `grades.read` | Student self, representative link, teacher assignment, or institution scope. |
-| Write grades | `grades.write` | Teacher assignment ownership, assessment/enrollment validation. |
+| Operation           | Guard metadata             | Service responsibility                                                        |
+| ------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| Create student      | `students.create`          | Resolve target institution/membership; validate tenant and student lifecycle. |
+| Read AcademicPlan   | `academic_planning.read`   | Own teacher assignment / institutional oversight / platform scope.            |
+| Update AcademicPlan | `academic_planning.update` | Own teacher assignment, DRAFT state, period lifecycle.                        |
+| Create ClassSession | `class_sessions.create`    | Own assignment, mutable period, date and LessonPlan compatibility.            |
+| Update ClassSession | `class_sessions.update`    | Same assignment ownership and mutable-period/domain checks.                   |
+| Read grades         | `grades.read`              | Student self, representative link, teacher assignment, or institution scope.  |
+| Write grades        | `grades.write`             | Teacher assignment ownership, assessment/enrollment validation.               |
 
 Guards/decorators perform authentication-independent capability checks using already resolved request context. Services own resource loading, scoped Prisma filters, and policies that require domain context. Query methods should accept a scope predicate/context constructed once and use it in Prisma `where` clauses; mutation services load a minimum projection then validate exactly once. Do not duplicate the same ownership query in both a guard and service, and do not put resource-rich policies in guards.
 
@@ -327,15 +452,15 @@ The frontend should replace role-named helpers gradually with `can('academic_pla
 
 No model below has been implemented.
 
-| Entity | Purpose and key fields | Constraints, ownership, deletion/indexes |
-| --- | --- | --- |
-| `Permission` | Seeded catalog row: stable `id`/`code`, `module`, Spanish label/description, active/deprecated metadata. | `@unique(code)`; global/system owned; restrict deletion, deprecate instead; index module/active. |
-| `RoleAllowedPermission` | System-controlled role boundary: `role`, `permissionId`. | Unique `(role, permissionId)`; global; cascade from permission only in controlled migration; index role. |
-| `PermissionProfile` | Reusable profile: `id`, name, description, compatible `role`, optional `institutionId`, `isSystem`, `isActive`, revision. | System profile has null institution; institution profile requires institution; unique normalized name per `(institutionId, role)`; restrict deletion while assigned, prefer archive; indexes institution/role/active. |
-| `PermissionProfilePermission` | Profile-to-permission membership. | Unique `(profileId, permissionId)`; FK cascade from profile; restrict/deprecate permission removal; index permission. |
-| `InstitutionMembershipPermissionProfile` | One current profile assignment for an institutional membership, with assignedBy/assignedAt. | Unique `institutionMembershipId`; cascade when membership is removed; index profile. A history/audit event preserves previous state. |
-| `InstitutionMembershipPermissionGrant` | Exceptional additive direct effective permission, with grantor and optional reason. | Unique `(institutionMembershipId, permissionId)`; cascade with membership; index permission; service validates role catalog/delegation. |
-| `PermissionAuditEvent` | Immutable security event projection: actor/user/membership/institution, action, target, before/after permission codes, profile IDs, correlation/request ID, reason, timestamp. | Append-only; restrict user/profile deletion or retain safe identifiers; indexes institution/time, membership/time, actor/time, event type/time. |
+| Entity                                   | Purpose and key fields                                                                                                                                                         | Constraints, ownership, deletion/indexes                                                                                                                                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Permission`                             | Seeded catalog row: stable `id`/`code`, `module`, Spanish label/description, active/deprecated metadata.                                                                       | `@unique(code)`; global/system owned; restrict deletion, deprecate instead; index module/active.                                                                                                                      |
+| `RoleAllowedPermission`                  | System-controlled role boundary: `role`, `permissionId`.                                                                                                                       | Unique `(role, permissionId)`; global; cascade from permission only in controlled migration; index role.                                                                                                              |
+| `PermissionProfile`                      | Reusable profile: `id`, name, description, compatible `role`, optional `institutionId`, `isSystem`, `isActive`, revision.                                                      | System profile has null institution; institution profile requires institution; unique normalized name per `(institutionId, role)`; restrict deletion while assigned, prefer archive; indexes institution/role/active. |
+| `PermissionProfilePermission`            | Profile-to-permission membership.                                                                                                                                              | Unique `(profileId, permissionId)`; FK cascade from profile; restrict/deprecate permission removal; index permission.                                                                                                 |
+| `InstitutionMembershipPermissionProfile` | One current profile assignment for an institutional membership, with assignedBy/assignedAt.                                                                                    | Unique `institutionMembershipId`; cascade when membership is removed; index profile. A history/audit event preserves previous state.                                                                                  |
+| `InstitutionMembershipPermissionGrant`   | Exceptional additive direct effective permission, with grantor and optional reason.                                                                                            | Unique `(institutionMembershipId, permissionId)`; cascade with membership; index permission; service validates role catalog/delegation.                                                                               |
+| `PermissionAuditEvent`                   | Immutable security event projection: actor/user/membership/institution, action, target, before/after permission codes, profile IDs, correlation/request ID, reason, timestamp. | Append-only; restrict user/profile deletion or retain safe identifiers; indexes institution/time, membership/time, actor/time, event type/time.                                                                       |
 
 `InstitutionMembership` is the correct attachment point for ADMIN/TEACHER permissions because it already carries the institution, role, active state, and supports multiple institutions. Attachments to `User` would leak access across institutions; attachments to `TeacherProfile`/`StudentProfile` would conflate academic identity with a configurable authorization context. Student and representative access is currently relationship/profile scoped, not membership-backed; the first migration should preserve their baseline role behavior and only create membership-based permissions for them if the product later makes them institutional operators. This is an open modeling boundary, not a reason to force a false universal membership now.
 
@@ -355,31 +480,31 @@ Bulk profile assignment accepts selected users only after server-side validation
 
 Initial seeds map only discovered current capabilities; they do not grant new powers. “Scoped” means the existing service checks remain required.
 
-| Current role | Discovered current behavior | Initial proposed permissions (representative groups) |
-| --- | --- | --- |
-| SUPER_ADMIN | Platform institutions, catalog, periods, memberships, users; broad monitoring reads; role bypass except strict operational routes | `institutions.*`, `platform_catalog.*`, `academic_periods.*`, `institution_memberships.*`, `users.*`, platform evaluation permissions, monitored reads, `permissions.admins.manage`; preserve exclusions from strict operational writes. |
-| ADMIN | Active-membership institution operations: students/enrollments, courses/assignments, transitions, evaluation config; institution/scoped oversight reads | `students.*`, `enrollments.*`, `courses.*`, `teacher_assignments.*`, `academic_transitions.*`, `academic_evaluation.*`, scoped `academic_planning.read`, `class_sessions.read`, `grades.read`, attendance read/write as currently implemented; optional future `permissions.<lower-role>.manage` only when explicitly assigned. |
-| TEACHER | Assigned-course/assignment reads; own planning and class-session writes; assessment/grade writes; attendance entry; selected-period context | `teacher_assignments.read`, `students.read`, `enrollments.read`, `academic_planning.read/create/update/publish/delete`, `class_sessions.read/create/update`, `assessments.*`, `grades.read/write`, `attendance.read/write`, selected-context permission, all constrained to owned assignments. |
-| STUDENT | Own profile/enrollment/grades/performance/report/attendance history; selected period; attendance-justification submission | `students.read_own`, `enrollments.read_own`, `grades.read_own`, `academic_performance.read_own`, `report_cards.read_own`, `attendance.read_own`, `attendance_justifications.submit_own`, `academic_period_context.select`. |
-| REPRESENTATIVE | Active linked-student academic reads and eligible absence justification submission | `representative_students.read`, `grades.read_linked`, `academic_performance.read_linked`, `report_cards.read_linked`, `attendance.read_linked`, `attendance_justifications.submit_linked`. |
+| Current role   | Discovered current behavior                                                                                                                             | Initial proposed permissions (representative groups)                                                                                                                                                                                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SUPER_ADMIN    | Platform institutions, catalog, periods, memberships, users; broad monitoring reads; role bypass except strict operational routes                       | `institutions.*`, `platform_catalog.*`, `academic_periods.*`, `institution_memberships.*`, `users.*`, platform evaluation permissions, monitored reads, `permissions.admins.manage`; preserve exclusions from strict operational writes.                                                                                        |
+| ADMIN          | Active-membership institution operations: students/enrollments, courses/assignments, transitions, evaluation config; institution/scoped oversight reads | `students.*`, `enrollments.*`, `courses.*`, `teacher_assignments.*`, `academic_transitions.*`, `academic_evaluation.*`, scoped `academic_planning.read`, `class_sessions.read`, `grades.read`, attendance read/write as currently implemented; optional future `permissions.<lower-role>.manage` only when explicitly assigned. |
+| TEACHER        | Assigned-course/assignment reads; own planning and class-session writes; assessment/grade writes; attendance entry; selected-period context             | `teacher_assignments.read`, `students.read`, `enrollments.read`, `academic_planning.read/create/update/publish/delete`, `class_sessions.read/create/update`, `assessments.*`, `grades.read/write`, `attendance.read/write`, selected-context permission, all constrained to owned assignments.                                  |
+| STUDENT        | Own profile/enrollment/grades/performance/report/attendance history; selected period; attendance-justification submission                               | `students.read_own`, `enrollments.read_own`, `grades.read_own`, `academic_performance.read_own`, `report_cards.read_own`, `attendance.read_own`, `attendance_justifications.submit_own`, `academic_period_context.select`.                                                                                                      |
+| REPRESENTATIVE | Active linked-student academic reads and eligible absence justification submission                                                                      | `representative_students.read`, `grades.read_linked`, `academic_performance.read_linked`, `report_cards.read_linked`, `attendance.read_linked`, `attendance_justifications.submit_linked`.                                                                                                                                      |
 
 Ambiguities requiring parity tests: current `PLATFORM_READ_ROLES` includes REPRESENTATIVE while several frontend route predicates exclude it; current frontend `canManageAttendance` permits ADMIN/SUPER_ADMIN even though the product narrative emphasizes teacher recording; several ordinary role predicates grant SUPER_ADMIN implicitly while frontend predicates are strict. The migration baseline must be generated from controller/service tests and documented policy, not from frontend helpers alone.
 
 ## Module/action inventory
 
-| Module | Current access/scopes | Proposed capability family |
-| --- | --- | --- |
-| Institutions and settings | SUPER_ADMIN writes; ADMIN active-membership settings/read; 404 cross-tenant | `institutions.read/update`, `institution_settings.update` |
-| Users and memberships | SUPER_ADMIN provisions/membership-manages; ADMIN user visibility excludes SUPER_ADMIN and assigns only student/representative today | `users.read/create/update`, `institution_memberships.read/manage` |
-| Students and enrollments | ADMIN writes; teacher reads assigned course; student self; representative linked where supported | `students.read/create/update`, `enrollments.read/create/update`, `enrollments.bulk_create` |
-| Courses, levels, grades, subjects | Global catalog writes are SUPER_ADMIN; courses/assignments institution operations; active/deactivate/delete rules | `academic_levels.*`, `grade_levels.*`, `subjects.*`, `courses.*` |
-| Academic periods/terms/transitions | SUPER_ADMIN calendar lifecycle; staff context/read; institution transition scope | `academic_periods.read/manage`, `academic_terms.manage`, `academic_transitions.manage` |
-| Teacher assignments | ADMIN operational mutation; teacher assigned read; period/institution ownership | `teacher_assignments.read/create/update/delete` |
-| Academic evaluation | ADMIN institution configuration; TEACHER read; SUPER_ADMIN templates | `academic_evaluation.read/manage`, `academic_evaluation_templates.manage` |
-| Academic planning | Teacher owns mutable DRAFT plans; ADMIN/institution and SUPER_ADMIN read; CLOSED is read-only | `academic_planning.read/create/update/publish/delete` |
-| Academic execution | Teacher assignment owner writes; ADMIN institution read; SUPER_ADMIN read; CLOSED/ARCHIVED immutable | `class_sessions.read/create/update` |
-| Grades/assessments/performance/reports | Teacher owns assessment/grade write; staff/institution monitoring; student self; representative linked where implemented | `assessments.read/create/update/delete`, `grades.read/write`, `academic_performance.read_*`, `report_cards.read_*` |
-| Attendance and justifications | Teacher assignment scope; ADMIN institution; SUPER_ADMIN current access; student/representative own/linked history/submit; CLOSED/ARCHIVED immutable | `attendance.read/write`, `attendance_justifications.submit/review`, `attendance_reports.read` |
+| Module                                 | Current access/scopes                                                                                                                                | Proposed capability family                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Institutions and settings              | SUPER_ADMIN writes; ADMIN active-membership settings/read; 404 cross-tenant                                                                          | `institutions.read/update`, `institution_settings.update`                                                          |
+| Users and memberships                  | SUPER_ADMIN provisions/membership-manages; ADMIN user visibility excludes SUPER_ADMIN and assigns only student/representative today                  | `users.read/create/update`, `institution_memberships.read/manage`                                                  |
+| Students and enrollments               | ADMIN writes; teacher reads assigned course; student self; representative linked where supported                                                     | `students.read/create/update`, `enrollments.read/create/update`, `enrollments.bulk_create`                         |
+| Courses, levels, grades, subjects      | Global catalog writes are SUPER_ADMIN; courses/assignments institution operations; active/deactivate/delete rules                                    | `academic_levels.*`, `grade_levels.*`, `subjects.*`, `courses.*`                                                   |
+| Academic periods/terms/transitions     | SUPER_ADMIN calendar lifecycle; staff context/read; institution transition scope                                                                     | `academic_periods.read/manage`, `academic_terms.manage`, `academic_transitions.manage`                             |
+| Teacher assignments                    | ADMIN operational mutation; teacher assigned read; period/institution ownership                                                                      | `teacher_assignments.read/create/update/delete`                                                                    |
+| Academic evaluation                    | ADMIN institution configuration; TEACHER read; SUPER_ADMIN templates                                                                                 | `academic_evaluation.read/manage`, `academic_evaluation_templates.manage`                                          |
+| Academic planning                      | Teacher owns mutable DRAFT plans; ADMIN/institution and SUPER_ADMIN read; CLOSED is read-only                                                        | `academic_planning.read/create/update/publish/delete`                                                              |
+| Academic execution                     | Teacher assignment owner writes; ADMIN institution read; SUPER_ADMIN read; CLOSED/ARCHIVED immutable                                                 | `class_sessions.read/create/update`                                                                                |
+| Grades/assessments/performance/reports | Teacher owns assessment/grade write; staff/institution monitoring; student self; representative linked where implemented                             | `assessments.read/create/update/delete`, `grades.read/write`, `academic_performance.read_*`, `report_cards.read_*` |
+| Attendance and justifications          | Teacher assignment scope; ADMIN institution; SUPER_ADMIN current access; student/representative own/linked history/submit; CLOSED/ARCHIVED immutable | `attendance.read/write`, `attendance_justifications.submit/review`, `attendance_reports.read`                      |
 
 The catalog should start with these business operations and may split only when the repository has a different authorization requirement. It must not mirror every endpoint or distinguish HTTP `PATCH` from `PUT` without an actual business distinction.
 
@@ -397,18 +522,18 @@ Backwards compatibility is a release gate: migration seeds one locked baseline p
 
 ## Security, testing, and performance
 
-| Risk | Mitigation |
-| --- | --- |
-| Privilege escalation / self-grant | Directed delegation graph, actor != recipient, server-side catalog/delegation checks, immutable audit. |
-| ADMIN changes another ADMIN | No ADMIN target in any ADMIN delegation policy; enforce role/membership target restriction in service. |
-| Cross-institution grant | Assignment anchored to membership and transaction asserts actor/target same institution. |
-| Incompatible profile | Profile compatible role and every profile permission validated against role catalog before save/assign. |
-| Stale permission token | Server-side resolution; token holds no permission claim. |
-| Deprecated permission reference | Code/seed validation, deprecation lifecycle, FK restrictions, startup/CI catalog check. |
-| Live profile broadening | impact preview, confirmation, revision/audit, profile modification delegation policy. |
-| Frontend-only enforcement | backend guard/service remains authoritative; negative API tests required. |
-| Bulk partial authorization | preflight all targets then all-or-nothing transaction and audit. |
-| Direct DB inconsistency | unique/FK constraints, service transactions, catalog validation, reconciliation job/report. |
+| Risk                              | Mitigation                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Privilege escalation / self-grant | Directed delegation graph, actor != recipient, server-side catalog/delegation checks, immutable audit.  |
+| ADMIN changes another ADMIN       | No ADMIN target in any ADMIN delegation policy; enforce role/membership target restriction in service.  |
+| Cross-institution grant           | Assignment anchored to membership and transaction asserts actor/target same institution.                |
+| Incompatible profile              | Profile compatible role and every profile permission validated against role catalog before save/assign. |
+| Stale permission token            | Server-side resolution; token holds no permission claim.                                                |
+| Deprecated permission reference   | Code/seed validation, deprecation lifecycle, FK restrictions, startup/CI catalog check.                 |
+| Live profile broadening           | impact preview, confirmation, revision/audit, profile modification delegation policy.                   |
+| Frontend-only enforcement         | backend guard/service remains authoritative; negative API tests required.                               |
+| Bulk partial authorization        | preflight all targets then all-or-nothing transaction and audit.                                        |
+| Direct DB inconsistency           | unique/FK constraints, service transactions, catalog validation, reconciliation job/report.             |
 
 Testing plan:
 

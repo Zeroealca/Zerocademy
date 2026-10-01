@@ -15,6 +15,8 @@ import {
   assertActorCanAccessInstitution,
   resolveActorInstitutionIds,
 } from '../../common/rbac/academic-scope.util';
+import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permission-enforcer.service';
+import { PERMISSIONS } from '../../common/rbac/permission-catalog';
 import { RoleUtils } from '../../common/rbac/role.utils';
 import {
   buildPaginationMeta,
@@ -60,6 +62,7 @@ export class PlanningService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLoggerService,
+    private readonly permissionEnforcer: MembershipPermissionEnforcer,
   ) {}
 
   async findAll(
@@ -89,6 +92,14 @@ export class PlanningService {
   ): Promise<AcademicPlanResponseDto> {
     const plan = await this.findPlanOrThrow(id);
     await this.assertReadAccess(actor, plan);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.READ,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: plan.id,
+    });
     return toAcademicPlanResponseDto(plan);
   }
 
@@ -100,6 +111,14 @@ export class PlanningService {
       actor,
       dto.teacherAssignmentId,
     );
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: assignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.CREATE,
+      domain: 'academic-planning',
+      resourceType: 'teacherAssignment',
+      resourceId: assignment.id,
+    });
     this.assertPeriodMutable(assignment.academicPeriod.status);
     const range = await this.validateTermAndDates(
       assignment.academicPeriodId,
@@ -136,6 +155,14 @@ export class PlanningService {
   ): Promise<AcademicPlanResponseDto> {
     const existing = await this.findPlanOrThrow(id);
     this.assertTeacherOwnsPlan(actor, existing);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: existing.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.UPDATE,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: existing.id,
+    });
     this.assertDraft(existing.status);
     this.assertPeriodMutable(existing.teacherAssignment.academicPeriod.status);
     const termId = dto.academicTermId ?? existing.academicTermId;
@@ -175,6 +202,14 @@ export class PlanningService {
   ): Promise<AcademicPlanResponseDto> {
     const existing = await this.findPlanOrThrow(id);
     this.assertTeacherOwnsPlan(actor, existing);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: existing.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.PUBLISH,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: existing.id,
+    });
     this.assertDraft(existing.status);
     this.assertPeriodMutable(existing.teacherAssignment.academicPeriod.status);
     if (
@@ -217,6 +252,14 @@ export class PlanningService {
   async remove(actor: AuthenticatedUser, id: string): Promise<void> {
     const existing = await this.findPlanOrThrow(id);
     this.assertTeacherOwnsPlan(actor, existing);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: existing.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.DELETE,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: existing.id,
+    });
     this.assertDraft(existing.status);
     this.assertPeriodMutable(existing.teacherAssignment.academicPeriod.status);
     await this.prisma.academicPlan.delete({ where: { id } });

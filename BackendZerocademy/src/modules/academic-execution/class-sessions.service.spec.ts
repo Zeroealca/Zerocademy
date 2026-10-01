@@ -73,13 +73,15 @@ describe('ClassSessionsFoundationService read contract', () => {
     },
   };
   const logger = { log: jest.fn() };
+  const requireForInstitutionMembership = jest.fn().mockResolvedValue({
+    decision: 'ALLOWED',
+    permission: 'class_sessions.read',
+    legacyCapable: true,
+    profileAwareCapable: true,
+  });
   const permissionEnforcer = {
-    requireMembershipPermission: jest.fn().mockResolvedValue({
-      decision: 'ALLOWED',
-      permission: 'class_sessions.read',
-      legacyCapable: true,
-      profileAwareCapable: true,
-    }),
+    requireMembershipPermission: requireForInstitutionMembership,
+    requireForInstitutionMembership,
   };
 
   beforeEach(() => {
@@ -665,16 +667,6 @@ describe('ClassSessionsFoundationService read contract', () => {
       ).not.toHaveBeenCalled();
     });
 
-    it('does not run permission enforcement on write paths', async () => {
-      await service.create(teacherA, {
-        teacherAssignmentId: 'assignment-a',
-        scheduledDate: '2026-06-15',
-      });
-      expect(
-        permissionEnforcer.requireMembershipPermission,
-      ).not.toHaveBeenCalled();
-    });
-
     it('allows null-profile baseline path when enforcer allows', async () => {
       permissionEnforcer.requireMembershipPermission.mockResolvedValue({
         decision: 'ALLOWED',
@@ -689,6 +681,156 @@ describe('ClassSessionsFoundationService read contract', () => {
       await expect(
         service.one(adminA, 'assignment-a', 'session-a1'),
       ).resolves.toMatchObject({ id: 'session-a1' });
+    });
+  });
+
+  describe('Phase 10 ClassSession WRITE permission enforcement', () => {
+    it('enforces canonical CREATE and UPDATE permissions after legacy ownership allows', async () => {
+      await service.create(teacherA, {
+        teacherAssignmentId: 'assignment-a',
+        scheduledDate: '2026-06-15',
+      });
+      await service.update(teacherA, 'assignment-a', 'session-a1', {});
+
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).toHaveBeenNthCalledWith(1, {
+        actor: teacherA,
+        institutionId: 'inst-a',
+        permission: 'class_sessions.create',
+        domain: 'academic-execution',
+        resourceType: 'teacherAssignment',
+        resourceId: 'assignment-a',
+      });
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).toHaveBeenNthCalledWith(2, {
+        actor: teacherA,
+        institutionId: 'inst-a',
+        permission: 'class_sessions.update',
+        domain: 'academic-execution',
+        resourceType: 'teacherAssignment',
+        resourceId: 'assignment-a',
+      });
+    });
+
+    it.each([
+      [
+        'create',
+        () =>
+          service.create(teacherA, {
+            teacherAssignmentId: 'assignment-a',
+            scheduledDate: '2026-06-15',
+          }),
+      ],
+      [
+        'update',
+        () => service.update(teacherA, 'assignment-a', 'session-a1', {}),
+      ],
+    ])(
+      'fails closed and does not persist when %s permission is denied',
+      async (_operation, invoke) => {
+        permissionEnforcer.requireMembershipPermission.mockRejectedValue(
+          new ForbiddenException('Access denied'),
+        );
+
+        await expect(invoke()).rejects.toBeInstanceOf(ForbiddenException);
+        expect(prisma.classSession.create).not.toHaveBeenCalled();
+        expect(prisma.classSession.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([teacherB, adminA, superAdmin, student, representative])(
+      'does not evaluate CREATE permission when legacy denies %s',
+      async (actor) => {
+        await expect(
+          service.create(actor, {
+            teacherAssignmentId: 'assignment-a',
+            scheduledDate: '2026-06-15',
+          }),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(
+          permissionEnforcer.requireMembershipPermission,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([teacherB, adminA, superAdmin, student, representative])(
+      'does not evaluate UPDATE permission when legacy denies %s',
+      async (actor) => {
+        await expect(
+          service.update(actor, 'assignment-a', 'session-a1', {}),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(
+          permissionEnforcer.requireMembershipPermission,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it('preserves UPDATE nesting isolation before permission evaluation', async () => {
+      prisma.classSession.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.update(teacherA, 'assignment-a', 'session-a1', {}),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireMembershipPermission,
+      ).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['missing membership', new ForbiddenException('Access denied')],
+      ['resolver error', new ForbiddenException('Access denied')],
+    ])('fails closed for CREATE and UPDATE on %s', async (_reason, error) => {
+      permissionEnforcer.requireMembershipPermission.mockRejectedValue(error);
+
+      await expect(
+        service.create(teacherA, {
+          teacherAssignmentId: 'assignment-a',
+          scheduledDate: '2026-06-15',
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(
+        service.update(teacherA, 'assignment-a', 'session-a1', {}),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.classSession.create).not.toHaveBeenCalled();
+      expect(prisma.classSession.update).not.toHaveBeenCalled();
+    });
+
+    it('retains null-profile baseline fallback when write permissions are allowed', async () => {
+      permissionEnforcer.requireMembershipPermission.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'class_sessions.create',
+        legacyCapable: true,
+        profileAwareCapable: true,
+        permissionProfileKey: null,
+      });
+
+      await expect(
+        service.create(teacherA, {
+          teacherAssignmentId: 'assignment-a',
+          scheduledDate: '2026-06-15',
+        }),
+      ).resolves.toMatchObject({ teacherAssignmentId: 'assignment-a' });
+      await expect(
+        service.update(teacherA, 'assignment-a', 'session-a1', {}),
+      ).resolves.toMatchObject({ id: 'session-a1' });
+    });
+
+    it('runs lifecycle checks after permission allows and before persistence', async () => {
+      prisma.teacherAssignment.findFirst.mockResolvedValue({
+        ...assignment,
+        academicPeriod: { ...assignment.academicPeriod, status: 'CLOSED' },
+      });
+
+      await expect(
+        service.create(teacherA, {
+          teacherAssignmentId: 'assignment-a',
+          scheduledDate: '2026-06-15',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(permissionEnforcer.requireMembershipPermission).toHaveBeenCalled();
+      expect(prisma.classSession.create).not.toHaveBeenCalled();
     });
   });
 });

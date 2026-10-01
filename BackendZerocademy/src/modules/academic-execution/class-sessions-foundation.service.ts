@@ -58,6 +58,12 @@ export class ClassSessionsFoundationService {
       input.teacherAssignmentId,
       true,
     );
+    await this.requireWritePermission(
+      actor,
+      assignment,
+      PERMISSIONS.CLASS_SESSIONS.CREATE,
+    );
+    this.assertWritableAcademicPeriod(assignment);
     return this.persistCreate(actor, assignment, input);
   }
 
@@ -105,6 +111,12 @@ export class ClassSessionsFoundationService {
       where: { id: classSessionId, teacherAssignmentId },
     });
     if (!existing) throw new NotFoundException('Class session not found');
+    await this.requireWritePermission(
+      actor,
+      assignment,
+      PERMISSIONS.CLASS_SESSIONS.UPDATE,
+    );
+    this.assertWritableAcademicPeriod(assignment);
     const status = input.status ?? existing.status;
     const scheduledDate =
       input.scheduledDate === undefined
@@ -204,20 +216,10 @@ export class ClassSessionsFoundationService {
       throw new NotFoundException('Teacher assignment not found');
     if (write && !teacherOwns)
       throw new NotFoundException('Teacher assignment not found');
-    if (
-      write &&
-      (assignment.academicPeriod.status === AcademicPeriodStatus.CLOSED ||
-        assignment.academicPeriod.status === AcademicPeriodStatus.ARCHIVED)
-    ) {
-      throw new BadRequestException(
-        'Class sessions are read-only for a closed or archived academic period',
-      );
-    }
-
     // Phase 7: after legacy allow, enforce profile-aware class_sessions.read.
     // Ordering preserves legacy 404 isolation for unauthorized callers.
     if (!write) {
-      await this.permissionEnforcer.requireMembershipPermission({
+      await this.permissionEnforcer.requireForInstitutionMembership({
         actor,
         institutionId: assignment.institutionId,
         permission: PERMISSIONS.CLASS_SESSIONS.READ,
@@ -228,6 +230,40 @@ export class ClassSessionsFoundationService {
     }
 
     return assignment;
+  }
+
+  /**
+   * Phase 10: keep the narrow Phase 7 enforcement model for write operations.
+   * Call only after legacy ownership and nested-resource checks have allowed.
+   */
+  private async requireWritePermission(
+    actor: AuthenticatedUser,
+    assignment: AssignmentExecutionContext,
+    permission:
+      | typeof PERMISSIONS.CLASS_SESSIONS.CREATE
+      | typeof PERMISSIONS.CLASS_SESSIONS.UPDATE,
+  ): Promise<void> {
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: assignment.institutionId,
+      permission,
+      domain: 'academic-execution',
+      resourceType: 'teacherAssignment',
+      resourceId: assignment.id,
+    });
+  }
+
+  private assertWritableAcademicPeriod(
+    assignment: AssignmentExecutionContext,
+  ): void {
+    if (
+      assignment.academicPeriod.status === AcademicPeriodStatus.CLOSED ||
+      assignment.academicPeriod.status === AcademicPeriodStatus.ARCHIVED
+    ) {
+      throw new BadRequestException(
+        'Class sessions are read-only for a closed or archived academic period',
+      );
+    }
   }
 
   private async assertCompatibleLessonPlan(

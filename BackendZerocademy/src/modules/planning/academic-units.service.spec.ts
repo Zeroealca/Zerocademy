@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AcademicPlanStatus, Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -58,8 +62,23 @@ describe('AcademicUnitsService', () => {
   let service: AcademicUnitsService;
   let prisma: PrismaMock;
   let logger: { log: jest.Mock };
+  const permissionEnforcer = {
+    requireForInstitutionMembership: jest.fn().mockResolvedValue({
+      decision: 'ALLOWED',
+      permission: 'academic_planning.read',
+      legacyCapable: true,
+      profileAwareCapable: true,
+    }),
+  };
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+      decision: 'ALLOWED',
+      permission: 'academic_planning.read',
+      legacyCapable: true,
+      profileAwareCapable: true,
+    });
     prisma = {
       academicPlan: {
         findUnique: jest.fn().mockResolvedValue({
@@ -111,6 +130,7 @@ describe('AcademicUnitsService', () => {
     service = new AcademicUnitsService(
       prisma as unknown as PrismaService,
       logger as unknown as AppLoggerService,
+      permissionEnforcer as never,
     );
   });
 
@@ -189,6 +209,399 @@ describe('AcademicUnitsService', () => {
       expect(prisma.academicUnit.findMany).not.toHaveBeenCalled();
     },
   );
+
+  describe('Phase 13 AcademicUnit READ permission enforcement', () => {
+    it('enforces academic_planning.read once for a legacy-authorized teacher list', async () => {
+      await expect(service.list(actor, 'plan')).resolves.toHaveLength(2);
+
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor,
+        institutionId: 'institution',
+        permission: 'academic_planning.read',
+        domain: 'academic-planning',
+        resourceType: 'academicUnit',
+        resourceId: 'plan',
+      });
+    });
+
+    it('enforces academic_planning.read after safe nested-unit lookup', async () => {
+      await expect(service.one(actor, 'plan', 'unit-c')).resolves.toMatchObject(
+        {
+          id: 'unit-c',
+        },
+      );
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ['list', () => service.list(actor, 'plan')],
+      ['detail', () => service.one(actor, 'plan', 'unit-c')],
+    ])(
+      'fails closed when teacher %s permission is denied',
+      async (_operation, invoke) => {
+        permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+          new ForbiddenException('Access denied'),
+        );
+
+        await expect(invoke()).rejects.toBeInstanceOf(ForbiddenException);
+        expect(prisma.academicUnit.findMany).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not evaluate permission for another teacher before legacy denial', async () => {
+      await expect(
+        service.list({ ...actor, profileId: 'other-teacher' }, 'plan'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('enforces permission for a same-institution ADMIN', async () => {
+      await expect(service.list(admin, 'plan')).resolves.toHaveLength(2);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actor: admin,
+          institutionId: 'institution',
+          permission: 'academic_planning.read',
+        }),
+      );
+    });
+
+    it('does not evaluate permission for a cross-institution ADMIN', async () => {
+      prisma.academicPlan.findUnique.mockResolvedValue({
+        id: 'plan',
+        status: AcademicPlanStatus.DRAFT,
+        teacherAssignment: {
+          teacherId: 'teacher-profile',
+          institutionId: 'other-institution',
+          academicPeriod: { status: 'ACTIVE' },
+        },
+      });
+
+      await expect(service.list(admin, 'plan')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('preserves SUPER_ADMIN membership-not-applicable read behavior', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+        decision: 'NOT_APPLICABLE',
+        permission: 'academic_planning.read',
+        legacyCapable: null,
+        profileAwareCapable: null,
+        reason: 'SUPER_ADMIN_NO_MEMBERSHIP',
+      });
+
+      await expect(service.list(superAdmin, 'plan')).resolves.toHaveLength(2);
+    });
+
+    it.each([student, representative])(
+      'does not evaluate permission for legacy-denied %s reads',
+      async (unauthorizedActor) => {
+        await expect(
+          service.list(unauthorizedActor, 'plan'),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(
+          permissionEnforcer.requireForInstitutionMembership,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      ['missing membership', new ForbiddenException('Access denied')],
+      ['resolver error', new ForbiddenException('Access denied')],
+    ])('fails closed when %s', async (_reason, error) => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        error,
+      );
+
+      await expect(service.list(actor, 'plan')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+    });
+
+    it('retains the null-profile baseline fallback when allowed', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'academic_planning.read',
+        legacyCapable: true,
+        profileAwareCapable: true,
+        permissionProfileKey: null,
+      });
+
+      await expect(service.list(actor, 'plan')).resolves.toHaveLength(2);
+    });
+
+    it('does not use read permission enforcement for writes', async () => {
+      await service.create(actor, 'plan', { title: 'Unit C' });
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({ permission: 'academic_planning.create' }),
+      );
+    });
+
+    it('preserves nested-unit isolation before permission evaluation', async () => {
+      prisma.academicUnit.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.one(actor, 'plan', 'other-plan-unit'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Phase 19 AcademicUnit CREATE permission enforcement', () => {
+    it('requires academic_planning.create after parent ownership establishes context', async () => {
+      await expect(
+        service.create(actor, 'plan', { title: 'Unit C' }),
+      ).resolves.toMatchObject({ id: 'unit-c' });
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor,
+        institutionId: 'institution',
+        permission: 'academic_planning.create',
+        domain: 'academic-planning',
+        resourceType: 'academicPlan',
+        resourceId: 'plan',
+      });
+    });
+
+    it('denies a legacy-authorized owner without create permission before persistence', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+      await expect(
+        service.create(actor, 'plan', { title: 'Unit C' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.academicUnit.create).not.toHaveBeenCalled();
+    });
+
+    it('does not evaluate permission after legacy ownership denial', async () => {
+      prisma.academicPlan.findUnique.mockResolvedValue({
+        id: 'plan',
+        status: AcademicPlanStatus.DRAFT,
+        teacherAssignment: {
+          teacherId: 'other-teacher',
+          institutionId: 'institution',
+          academicPeriod: { status: 'ACTIVE' },
+        },
+      });
+      await expect(
+        service.create(actor, 'plan', { title: 'Unit C' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+
+    it.each([admin, superAdmin, student, representative])(
+      'does not evaluate permission for legacy-denied %s',
+      async (unauthorizedActor) => {
+        await expect(
+          service.create(unauthorizedActor, 'plan', { title: 'Unit C' }),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(
+          permissionEnforcer.requireForInstitutionMembership,
+        ).not.toHaveBeenCalled();
+        expect(prisma.academicUnit.create).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      ['membership is missing', new ForbiddenException('Access denied')],
+      ['permission resolution fails', new ForbiddenException('Access denied')],
+    ])('fails closed before persistence when %s', async (_reason, error) => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        error,
+      );
+      await expect(
+        service.create(actor, 'plan', { title: 'Unit C' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.academicUnit.create).not.toHaveBeenCalled();
+    });
+
+    it('retains null-profile baseline fallback when enforcement allows', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'academic_planning.create',
+        legacyCapable: true,
+        profileAwareCapable: true,
+        permissionProfileKey: null,
+      });
+      await expect(
+        service.create(actor, 'plan', { title: 'Unit C' }),
+      ).resolves.toMatchObject({ id: 'unit-c' });
+    });
+  });
+
+  describe('Phase 20 AcademicUnit UPDATE permission enforcement', () => {
+    it('requires academic_planning.update after parent and unit isolation', async () => {
+      await expect(
+        service.update(actor, 'plan', 'unit-c', { title: 'Updated Unit' }),
+      ).resolves.toMatchObject({ id: 'unit-c' });
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor,
+        institutionId: 'institution',
+        permission: 'academic_planning.update',
+        domain: 'academic-planning',
+        resourceType: 'academicUnit',
+        resourceId: 'unit-c',
+      });
+    });
+
+    it('denies an otherwise-authorized owner without update permission before persistence', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+      await expect(
+        service.update(actor, 'plan', 'unit-c', { title: 'Updated Unit' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.academicUnit.update).not.toHaveBeenCalled();
+    });
+
+    it('does not evaluate permission when unit nesting fails', async () => {
+      prisma.academicUnit.findFirst.mockResolvedValue(null);
+      await expect(
+        service.update(actor, 'plan', 'unit-c', { title: 'Updated Unit' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+
+    it.each([admin, superAdmin, student, representative])(
+      'does not evaluate permission for legacy-denied %s',
+      async (unauthorizedActor) => {
+        await expect(
+          service.update(unauthorizedActor, 'plan', 'unit-c', {
+            title: 'Updated Unit',
+          }),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(
+          permissionEnforcer.requireForInstitutionMembership,
+        ).not.toHaveBeenCalled();
+        expect(prisma.academicUnit.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      ['membership is missing', new ForbiddenException('Access denied')],
+      ['permission resolution fails', new ForbiddenException('Access denied')],
+    ])('fails closed before persistence when %s', async (_reason, error) => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        error,
+      );
+      await expect(
+        service.update(actor, 'plan', 'unit-c', { title: 'Updated Unit' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.academicUnit.update).not.toHaveBeenCalled();
+    });
+
+    it('retains null-profile baseline fallback when enforcement allows', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'academic_planning.update',
+        legacyCapable: true,
+        profileAwareCapable: true,
+        permissionProfileKey: null,
+      });
+      await expect(
+        service.update(actor, 'plan', 'unit-c', { title: 'Updated Unit' }),
+      ).resolves.toMatchObject({ id: 'unit-c' });
+    });
+  });
+
+  describe('Phase 21 AcademicUnit DELETE permission enforcement', () => {
+    it('requires academic_planning.delete before the delete-compaction transaction', async () => {
+      await service.remove(actor, 'plan', 'unit-c');
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor,
+        institutionId: 'institution',
+        permission: 'academic_planning.delete',
+        domain: 'academic-planning',
+        resourceType: 'academicUnit',
+        resourceId: 'unit-c',
+      });
+    });
+
+    it.each([
+      ['missing permission', new ForbiddenException('Access denied')],
+      ['missing membership', new ForbiddenException('Access denied')],
+      ['resolver failure', new ForbiddenException('Access denied')],
+    ])(
+      'fails closed for %s before destructive work',
+      async (_reason, error) => {
+        permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+          error,
+        );
+        await expect(
+          service.remove(actor, 'plan', 'unit-c'),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+        expect(prisma.academicUnit.delete).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not evaluate permission when nested unit isolation fails', async () => {
+      prisma.academicUnit.findFirst.mockResolvedValue(null);
+      await expect(
+        service.remove(actor, 'plan', 'unit-c'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Phase 22 AcademicUnit REORDER permission enforcement', () => {
+    it('requires academic_planning.update once before reorder transaction work', async () => {
+      await service.reorder(actor, 'plan', ['unit-a', 'unit-b']);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor,
+        institutionId: 'institution',
+        permission: 'academic_planning.update',
+        domain: 'academic-planning',
+        resourceType: 'academicPlan',
+        resourceId: 'plan',
+      });
+    });
+
+    it('fails closed before reorder mutation when permission is denied', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+      await expect(
+        service.reorder(actor, 'plan', ['unit-a', 'unit-b']),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+  });
 
   it.each([
     ['published plan', AcademicPlanStatus.PUBLISHED, 'ACTIVE'],

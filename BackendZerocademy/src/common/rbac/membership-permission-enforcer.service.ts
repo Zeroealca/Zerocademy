@@ -39,7 +39,7 @@ export type RequireMembershipPermissionInput = Readonly<{
 }>;
 
 /**
- * Phase 7 narrow membership-scoped permission enforcement.
+ * Reusable membership-scoped permission enforcement foundation.
  *
  * Call only after legacy Role/resource authorization has already allowed the
  * request. Never broadens access; may restrict it. Fail-closed for missing
@@ -53,7 +53,7 @@ export class MembershipPermissionEnforcer {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async requireMembershipPermission(
+  async requireForInstitutionMembership(
     input: RequireMembershipPermissionInput,
   ): Promise<PermissionEnforcementResult> {
     let evaluation: MembershipCapabilityEvaluation;
@@ -83,6 +83,16 @@ export class MembershipPermissionEnforcer {
     }
 
     throw new ForbiddenException('Access denied');
+  }
+
+  /**
+   * @deprecated Use requireForInstitutionMembership. Kept as a narrow
+   * compatibility alias while existing internal callers migrate.
+   */
+  requireMembershipPermission(
+    input: RequireMembershipPermissionInput,
+  ): Promise<PermissionEnforcementResult> {
+    return this.requireForInstitutionMembership(input);
   }
 
   private interpret(

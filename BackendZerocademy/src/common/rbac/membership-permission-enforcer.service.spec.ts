@@ -96,6 +96,41 @@ describe('MembershipPermissionEnforcer', () => {
     );
   });
 
+  it('exposes the reusable institution-membership enforcement API', async () => {
+    const { enforcer } = createEnforcer();
+
+    await expect(
+      enforcer.requireForInstitutionMembership(baseInput),
+    ).resolves.toMatchObject({
+      decision: 'ALLOWED',
+      permission: PERMISSIONS.CLASS_SESSIONS.READ,
+    });
+  });
+
+  it.each([
+    PERMISSIONS.CLASS_SESSIONS.CREATE,
+    PERMISSIONS.CLASS_SESSIONS.UPDATE,
+    PERMISSIONS.ACADEMIC_PLANNING.CREATE,
+    PERMISSIONS.ACADEMIC_PLANNING.UPDATE,
+    PERMISSIONS.ACADEMIC_PLANNING.PUBLISH,
+    PERMISSIONS.ACADEMIC_PLANNING.DELETE,
+  ])('emits write-enforcement telemetry for %s', async (permission) => {
+    const { enforcer, logger } = createEnforcer();
+
+    await expect(
+      enforcer.requireMembershipPermission({ ...baseInput, permission }),
+    ).resolves.toMatchObject({ decision: 'ALLOWED', permission });
+    expect(logger.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: AUTHORIZATION_PERMISSION_ENFORCEMENT_EVENT,
+        metadata: expect.objectContaining({
+          decision: 'ALLOWED',
+          permission,
+        }),
+      }),
+    );
+  });
+
   it('allows ADMIN baseline profile membership', async () => {
     const { enforcer } = createEnforcer({
       membership: {

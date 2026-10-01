@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -60,8 +60,23 @@ type PrismaMock = {
 describe('LessonPlansService aggregate academic-plan read', () => {
   let service: LessonPlansService;
   let prisma: PrismaMock;
+  const permissionEnforcer = {
+    requireForInstitutionMembership: jest.fn().mockResolvedValue({
+      decision: 'ALLOWED',
+      permission: 'academic_planning.read',
+      legacyCapable: true,
+      profileAwareCapable: true,
+    }),
+  };
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+      decision: 'ALLOWED',
+      permission: 'academic_planning.read',
+      legacyCapable: true,
+      profileAwareCapable: true,
+    });
     prisma = {
       academicPlan: { findUnique: jest.fn().mockResolvedValue(planContext()) },
       institutionMembership: { findFirst: jest.fn().mockResolvedValue(null) },
@@ -70,6 +85,7 @@ describe('LessonPlansService aggregate academic-plan read', () => {
     service = new LessonPlansService(
       prisma as unknown as PrismaService,
       { log: jest.fn() } as unknown as AppLoggerService,
+      permissionEnforcer as never,
     );
   });
 
@@ -80,10 +96,7 @@ describe('LessonPlansService aggregate academic-plan read', () => {
     expect(prisma.lessonPlan.findMany).toHaveBeenCalledWith({
       where: { academicUnit: { academicPlanId: 'plan-a' } },
       include: { academicUnit: { select: { title: true } } },
-      orderBy: [
-        { academicUnit: { position: 'asc' } },
-        { position: 'asc' },
-      ],
+      orderBy: [{ academicUnit: { position: 'asc' } }, { position: 'asc' }],
     });
   });
 
@@ -117,7 +130,10 @@ describe('LessonPlansService aggregate academic-plan read', () => {
 
   it('lets a SUPER_ADMIN read the aggregate', async () => {
     await expect(
-      service.listForAcademicPlan({ ...teacher, role: Role.SUPER_ADMIN }, 'plan-a'),
+      service.listForAcademicPlan(
+        { ...teacher, role: Role.SUPER_ADMIN },
+        'plan-a',
+      ),
     ).resolves.toHaveLength(1);
   });
 
@@ -147,5 +163,64 @@ describe('LessonPlansService aggregate academic-plan read', () => {
       service.listForAcademicPlan(teacher, 'missing-plan'),
     ).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.lessonPlan.findMany).not.toHaveBeenCalled();
+  });
+
+  describe('Phase 14 aggregate permission enforcement', () => {
+    it('enforces academic_planning.read once for the authorized aggregate', async () => {
+      await expect(
+        service.listForAcademicPlan(teacher, 'plan-a'),
+      ).resolves.toHaveLength(1);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor: teacher,
+        institutionId: 'institution-a',
+        permission: 'academic_planning.read',
+        domain: 'academic-planning',
+        resourceType: 'academicPlan',
+        resourceId: 'plan-a',
+      });
+    });
+
+    it('fails closed when an otherwise authorized aggregate reader lacks permission', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+      await expect(
+        service.listForAcademicPlan(teacher, 'plan-a'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.lessonPlan.findMany).not.toHaveBeenCalled();
+    });
+
+    it('does not evaluate permission after legacy aggregate denial', async () => {
+      prisma.academicPlan.findUnique.mockResolvedValue(
+        planContext({ teacherId: 'other-teacher-profile' }),
+      );
+      await expect(
+        service.listForAcademicPlan(teacher, 'plan-a'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('preserves SUPER_ADMIN membership-not-applicable aggregate access', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+        decision: 'NOT_APPLICABLE',
+        permission: 'academic_planning.read',
+        legacyCapable: null,
+        profileAwareCapable: null,
+        reason: 'SUPER_ADMIN_NO_MEMBERSHIP',
+      });
+      await expect(
+        service.listForAcademicPlan(
+          { ...teacher, role: Role.SUPER_ADMIN },
+          'plan-a',
+        ),
+      ).resolves.toHaveLength(1);
+    });
   });
 });

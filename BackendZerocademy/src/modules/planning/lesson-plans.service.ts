@@ -13,6 +13,8 @@ import {
 } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
+import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permission-enforcer.service';
+import { PERMISSIONS } from '../../common/rbac/permission-catalog';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
@@ -40,6 +42,7 @@ export class LessonPlansService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLoggerService,
+    private readonly permissionEnforcer: MembershipPermissionEnforcer,
   ) {}
 
   async list(
@@ -47,7 +50,8 @@ export class LessonPlansService {
     planId: string,
     unitId: string,
   ): Promise<LessonPlan[]> {
-    await this.findUnitOrThrow(actor, planId, unitId);
+    const unit = await this.findUnitOrThrow(actor, planId, unitId);
+    await this.requireReadPermission(actor, unit, 'academicUnit', unit.id);
     return this.prisma.lessonPlan.findMany({
       where: { academicUnitId: unitId },
       orderBy: { position: 'asc' },
@@ -58,15 +62,20 @@ export class LessonPlansService {
     actor: AuthenticatedUser,
     planId: string,
   ): Promise<AggregateLessonPlan[]> {
-    await this.findPlanForReadOrThrow(actor, planId);
+    const plan = await this.findPlanForReadOrThrow(actor, planId);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.READ,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: planId,
+    });
 
     return this.prisma.lessonPlan.findMany({
       where: { academicUnit: { academicPlanId: planId } },
       include: { academicUnit: { select: { title: true } } },
-      orderBy: [
-        { academicUnit: { position: 'asc' } },
-        { position: 'asc' },
-      ],
+      orderBy: [{ academicUnit: { position: 'asc' } }, { position: 'asc' }],
     });
   }
 
@@ -76,11 +85,9 @@ export class LessonPlansService {
     unitId: string,
     lessonPlanId: string,
   ): Promise<LessonPlan> {
-    await this.findUnitOrThrow(actor, planId, unitId);
-    const lesson = await this.prisma.lessonPlan.findFirst({
-      where: { id: lessonPlanId, academicUnitId: unitId },
-    });
-    if (!lesson) throw new NotFoundException('Lesson plan not found');
+    const unit = await this.findUnitOrThrow(actor, planId, unitId);
+    const lesson = await this.findNestedLessonOrThrow(unitId, lessonPlanId);
+    await this.requireReadPermission(actor, unit, 'lessonPlan', lesson.id);
     return lesson;
   }
 
@@ -91,6 +98,13 @@ export class LessonPlansService {
     dto: CreateLessonPlanDto,
   ): Promise<LessonPlan> {
     const unit = await this.findUnitOrThrow(actor, planId, unitId, true);
+    await this.requireWritePermission(
+      actor,
+      unit,
+      PERMISSIONS.ACADEMIC_PLANNING.CREATE,
+      'academicUnit',
+      unit.id,
+    );
     const lessonDate = this.validateLessonDate(unit, dto.lessonDate);
     const lesson = await this.prisma.$transaction(async (tx) => {
       const last = await tx.lessonPlan.aggregate({
@@ -166,6 +180,13 @@ export class LessonPlansService {
   ): Promise<LessonPlan> {
     const unit = await this.findUnitOrThrow(actor, planId, unitId, true);
     const existing = await this.findNestedLessonOrThrow(unitId, lessonPlanId);
+    await this.requireWritePermission(
+      actor,
+      unit,
+      PERMISSIONS.ACADEMIC_PLANNING.UPDATE,
+      'lessonPlan',
+      existing.id,
+    );
     const lesson = await this.prisma.lessonPlan.update({
       where: { id: lessonPlanId },
       data: {
@@ -189,8 +210,15 @@ export class LessonPlansService {
     unitId: string,
     lessonPlanId: string,
   ): Promise<void> {
-    await this.findUnitOrThrow(actor, planId, unitId, true);
-    await this.findNestedLessonOrThrow(unitId, lessonPlanId);
+    const unit = await this.findUnitOrThrow(actor, planId, unitId, true);
+    const existing = await this.findNestedLessonOrThrow(unitId, lessonPlanId);
+    await this.requireWritePermission(
+      actor,
+      unit,
+      PERMISSIONS.ACADEMIC_PLANNING.DELETE,
+      'lessonPlan',
+      existing.id,
+    );
     await this.prisma.$transaction(async (tx) => {
       await tx.lessonPlan.delete({ where: { id: lessonPlanId } });
       const lessons = await tx.lessonPlan.findMany({
@@ -273,17 +301,54 @@ export class LessonPlansService {
 
     const assignment = plan.teacherAssignment;
     if (actor.role === Role.TEACHER && actor.profileId === assignment.teacherId)
-      return;
+      return plan;
     if (actor.role === Role.ADMIN && assignment.institutionId) {
       await assertActorCanAccessInstitution(
         this.prisma,
         actor,
         assignment.institutionId,
       );
-      return;
+      return plan;
     }
     if (actor.role !== Role.SUPER_ADMIN)
       throw new NotFoundException('Academic plan not found');
+    return plan;
+  }
+
+  private async requireReadPermission(
+    actor: AuthenticatedUser,
+    unit: UnitContext,
+    resourceType: 'academicUnit' | 'lessonPlan',
+    resourceId: string,
+  ): Promise<void> {
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: unit.academicPlan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.READ,
+      domain: 'academic-planning',
+      resourceType,
+      resourceId,
+    });
+  }
+
+  private async requireWritePermission(
+    actor: AuthenticatedUser,
+    unit: UnitContext,
+    permission:
+      | typeof PERMISSIONS.ACADEMIC_PLANNING.CREATE
+      | typeof PERMISSIONS.ACADEMIC_PLANNING.UPDATE
+      | typeof PERMISSIONS.ACADEMIC_PLANNING.DELETE,
+    resourceType: 'academicUnit' | 'lessonPlan',
+    resourceId: string,
+  ): Promise<void> {
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: unit.academicPlan.teacherAssignment.institutionId,
+      permission,
+      domain: 'academic-planning',
+      resourceType,
+      resourceId,
+    });
   }
 
   private async findNestedLessonOrThrow(unitId: string, lessonPlanId: string) {

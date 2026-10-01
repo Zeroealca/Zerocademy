@@ -7,6 +7,8 @@ import {
 import { AcademicPeriodStatus, AcademicPlanStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permission-enforcer.service';
+import { PERMISSIONS } from '../../common/rbac/permission-catalog';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 type UnitInput = {
@@ -25,24 +27,32 @@ export class AcademicUnitsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLoggerService,
+    private readonly permissionEnforcer: MembershipPermissionEnforcer,
   ) {}
   async list(actor: AuthenticatedUser, planId: string) {
     const plan = await this.plan(actor, planId);
+    await this.requireReadPermission(actor, plan);
     return this.prisma.academicUnit.findMany({
       where: { academicPlanId: plan.id },
       orderBy: { position: 'asc' },
     });
   }
   async one(actor: AuthenticatedUser, planId: string, id: string) {
-    await this.plan(actor, planId);
-    const unit = await this.prisma.academicUnit.findFirst({
-      where: { id, academicPlanId: planId },
-    });
-    if (!unit) throw new NotFoundException('Academic unit not found');
+    const plan = await this.plan(actor, planId);
+    const unit = await this.findUnitOrThrow(planId, id);
+    await this.requireReadPermission(actor, plan);
     return unit;
   }
   async create(actor: AuthenticatedUser, planId: string, dto: UnitInput) {
     const plan = await this.plan(actor, planId, true);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.CREATE,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: plan.id,
+    });
     const dates = this.dates(plan, dto.startDate, dto.endDate);
     const unit = await this.prisma.$transaction(async (tx) => {
       const last = await tx.academicUnit.aggregate({
@@ -69,7 +79,15 @@ export class AcademicUnitsService {
     dto: Partial<UnitInput>,
   ) {
     const plan = await this.plan(actor, planId, true);
-    const unit = await this.one(actor, planId, id);
+    const unit = await this.findUnitOrThrow(planId, id);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.UPDATE,
+      domain: 'academic-planning',
+      resourceType: 'academicUnit',
+      resourceId: unit.id,
+    });
     const dates = this.dates(
       plan,
       dto.startDate ?? this.day(unit.startDate),
@@ -87,8 +105,16 @@ export class AcademicUnitsService {
     return updated;
   }
   async remove(actor: AuthenticatedUser, planId: string, id: string) {
-    await this.plan(actor, planId, true);
-    await this.one(actor, planId, id);
+    const plan = await this.plan(actor, planId, true);
+    const unit = await this.findUnitOrThrow(planId, id);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.DELETE,
+      domain: 'academic-planning',
+      resourceType: 'academicUnit',
+      resourceId: unit.id,
+    });
     await this.prisma.$transaction(async (tx) => {
       await tx.academicUnit.delete({ where: { id } });
       const units = await tx.academicUnit.findMany({
@@ -109,7 +135,15 @@ export class AcademicUnitsService {
     this.log('ACADEMIC_UNIT_DELETED', actor.id, planId, id);
   }
   async reorder(actor: AuthenticatedUser, planId: string, unitIds: string[]) {
-    await this.plan(actor, planId, true);
+    const plan = await this.plan(actor, planId, true);
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.UPDATE,
+      domain: 'academic-planning',
+      resourceType: 'academicPlan',
+      resourceId: plan.id,
+    });
     if (new Set(unitIds).size !== unitIds.length)
       throw new BadRequestException('Unit ids must not repeat');
     await this.prisma.$transaction(async (tx) => {
@@ -170,6 +204,26 @@ export class AcademicUnitsService {
         throw new BadRequestException('Academic plan units are read-only');
     }
     return p;
+  }
+  private async findUnitOrThrow(planId: string, id: string) {
+    const unit = await this.prisma.academicUnit.findFirst({
+      where: { id, academicPlanId: planId },
+    });
+    if (!unit) throw new NotFoundException('Academic unit not found');
+    return unit;
+  }
+  private async requireReadPermission(
+    actor: AuthenticatedUser,
+    plan: Awaited<ReturnType<AcademicUnitsService['plan']>>,
+  ): Promise<void> {
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: plan.teacherAssignment.institutionId,
+      permission: PERMISSIONS.ACADEMIC_PLANNING.READ,
+      domain: 'academic-planning',
+      resourceType: 'academicUnit',
+      resourceId: plan.id,
+    });
   }
   private fields(dto: Partial<UnitInput>) {
     const o: Record<string, string | null> = {};
