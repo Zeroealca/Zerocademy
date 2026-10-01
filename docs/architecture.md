@@ -40,9 +40,11 @@ Execution: TeacherAssignment → ClassSession → optional LessonPlan reference
 
 `ClassSession` represents an actual teaching occurrence; it is not an AttendanceRecord. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it.
 
-## Future authorization work
+## Authorization and permissions architecture
 
-**Authorization & Permissions Architecture Spike** is future work, not part of Phase 2C. It may define a role-bounded permission catalog, effective permissions and reusable profiles, institution-scoped delegation without ADMIN self-escalation, and authorization derived from permission, resource scope, and domain/lifecycle rules.
+The role-bounded permissions architecture has a Phases 1–2 foundation: code-defined catalog and role allowed/baseline maps, a read-only effective-permission resolver, and a seed-synchronized persistence mirror for catalog and role boundaries. It is not enforced and does not alter current RBAC. The proposed model separates a code-controlled role catalog, permission profiles/effective permissions, resource scope, and domain/lifecycle rules. See [authorization-permissions.md](./authorization-permissions.md) for the decision, current-state inventory, parity matrix, persistence model, and staged migration plan.
+
+Phase 3 adds system-owned, live ADMIN and TEACHER permission profile compositions as persistence-only infrastructure. Phase 4 adds optional `InstitutionMembership` → `PermissionProfile` assignment persistence and domain validation (compatibility via `User.role`), still without profile-aware authorization. Phase 5 adds membership-aware effective permission resolution with live profile composition and null-profile baseline fallback, still without endpoint enforcement. Phase 6 adds a non-blocking ClassSession READ dual-evaluation pilot that observes profile-aware capability beside legacy RBAC without changing allow/deny. Phase 7 enforces `class_sessions.read` on ClassSession list/detail only (`Legacy AND Permission`), fail-closed on configuration/membership gaps, without a global PermissionsGuard. Global `User.role` remains a known multi-institution limitation tracked in DEMY-126.
 
 For the execution create flow, Planning also exposes the narrow read projection `GET /v1/academic-plans/:planId/lesson-plans`. It is scoped through the AcademicPlan and its TeacherAssignment, applies the existing Planning read authorization, and returns LessonPlans in AcademicUnit/LessonPlan pedagogical order with parent-unit label metadata. It avoids client-side per-unit LessonPlan loading; Unit-scoped LessonPlan CRUD remains unchanged.
 
@@ -79,6 +81,7 @@ npm run docker:up
 - [backend-architecture.md](./backend-architecture.md)
 - [frontend-architecture.md](./frontend-architecture.md)
 - [auth.md](./auth.md)
+- [authorization-permissions.md](./authorization-permissions.md)
 - [users.md](./users.md)
 - [database.md](./database.md)
 - [api-flow.md](./api-flow.md)

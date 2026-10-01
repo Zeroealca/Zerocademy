@@ -25,6 +25,16 @@ Relations: optional 1:1 `StudentProfile`, `TeacherProfile`, `RepresentativeProfi
 
 Indexes: `role`, `isActive`, `deletedAt`.
 
+### Permission catalog and role boundaries
+
+`Permission` is a global reference row with a unique canonical `key` and timestamps. `RoleAllowedPermission` is a system-owned join from the existing `Role` enum to a Permission, with a composite primary key `(role, permissionId)`, a restrictive permission foreign key, and indexes by role and permission. The normal Prisma seed upserts the code-defined catalog and transactionally reconciles role relationships; it never makes these rows authoritative for runtime authorization. Baseline permissions remain code-defined, and no profile or individual grant model exists in this phase.
+
+`PermissionProfile` adds a unique stable key, display name, target Role, system flag, and timestamps. `PermissionProfilePermission` has a composite `(permissionProfileId, permissionId)` identity with restrictive foreign keys. System profiles are synchronized from code and are live compositions.
+
+### InstitutionMembership permission profile assignment (Phase 4)
+
+`InstitutionMembership.permissionProfileId` is an optional FK to `PermissionProfile` with `onDelete: Restrict` and an index on the FK. Cardinality is one optional profile per membership (0..1). Existing rows remain valid when null. The assignment is configuration persistence only; production authorization still ignores it. Seed may backfill null ADMIN/TEACHER memberships to the matching system baseline using authoritative `User.role`.
+
 ### Academic profiles
 
 Separated from `User` so authentication stays lean and domain models can evolve independently.
@@ -66,6 +76,7 @@ Relations: profiles, academic levels/grades, academic periods, courses, subjects
 | institutionId, userId | UUID    | FKs; `@@unique([institutionId, userId])` |
 | role                  | Enum    | `ADMIN`, `TEACHER`                       |
 | isActive              | Boolean | Membership gate                          |
+| permissionProfileId   | UUID?   | Optional FK → `PermissionProfile` (`Restrict`); non-authoritative |
 
 See [memberships.md](./memberships.md).
 
@@ -230,8 +241,15 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20260920110000_academic_units_phase2`                | Ordered academic units per plan                                              |
 | `20260921090000_lesson_plans_phase2b`                 | Ordered lesson plans per academic unit                                       |
 | `20260923090000_class_sessions_phase2c1`              | ClassSession execution persistence and operational lifecycle foundation      |
+| `20260930090000_authorization_permission_catalog`     | Permission catalog + role allowed boundary tables                            |
+| `20260930100000_authorization_system_permission_profiles` | System permission profiles + composition join tables                     |
+| `20260930110000_authorization_membership_permission_profile_assignment` | Optional `InstitutionMembership.permissionProfileId` FK        |
 
 Never edit applied migration SQL retroactively.
+
+### Migration checksum / EOL note (Phase 8)
+
+Prisma stores SHA-256 checksums of `migration.sql` bytes. Neon applied historical migrations with LF line endings. On Windows with `core.autocrlf=true`, a CRLF working tree produces false “modified migration” checksum drift even when SQL content is identical. `.gitattributes` forces `eol=lf` for `BackendZerocademy/prisma/migrations/**/migration.sql`. Use `DATABASE_URL_UNPOOLED` (direct Neon URL) for `prisma migrate deploy`.
 
 ## Seeding
 
@@ -242,7 +260,7 @@ npm run prisma:seed:grades-demo -w backend-zerocademy  # catalog + demo institut
 npm run prisma:seed:dry-run -w backend-zerocademy    # no writes
 ```
 
-Creates a `SUPER_ADMIN` if none exists, upserts the **Ecuador reference catalog**, platform evaluation defaults, and the **demo institution** (`demo-grades`) so every current table has rows for QA. See [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md).
+Creates a `SUPER_ADMIN` if none exists, upserts the **Ecuador reference catalog**, platform evaluation defaults, and the **demo institution** (`demo-grades`) so every current table has rows for QA. Authorization seed steps synchronize the permission catalog, system profiles, and membership baseline assignments. See [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md).
 
 Super admins do not require an academic profile.
 
@@ -257,6 +275,8 @@ Super admins do not require an academic profile.
 ## Connection
 
 `DATABASE_URL` in `.env` (root for Docker, `BackendZerocademy/.env` for local API-only dev).
+
+For Prisma migrate against Neon, also set `DATABASE_URL_UNPOOLED` to the direct (non-pooler) URL. Pooled URLs are for the application runtime.
 
 ## Related documentation
 

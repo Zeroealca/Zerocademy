@@ -38,6 +38,9 @@ prisma/
 |------|---------|
 | Admin user | `SUPER_ADMIN` (if missing) |
 | HealthCheck | Probe row `id = 1` |
+| Permission catalog | Code-defined permissions and current role allowed boundaries |
+| Permission profiles | System-owned ADMIN/TEACHER baseline compositions |
+| Membership profile assignments | Optional backfill of null ADMIN/TEACHER memberships to system baselines |
 | Ecuador catalog | Levels, grades, subjects, `SubjectGradeLevel` links |
 | Platform evaluation | Grading scheme, grade scales, category/term templates, platform config |
 | Demo institution | Users of every role, memberships, periods, courses, enrollments, evaluation, assessments, grades, transition audit, revoked refresh token |
@@ -147,11 +150,14 @@ E2E tests: `npm run test:e2e:grades` from repository root. Those tests keep two 
 1. `seed.ts` loads environment and connects Prisma.
 2. `seedAdminUser()` — skip if email exists.
 3. `seedHealthCheck()` — upsert probe row.
-4. `runCatalogSeeds()` — for each catalog key (default `ecuador`):
+4. `seedPermissionCatalog()` — transactionally upsert canonical permission keys and reconcile `RoleAllowedPermission` rows (interactive timeout raised for Neon latency).
+5. `seedPermissionProfiles()` — synchronize system-owned ADMIN/TEACHER live profile compositions.
+6. `seedMembershipPermissionProfileAssignments()` — idempotently backfill null ADMIN/TEACHER memberships with matching system baselines using `User.role` (non-authoritative).
+7. `runCatalogSeeds()` — for each catalog key (default `ecuador`):
    - Curriculum transaction: levels → grades → subjects → subject–grade links
    - Platform evaluation defaults
-5. `seedGradesDemo()` — demo institution covering operational tables (unless `SEED_SKIP_DEMO=true`).
-6. Structured **summary** log (`SEED_RUN_SUMMARY`).
+8. `seedGradesDemo()` — demo institution covering operational tables (unless `SEED_SKIP_DEMO=true`).
+9. Structured **summary** log (`SEED_RUN_SUMMARY`).
 
 ## Idempotency
 

@@ -4,7 +4,19 @@
 
 Each user has one **system role** on `User.role`. NestJS `JwtAuthGuard` and `RolesGuard` enforce route access. Institution memberships add institution-scoped roles for admins and teachers.
 
-Granular permissions and ABAC remain future work.
+Granular permissions and ABAC remain future work. The approved design direction and incremental migration plan are documented in [authorization-permissions.md](./authorization-permissions.md); this document continues to describe the production RBAC behavior currently enforced.
+
+## Permission foundation (Phases 1–2)
+
+The backend contains a code-defined capability catalog, explicit role allowed/baseline maps, and an in-memory effective-permission resolver for migration parity tests. Phase 2 persists catalog keys and role allowed relationships as a seed-synchronized mirror. It is **not** connected to `RolesGuard`, controllers, services, JWT claims, or frontend gating. Existing RBAC remains the only production authorization mechanism; baseline permissions and runtime resolution remain code-defined. See [authorization-permissions.md](./authorization-permissions.md) for synchronization, removal safety, and deferred work.
+
+Phase 3 adds system-owned ADMIN and TEACHER baseline profile compositions only. They are role-bounded, live, and not consulted at runtime.
+
+Phase 4 persists an optional one-profile-per-membership assignment on `InstitutionMembership`, with domain validation against authoritative `User.role`. Assignment is not used for production authorization.
+
+Phase 5 adds membership-aware effective permission resolution (`resolveForMembership` / `canForMembership` / `canAnyForMembership`) with live profile composition, null-profile baseline fallback, and a code-defined Role allowed ceiling. Dual evaluation (`compareMembershipResolution`) is internal/test-only. **Production endpoint authorization still uses existing RBAC only**; profile-aware results are not wired to guards.
+
+Phase 6 adds a non-blocking ClassSession READ dual-evaluation pilot (`class_sessions.read`) that logs `MATCH` / `MISMATCH` / `NOT_APPLICABLE` / `ERROR` beside legacy decisions. Phase 7 enforces `class_sessions.read` on ClassSession list/detail with additive `Legacy AND Permission` semantics after legacy allow; fail-closed for missing membership and resolver errors; SUPER_ADMIN remains not-applicable. No global PermissionsGuard.
 
 ## System roles (updated)
 

@@ -1,2 +1,8 @@
 # Shell entrypoints run inside Linux containers and must preserve LF line endings.
 *.sh text eol=lf
+
+# Prisma migration checksums are SHA-256 of file bytes. Neon/Linux apply LF
+# checksums; Windows core.autocrlf=true otherwise rewrites working-tree SQL to
+# CRLF and breaks `prisma migrate deploy` with false "modified migration" drift.
+BackendZerocademy/prisma/migrations/**/migration.sql text eol=lf
+BackendZerocademy/prisma/migrations/**/migration_lock.toml text eol=lf
