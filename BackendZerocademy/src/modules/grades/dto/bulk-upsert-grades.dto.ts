@@ -1,8 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsDateString,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
@@ -12,21 +14,40 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export class BulkGradeEntryDto {
+export enum GradeSheetOperation {
+  SET = 'SET',
+  CLEAR = 'CLEAR',
+}
+
+export class GradeSheetEntryDto {
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   enrollmentId: string;
 
-  @ApiProperty({ example: 8.5, minimum: 0 })
+  @ApiProperty({ enum: GradeSheetOperation })
+  @IsEnum(GradeSheetOperation)
+  operation: GradeSheetOperation;
+
+  @ApiPropertyOptional({ example: 8.5, minimum: 0 })
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
-  score: number;
+  score?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
-  observations?: string;
+  observations?: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    description:
+      'Server updatedAt from the loaded entry sheet; null when no grade existed.',
+  })
+  @IsOptional()
+  @IsDateString()
+  expectedUpdatedAt: string | null;
 }
 
 export class BulkUpsertGradesDto {
@@ -34,10 +55,10 @@ export class BulkUpsertGradesDto {
   @IsUUID()
   assessmentId: string;
 
-  @ApiProperty({ type: [BulkGradeEntryDto] })
+  @ApiProperty({ type: [GradeSheetEntryDto] })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
-  @Type(() => BulkGradeEntryDto)
-  grades: BulkGradeEntryDto[];
+  @Type(() => GradeSheetEntryDto)
+  entries: GradeSheetEntryDto[];
 }

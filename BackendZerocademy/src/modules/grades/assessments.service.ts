@@ -4,8 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
+import { AssessmentStatus, Prisma, Role } from '@prisma/client';
 import { resolveActorInstitutionId } from '../../common/rbac/academic-scope.util';
+import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permission-enforcer.service';
+import { PERMISSIONS } from '../../common/rbac/permission-catalog';
 import { RoleUtils } from '../../common/rbac/role.utils';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
@@ -37,6 +39,7 @@ export class AssessmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLoggerService,
+    private readonly permissionEnforcer: MembershipPermissionEnforcer,
   ) {}
 
   async findAll(
@@ -135,6 +138,9 @@ export class AssessmentsService {
     if (actor.role !== Role.TEACHER) {
       throw new ForbiddenException('Only teachers can update assessments');
     }
+    if (existing.status === AssessmentStatus.PUBLISHED) {
+      throw new BadRequestException('Published assessments cannot be updated');
+    }
 
     const keys = {
       institutionId: dto.institutionId ?? existing.institutionId,
@@ -145,8 +151,7 @@ export class AssessmentsService {
         dto.teacherAssignmentId ?? existing.teacherAssignmentId,
       assessmentCategoryId:
         dto.assessmentCategoryId ?? existing.assessmentCategoryId,
-      maxScore:
-        dto.maxScore ?? decimalToNumber(existing.maxScore),
+      maxScore: dto.maxScore ?? decimalToNumber(existing.maxScore),
       weight: dto.weight ?? decimalToNumber(existing.weight),
     };
 
@@ -210,6 +215,9 @@ export class AssessmentsService {
     if (actor.role !== Role.TEACHER) {
       throw new ForbiddenException('Only teachers can delete assessments');
     }
+    if (existing.status === AssessmentStatus.PUBLISHED) {
+      throw new BadRequestException('Published assessments cannot be deleted');
+    }
 
     const gradeCount = await this.prisma.grade.count({
       where: { assessmentId: id },
@@ -229,6 +237,81 @@ export class AssessmentsService {
       message: 'Assessment deleted',
       metadata: { assessmentId: id, actorId: actor.id },
     });
+  }
+
+  async publish(
+    actor: AuthenticatedUser,
+    id: string,
+  ): Promise<AssessmentResponseDto> {
+    const assessment = await this.findAssessmentOrThrow(id);
+    await assertActorCanAccessAssessment(this.prisma, actor, assessment);
+    await assertTeacherOwnsAssignment(
+      this.prisma,
+      actor,
+      assessment.teacherAssignmentId,
+    );
+    await this.permissionEnforcer.requireForInstitutionMembership({
+      actor,
+      institutionId: assessment.institutionId,
+      permission: PERMISSIONS.ASSESSMENTS.UPDATE,
+      domain: 'grades',
+      resourceType: 'Assessment',
+      resourceId: assessment.id,
+    });
+    if (assessment.status === AssessmentStatus.PUBLISHED) {
+      throw new BadRequestException('Assessment is already published');
+    }
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        courseId: assessment.teacherAssignment.courseId,
+        academicPeriodId: assessment.academicPeriodId,
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
+    const grades = await this.prisma.grade.findMany({
+      where: { assessmentId: assessment.id },
+      select: { enrollmentId: true },
+    });
+    const rosterIds = new Set(enrollments.map((enrollment) => enrollment.id));
+    if (grades.some((grade) => !rosterIds.has(grade.enrollmentId))) {
+      throw new BadRequestException(
+        'Assessment has grades outside its eligible roster',
+      );
+    }
+    const published = await this.prisma.$transaction(async (tx) => {
+      await tx.assessmentRosterEntry.createMany({
+        data: enrollments.map((enrollment) => ({
+          assessmentId: assessment.id,
+          enrollmentId: enrollment.id,
+        })),
+      });
+      const updated = await tx.assessment.updateMany({
+        where: { id: assessment.id, status: AssessmentStatus.DRAFT },
+        data: {
+          status: AssessmentStatus.PUBLISHED,
+          publishedAt: new Date(),
+          publishedByUserId: actor.id,
+        },
+      });
+      if (updated.count !== 1)
+        throw new BadRequestException('Assessment is already published');
+      return tx.assessment.findUniqueOrThrow({
+        where: { id: assessment.id },
+        include: assessmentInclude,
+      });
+    });
+    this.logger.log({
+      context: GRADES_CONTEXT,
+      event: 'ASSESSMENT_PUBLISHED',
+      message: 'Assessment published',
+      metadata: {
+        assessmentId: id,
+        actorId: actor.id,
+        rosterCount: enrollments.length,
+      },
+    });
+    return toAssessmentResponseDto(published);
   }
 
   private async buildListWhere(
@@ -270,10 +353,7 @@ export class AssessmentsService {
     }
 
     if (actor.role === Role.ADMIN) {
-      const institutionId = await resolveActorInstitutionId(
-        this.prisma,
-        actor,
-      );
+      const institutionId = await resolveActorInstitutionId(this.prisma, actor);
       if (institutionId) {
         where.institutionId = institutionId;
       }

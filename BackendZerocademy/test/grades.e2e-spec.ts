@@ -54,7 +54,8 @@ describe('Grades module (e2e)', () => {
     expect(response.body.data.length).toBeGreaterThanOrEqual(1);
     expect(
       response.body.data.some(
-        (item: { title: string }) => item.title === DEMO_GRADES_ASSESSMENT_TITLE,
+        (item: { title: string }) =>
+          item.title === DEMO_GRADES_ASSESSMENT_TITLE,
       ),
     ).toBe(true);
   });
@@ -111,19 +112,24 @@ describe('Grades module (e2e)', () => {
       .set('Authorization', `Bearer ${teacherToken}`)
       .send({
         assessmentId,
-        grades: entrySheet.body.rows.map(
-          (row: { enrollmentId: string }, index: number) => ({
+        entries: entrySheet.body.rows.map(
+          (
+            row: { enrollmentId: string; updatedAt: string | null },
+            index: number,
+          ) => ({
             enrollmentId: row.enrollmentId,
+            operation: 'SET',
             score: index === 0 ? 9.25 : 6.5,
             observations: 'E2E bulk grade',
+            expectedUpdatedAt: row.updatedAt,
           }),
         ),
       })
       .expect(201);
 
-    expect(bulkResponse.body.createdCount + bulkResponse.body.updatedCount).toBe(
-      2,
-    );
+    expect(
+      bulkResponse.body.createdCount + bulkResponse.body.updatedCount,
+    ).toBe(2);
 
     const studentToken = await login(
       DEMO_GRADES_CREDENTIALS.students[0].email,

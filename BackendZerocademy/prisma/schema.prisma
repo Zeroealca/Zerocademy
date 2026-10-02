@@ -113,11 +113,14 @@ model User {
   institutionMemberships            InstitutionMembership[]
   academicPeriodTransitions         AcademicPeriodTransition[]
   attendanceRecordsRecorded         AttendanceRecord[]         @relation("AttendanceRecordedBy")
+  classSessionAttendanceRecorded    ClassSessionAttendanceRecord[] @relation("ClassSessionAttendanceRecordedBy")
   attendanceJustificationsSubmitted AttendanceJustification[]  @relation("AttendanceJustificationSubmittedBy")
   attendanceJustificationsReviewed  AttendanceJustification[]  @relation("AttendanceJustificationReviewedBy")
   academicPlansCreated              AcademicPlan[]             @relation("AcademicPlanCreatedBy")
   academicPlansPublished            AcademicPlan[]             @relation("AcademicPlanPublishedBy")
   representativeStudentRelations    RepresentativeStudent[]    @relation("RepresentativeStudentRepresentative")
+  gradeAuditEvents                  GradeAuditEvent[]          @relation("GradeAuditActor")
+  assessmentsPublished              Assessment[]               @relation("AssessmentPublishedBy")
   selectedAcademicPeriod            AcademicPeriod?            @relation("UserSelectedPeriod", fields: [selectedAcademicPeriodId], references: [id], onDelete: SetNull)
 
   @@index([role])
@@ -638,6 +641,7 @@ model ClassSession {
   updatedAt           DateTime           @updatedAt
   teacherAssignment   TeacherAssignment  @relation(fields: [teacherAssignmentId], references: [id], onDelete: Restrict)
   lessonPlan          LessonPlan?        @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+  attendanceRecords   ClassSessionAttendanceRecord[]
 
   @@index([teacherAssignmentId, scheduledDate])
   @@index([teacherAssignmentId, occurredOn])
@@ -659,7 +663,10 @@ model Enrollment {
   course            Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
   academicPeriod    AcademicPeriod     @relation(fields: [academicPeriodId], references: [id], onDelete: Cascade)
   grades            Grade[]
+  gradeAuditEvents  GradeAuditEvent[]
+  assessmentRosterEntries AssessmentRosterEntry[]
   attendanceRecords AttendanceRecord[]
+  classSessionAttendanceRecords ClassSessionAttendanceRecord[]
 
   @@unique([studentId, courseId, academicPeriodId])
   @@index([studentId])
@@ -696,6 +703,26 @@ model AttendanceRecord {
   @@index([courseId, date])
   @@index([recordedByUserId])
   @@map("attendance_records")
+}
+
+/// Attendance recorded for one enrolled student at one actual class session.
+model ClassSessionAttendanceRecord {
+  id               String             @id @default(uuid())
+  classSessionId   String
+  enrollmentId     String
+  status           AttendanceStatus
+  note             String?            @db.VarChar(500)
+  recordedByUserId String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  classSession     ClassSession       @relation(fields: [classSessionId], references: [id], onDelete: Restrict)
+  enrollment       Enrollment         @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  recordedByUser   User               @relation("ClassSessionAttendanceRecordedBy", fields: [recordedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([classSessionId, enrollmentId])
+  @@index([enrollmentId])
+  @@index([classSessionId, status])
+  @@map("class_session_attendance_records")
 }
 
 model AttendanceJustification {
@@ -752,6 +779,17 @@ enum RoundingStrategy {
   ROUND_DOWN
   ROUND_UP
   TRUNCATE
+}
+
+enum GradeAuditOperation {
+  CREATED
+  UPDATED
+  CLEARED
+}
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
 }
 
 /// Numeric grading scale definition (institution-owned or global template).
@@ -927,6 +965,9 @@ model Assessment {
   maxScore             Decimal  @db.Decimal(6, 2)
   weight               Decimal  @db.Decimal(5, 2)
   assessmentDate       DateTime @db.Date
+  status               AssessmentStatus @default(DRAFT)
+  publishedAt          DateTime?
+  publishedByUserId    String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -936,7 +977,10 @@ model Assessment {
   subject            Subject            @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   teacherAssignment  TeacherAssignment  @relation(fields: [teacherAssignmentId], references: [id], onDelete: Restrict)
   assessmentCategory AssessmentCategory @relation(fields: [assessmentCategoryId], references: [id], onDelete: Restrict)
+  publishedBy        User?              @relation("AssessmentPublishedBy", fields: [publishedByUserId], references: [id], onDelete: Restrict)
   grades             Grade[]
+  gradeAuditEvents   GradeAuditEvent[]
+  rosterEntries      AssessmentRosterEntry[]
 
   @@index([institutionId])
   @@index([academicPeriodId])
@@ -944,9 +988,26 @@ model Assessment {
   @@index([subjectId])
   @@index([teacherAssignmentId])
   @@index([assessmentCategoryId])
+  @@index([status])
+  @@index([publishedByUserId])
   @@index([academicPeriodId, teacherAssignmentId])
   @@index([institutionId, academicPeriodId, academicTermId])
   @@map("assessments")
+}
+
+model AssessmentRosterEntry {
+  id           String     @id @default(uuid())
+  assessmentId String
+  enrollmentId String
+  createdAt    DateTime   @default(now())
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+
+  @@unique([assessmentId, enrollmentId])
+  @@index([assessmentId])
+  @@index([enrollmentId])
+  @@map("assessment_roster_entries")
 }
 
 /// Score recorded for a student enrollment on a specific assessment.
@@ -969,6 +1030,32 @@ model Grade {
   @@index([enrollmentId])
   @@index([gradingSchemeId])
   @@map("grades")
+}
+
+/// Append-only history for grade state changes. It references the durable
+/// assessment/enrollment identity rather than a Grade row that can be cleared.
+model GradeAuditEvent {
+  id                   String              @id @default(uuid())
+  assessmentId         String
+  enrollmentId         String
+  actorId              String
+  operation            GradeAuditOperation
+  previousScore        Decimal?            @db.Decimal(6, 2)
+  newScore             Decimal?            @db.Decimal(6, 2)
+  previousObservations String?
+  newObservations      String?
+  reason               String?
+  createdAt            DateTime            @default(now())
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  actor      User       @relation("GradeAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([assessmentId])
+  @@index([enrollmentId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("grade_audit_events")
 }
 
 // Bootstrap health probe — kept for infrastructure checks.

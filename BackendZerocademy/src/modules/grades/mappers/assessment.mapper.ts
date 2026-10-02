@@ -48,6 +48,8 @@ export function toAssessmentResponseDto(
     maxScore: decimalToNumber(assessment.maxScore),
     weight: decimalToNumber(assessment.weight),
     assessmentDate: assessment.assessmentDate.toISOString().slice(0, 10),
+    status: assessment.status,
+    publishedAt: assessment.publishedAt?.toISOString() ?? null,
     createdAt: assessment.createdAt.toISOString(),
     updatedAt: assessment.updatedAt.toISOString(),
   };

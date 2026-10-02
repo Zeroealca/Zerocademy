@@ -112,6 +112,7 @@ export class ReportCardsService {
         enrollment.course.institutionId,
         academicPeriodId,
         enrollment.course.id,
+        true,
       ),
       resolveCalculationConfig(
         this.prisma,
@@ -247,7 +248,7 @@ export class ReportCardsService {
     const snapshotSchemes = await this.prisma.grade.findMany({
       where: {
         enrollmentId,
-        assessment: { academicPeriodId },
+        assessment: { academicPeriodId, status: 'PUBLISHED' },
         gradingSchemeId: { not: null },
       },
       distinct: ['gradingSchemeId'],

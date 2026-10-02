@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AssessmentStatus } from '@prisma/client';
 
 export class AssessmentResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -57,6 +58,12 @@ export class AssessmentResponseDto {
 
   @ApiProperty({ format: 'date' })
   assessmentDate: string;
+
+  @ApiProperty({ enum: AssessmentStatus })
+  status: AssessmentStatus;
+
+  @ApiPropertyOptional({ format: 'date-time', nullable: true })
+  publishedAt: string | null;
 
   @ApiProperty({ format: 'date-time' })
   createdAt: string;

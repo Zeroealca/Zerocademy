@@ -85,6 +85,7 @@ export class AcademicPerformanceService {
       enrollment.enrollmentId,
       enrollment.institutionId,
       query.academicPeriodId,
+      true,
     );
 
     return {
@@ -124,6 +125,7 @@ export class AcademicPerformanceService {
       {
         subjectId: query.subjectId,
         academicTermId: query.academicTermId,
+        publishedOnly: true,
       },
     );
 
@@ -196,6 +198,7 @@ export class AcademicPerformanceService {
       enrollment.enrollmentId,
       enrollment.institutionId,
       query.academicPeriodId,
+      true,
     );
 
     const gradedSubjects = subjects.filter(
@@ -447,6 +450,7 @@ export class AcademicPerformanceService {
       enrollment.enrollmentId,
       enrollment.institutionId,
       query.academicPeriodId,
+      actor.role === Role.REPRESENTATIVE,
     );
 
     const gradedSubjects = subjects.filter(
@@ -653,11 +657,14 @@ export class AcademicPerformanceService {
     enrollmentId: string,
     institutionId: string,
     academicPeriodId: string,
+    publishedOnly = false,
   ): Promise<SubjectAverageResponseDto[]> {
     return this.getEnrollmentSubjectAverages(
       enrollmentId,
       institutionId,
       academicPeriodId,
+      undefined,
+      publishedOnly,
     );
   }
 
@@ -670,6 +677,7 @@ export class AcademicPerformanceService {
     institutionId: string,
     academicPeriodId: string,
     courseId?: string,
+    publishedOnly = false,
   ): Promise<SubjectAverageResponseDto[]> {
     const config = await resolveCalculationConfig(
       this.prisma,
@@ -682,12 +690,14 @@ export class AcademicPerformanceService {
       this.prisma,
       enrollmentId,
       academicPeriodId,
+      { publishedOnly },
     );
 
     const gradedSubjects = await loadDistinctSubjectsForEnrollment(
       this.prisma,
       enrollmentId,
       academicPeriodId,
+      publishedOnly,
     );
 
     const assignedSubjects = courseId

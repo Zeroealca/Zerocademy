@@ -25,6 +25,7 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { BulkGradeResultDto } from './dto/bulk-grade-result.dto';
 import { BulkUpsertGradesDto } from './dto/bulk-upsert-grades.dto';
 import { CreateGradeDto } from './dto/create-grade.dto';
+import { CorrectPublishedGradeDto } from './dto/correct-published-grade.dto';
 import { GradeEntrySheetResponseDto } from './dto/grade-entry-sheet-response.dto';
 import { GradeListResponseDto } from './dto/grade-list-response.dto';
 import { GradeResponseDto } from './dto/grade-response.dto';
@@ -89,9 +90,29 @@ export class GradesController {
     return this.gradesService.create(actor, dto);
   }
 
+  @Post('assessments/:assessmentId/corrections')
+  @ApiRequireRolesStrict(...GRADES_WRITE_ROLES)
+  @ApiOperation({
+    summary: 'Correct a published grade against its frozen roster',
+    description:
+      'SET can create a missing published grade and CLEAR removes a grade without removing its roster entry. Every mutation requires a non-blank reason and the loaded updatedAt baseline (or null for absence); stale writes return 409.',
+  })
+  @ApiOkResponse({ type: GradeResponseDto })
+  correctPublished(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('assessmentId', ParseUUIDPipe) assessmentId: string,
+    @Body() dto: CorrectPublishedGradeDto,
+  ): Promise<GradeResponseDto | null> {
+    return this.gradesService.correctPublished(actor, assessmentId, dto);
+  }
+
   @Post('bulk')
   @ApiRequireRolesStrict(...GRADES_WRITE_ROLES)
-  @ApiOperation({ summary: 'Bulk create or update grades for an assessment' })
+  @ApiOperation({
+    summary: 'Atomically save intended grade-sheet SET and CLEAR operations',
+    description:
+      'Each entry must include its server revision baseline. The request rolls back completely on validation or stale-write conflicts.',
+  })
   @ApiCreatedResponse({ type: BulkGradeResultDto })
   bulkUpsert(
     @CurrentUser() actor: AuthenticatedUser,

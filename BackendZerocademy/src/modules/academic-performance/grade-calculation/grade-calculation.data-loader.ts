@@ -1,4 +1,4 @@
-import { EnrollmentStatus } from '@prisma/client';
+import { AssessmentStatus, EnrollmentStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { decimalToNumber } from '../../academic-evaluation/academic-evaluation.validation';
 import type { GradeCalculationInput } from './grade-calculation.types';
@@ -7,7 +7,11 @@ export async function loadGradesForEnrollment(
   prisma: PrismaService,
   enrollmentId: string,
   academicPeriodId: string,
-  filters?: { subjectId?: string; academicTermId?: string },
+  filters?: {
+    subjectId?: string;
+    academicTermId?: string;
+    publishedOnly?: boolean;
+  },
 ): Promise<GradeCalculationInput[]> {
   const grades = await prisma.grade.findMany({
     where: {
@@ -17,6 +21,9 @@ export async function loadGradesForEnrollment(
         ...(filters?.subjectId ? { subjectId: filters.subjectId } : {}),
         ...(filters?.academicTermId
           ? { academicTermId: filters.academicTermId }
+          : {}),
+        ...(filters?.publishedOnly
+          ? { status: AssessmentStatus.PUBLISHED }
           : {}),
       },
     },
@@ -109,11 +116,13 @@ export async function loadDistinctSubjectsForEnrollment(
   prisma: PrismaService,
   enrollmentId: string,
   academicPeriodId: string,
+  publishedOnly = false,
 ): Promise<Array<{ subjectId: string; subjectName: string }>> {
   const assessments = await prisma.assessment.findMany({
     where: {
       academicPeriodId,
       grades: { some: { enrollmentId } },
+      ...(publishedOnly ? { status: AssessmentStatus.PUBLISHED } : {}),
     },
     distinct: ['subjectId'],
     select: {

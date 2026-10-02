@@ -82,6 +82,19 @@ export class AssessmentsController {
     return this.assessmentsService.update(actor, id, dto);
   }
 
+  @Post(':id/publish')
+  @ApiRequireRolesStrict(...ASSESSMENTS_WRITE_ROLES)
+  @ApiOperation({
+    summary: 'Publish an assessment and freeze its eligible enrollment roster',
+  })
+  @ApiOkResponse({ type: AssessmentResponseDto })
+  publish(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<AssessmentResponseDto> {
+    return this.assessmentsService.publish(actor, id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiRequireRolesStrict(...ASSESSMENTS_WRITE_ROLES)

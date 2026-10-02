@@ -22,6 +22,9 @@ export class GradeEntryRowDto {
 
   @ApiPropertyOptional()
   observations: string | null;
+
+  @ApiPropertyOptional({ format: 'date-time' })
+  updatedAt: string | null;
 }
 
 export class GradeEntrySheetResponseDto {
