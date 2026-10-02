@@ -48,6 +48,14 @@ Future work can add exports, notifications, and a session/subject layer without 
 
 The current attendance contract does **not** yet reference `ClassSession`: it remains course-level and enrollment/date-unique. A future session/subject attendance phase must explicitly choose its record ownership and uniqueness rules before adding a session relationship, so multiple subject sessions on one calendar day cannot silently conflict with the present `@@unique([enrollmentId, date])` invariant.
 
+## ClassSession attendance Phase 1
+
+ClassSession attendance is now a separate backend aggregate and does not change the daily `AttendanceRecord`, reports, history, or justifications. `ClassSessionAttendanceRecord` uses the existing `AttendanceStatus` enum and identifies one result by `ClassSession + Enrollment`; its restrictive foreign keys preserve historical records. Strict owner-TEACHER routes are `GET` and `PUT /v1/teacher-assignments/:teacherAssignmentId/class-sessions/:classSessionId/attendance`. GET uses one `attendance.read` membership evaluation and returns eligible active Enrollment rows with null status/note until saved. PUT uses one `attendance.write` evaluation, requires a COMPLETED ClassSession and non-CLOSED/non-ARCHIVED period, validates the submitted set exactly matches the eligible roster, and transactionally replaces the complete attendance state. SCHEDULED/CANCELLED sessions reject writes; cancellation never deletes records. ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE session-attendance access remains deferred.
+
+## ClassSession attendance Phase 2
+
+Teachers access session attendance from the completed ClassSession card in `/academic-plans/:id/execution`, which links to `/academic-plans/:id/execution/attendance/:classSessionId`. The screen uses the nested ClassSession attendance API through TanStack Query while retaining uncommitted selections locally. Unrecorded statuses remain unselected, `Marcar todos como presentes` changes only the local draft, and one explicit save is enabled only when the complete roster has a selected status. Notes are optional. Read-only, scheduled, cancelled, empty, loading, and error states remain explicit; failed saves retain the local draft. The layout uses responsive roster cards and accessible labels without changing daily Attendance UI. Environment integration QA remains pending because the Phase 1 migration cannot safely be applied until existing Neon migration drift is resolved without reset.
+
 ## Phase 2 reporting
 
 Attendance records remain the reporting source of truth; no summary table is stored. Student history uses the historical enrollment relationship and filters actual records by period, date range, and optional status. Course reports aggregate `AttendanceRecord` by enrollment and status, then join the course roster in a bounded course query.

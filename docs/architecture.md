@@ -70,7 +70,9 @@ Phases 21–22 complete AcademicUnit capability migration: DELETE applies `acade
 
 Phase 23 applies the same service-level model to LessonPlan's ordinary writes. CREATE reuses the loaded `AcademicUnit → AcademicPlan → TeacherAssignment → institutionId` context for one `academic_planning.create` evaluation before date validation and its position-allocation transaction. UPDATE verifies nested LessonPlan membership first, then uses that same context for one `academic_planning.update` evaluation before direct persistence. Capability remains separate from resource scope and lifecycle; DELETE and REORDER are intentionally outside this slice.
 
-Phase 24 applies `academic_planning.delete` to LessonPlan hard deletion. Unit/Plan/Assignment context and nested LessonPlan isolation are resolved before one capability evaluation, outside the existing delete/temporary-position/final-position compaction transaction. Prisma retains the dependent reference semantics: ClassSessions are not deleted and their optional LessonPlan references become null. REORDER remains outside this slice.
+Phase 24 applies `academic_planning.delete` to LessonPlan hard deletion. Unit/Plan/Assignment context and nested LessonPlan isolation are resolved before one capability evaluation, outside the existing delete/temporary-position/final-position compaction transaction. Prisma retains the dependent reference semantics: ClassSessions are not deleted and their optional LessonPlan references become null.
+
+Phase 25 completes individual-resource Academic Planning authorization. Parent-scoped LessonPlan REORDER resolves the existing `AcademicUnit → AcademicPlan → TeacherAssignment → institutionId` context and legacy owner-TEACHER/lifecycle boundary first, then evaluates `academic_planning.update` once for the Unit before duplicate or exact-set validation. The complete submitted set is still verified in the existing temporary-position/final-position transaction, without per-row authorization. Permission denials, missing memberships, and resolver failures fail closed before transaction work. The multi-institution global/paginated AcademicPlan list remains a separate, deferred collection-authorization design problem; ARCHIVED-period mutation policy remains deferred.
 
 For the execution create flow, Planning also exposes the narrow read projection `GET /v1/academic-plans/:planId/lesson-plans`. It is scoped through the AcademicPlan and its TeacherAssignment, applies the existing Planning read authorization, and returns LessonPlans in AcademicUnit/LessonPlan pedagogical order with parent-unit label metadata. It avoids client-side per-unit LessonPlan loading; Unit-scoped LessonPlan CRUD remains unchanged.
 
@@ -118,6 +120,7 @@ npm run docker:up
 - [academic-evaluation.md](./academic-evaluation.md)
 - [grades.md](./grades.md)
 - [assessments.md](./assessments.md)
+- [assessments-grades-current-state-audit.md](./assessments-grades-current-state-audit.md)
 - [grading-workflow.md](./grading-workflow.md)
 - [grade-calculation-engine.md](./grade-calculation-engine.md)
 - [report-cards.md](./report-cards.md)

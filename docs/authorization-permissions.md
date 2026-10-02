@@ -259,7 +259,15 @@ The capability is additive to neither scope nor lifecycle: it may restrict a leg
 
 `DELETE /v1/academic-plans/:planId/units/:unitId/lesson-plans/:lessonPlanId` now requires `academic_planning.delete`. The service loads the existing Unit/Plan/TeacherAssignment/Period context, confirms owner-TEACHER write scope and nested LessonPlan isolation, then evaluates the aggregate delete capability exactly once before starting the destructive transaction.
 
-Deletion remains a hard delete. The existing transaction deletes the LessonPlan and collision-safely compacts remaining sibling positions using temporary then final positions. Database referential behavior remains authoritative: dependent ClassSessions survive and their optional `lessonPlanId` is set null. Missing membership and resolver/configuration failures fail closed before transaction work; null-profile fallback, DRAFT-only/PUBLISHED read-only behavior, CLOSED restriction, and existing ARCHIVED mutability remain unchanged. REORDER remains legacy-only and deferred as its own bulk-operation slice.
+Deletion remains a hard delete. The existing transaction deletes the LessonPlan and collision-safely compacts remaining sibling positions using temporary then final positions. Database referential behavior remains authoritative: dependent ClassSessions survive and their optional `lessonPlanId` is set null. Missing membership and resolver/configuration failures fail closed before transaction work; null-profile fallback, DRAFT-only/PUBLISHED read-only behavior, CLOSED restriction, and existing ARCHIVED mutability remain unchanged.
+
+## Phase 25 LessonPlan REORDER permission enforcement
+
+`PATCH /v1/academic-plans/:planId/units/:unitId/lesson-plans/reorder` requires `academic_planning.update`. The service first loads the authoritative Unit/Plan/TeacherAssignment/Period hierarchy and preserves legacy owner-TEACHER scope, DRAFT-only mutation, PUBLISHED read-only behavior, and CLOSED-period rejection. It then evaluates the capability exactly once using the parent Unit and its server-derived institution context, before duplicate or exact-set validation and before opening the transaction. ADMIN, SUPER_ADMIN, STUDENT, and REPRESENTATIVE remain legacy-denied before capability evaluation; a separately authorized TEACHER cannot broaden ownership to another teacher's Unit.
+
+`lessonPlanIds` remains a complete ordered Unit set. Duplicate IDs are rejected, and the existing transaction verifies exact membership before making collision-safe temporary-position updates followed by final contiguous positions. No permission evaluation occurs per LessonPlan, position, or transaction row. Restrictive profiles, missing contextual memberships, and resolver/configuration errors fail closed with no transaction or position writes; null profiles retain the TEACHER baseline fallback. The shared `AUTHORIZATION_PERMISSION_ENFORCEMENT` telemetry records the one capability decision. ARCHIVED remains mutable under the existing lifecycle gate and is tracked as policy debt.
+
+This completes Academic Planning individual-resource authorization for AcademicPlan detail/writes, AcademicUnit, and LessonPlan. `GET /v1/academic-plans` remains deferred because its global/paginated collection requires a separate authorization design that avoids per-row membership resolution.
 
 ### Finalized product decisions
 

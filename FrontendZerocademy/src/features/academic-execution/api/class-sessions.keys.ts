@@ -10,5 +10,13 @@ export const classSessionsKeys = {
   details: (teacherAssignmentId: string) =>
     [...classSessionsKeys.assignment(teacherAssignmentId), "detail"] as const,
   detail: (teacherAssignmentId: string, classSessionId: string) =>
-    [...classSessionsKeys.details(teacherAssignmentId), classSessionId] as const,
+    [
+      ...classSessionsKeys.details(teacherAssignmentId),
+      classSessionId,
+    ] as const,
+  attendance: (teacherAssignmentId: string, classSessionId: string) =>
+    [
+      ...classSessionsKeys.detail(teacherAssignmentId, classSessionId),
+      "attendance",
+    ] as const,
 };

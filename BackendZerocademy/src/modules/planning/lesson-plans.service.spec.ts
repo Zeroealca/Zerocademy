@@ -706,6 +706,87 @@ describe('LessonPlansService', () => {
     );
   });
 
+  describe('Phase 25 LessonPlan REORDER permission enforcement', () => {
+    it('requires academic_planning.update once from the authoritative parent Unit before reorder validation and transaction work', async () => {
+      await service.reorder(teacher, 'plan-a', 'unit-a', [
+        'lesson-a',
+        'lesson-b',
+      ]);
+
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).toHaveBeenCalledWith({
+        actor: teacher,
+        institutionId: 'institution-a',
+        permission: 'academic_planning.update',
+        domain: 'academic-planning',
+        resourceType: 'academicUnit',
+        resourceId: 'unit-a',
+      });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      'restrictive permission',
+      'missing contextual membership',
+      'resolver/configuration error',
+    ])('fails closed for %s before reorder persistence', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockRejectedValue(
+        new ForbiddenException('Access denied'),
+      );
+
+      await expect(
+        service.reorder(teacher, 'plan-a', 'unit-a', ['lesson-a', 'lesson-b']),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.lessonPlan.update).not.toHaveBeenCalled();
+    });
+
+    it('retains null-profile baseline fallback for an owner reorder', async () => {
+      permissionEnforcer.requireForInstitutionMembership.mockResolvedValue({
+        decision: 'ALLOWED',
+        permission: 'academic_planning.update',
+        legacyCapable: true,
+        profileAwareCapable: true,
+        permissionProfileKey: null,
+      });
+
+      await expect(
+        service.reorder(teacher, 'plan-a', 'unit-a', ['lesson-a', 'lesson-b']),
+      ).resolves.toBeUndefined();
+    });
+
+    it('does not evaluate reorder permission for another teacher', async () => {
+      prisma.academicUnit.findFirst.mockResolvedValue(
+        unitContext('plan-a', 'unit-a', 'teacher-b-profile'),
+      );
+
+      await expect(
+        service.reorder(teacher, 'plan-a', 'unit-a', ['lesson-a']),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        permissionEnforcer.requireForInstitutionMembership,
+      ).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it.each([admin, superAdmin, student, representative])(
+      'does not evaluate reorder permission for legacy-denied %s',
+      async (unauthorizedActor) => {
+        await expect(
+          service.reorder(unauthorizedActor, 'plan-a', 'unit-a', ['lesson-a']),
+        ).rejects.toBeInstanceOf(NotFoundException);
+        expect(
+          permissionEnforcer.requireForInstitutionMembership,
+        ).not.toHaveBeenCalled();
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+      },
+    );
+  });
+
   it('creates a lesson in a teacher owned unit with a contained calendar date', async () => {
     prisma.academicUnit.findFirst.mockResolvedValue({
       ...unitContext(),

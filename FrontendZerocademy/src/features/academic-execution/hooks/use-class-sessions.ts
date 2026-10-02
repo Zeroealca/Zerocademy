@@ -6,11 +6,14 @@ import {
   fetchClassSession,
   fetchClassSessions,
   updateClassSession,
+  fetchClassSessionAttendance,
+  replaceClassSessionAttendance,
 } from "@/features/academic-execution/api/class-sessions.api";
 import { classSessionsKeys } from "@/features/academic-execution/api/class-sessions.keys";
 import type {
   CreateClassSessionInput,
   UpdateClassSessionInput,
+  ReplaceClassSessionAttendanceInput,
 } from "@/features/academic-execution/types";
 
 export function useClassSessions(teacherAssignmentId: string) {
@@ -18,6 +21,45 @@ export function useClassSessions(teacherAssignmentId: string) {
     queryKey: classSessionsKeys.list(teacherAssignmentId),
     queryFn: () => fetchClassSessions(teacherAssignmentId),
     enabled: Boolean(teacherAssignmentId),
+  });
+}
+
+export function useClassSessionAttendance(
+  teacherAssignmentId: string,
+  classSessionId: string,
+) {
+  return useQuery({
+    queryKey: classSessionsKeys.attendance(teacherAssignmentId, classSessionId),
+    queryFn: () =>
+      fetchClassSessionAttendance(teacherAssignmentId, classSessionId),
+    enabled: Boolean(teacherAssignmentId && classSessionId),
+  });
+}
+
+export function useReplaceClassSessionAttendance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      teacherAssignmentId,
+      classSessionId,
+      payload,
+    }: {
+      teacherAssignmentId: string;
+      classSessionId: string;
+      payload: ReplaceClassSessionAttendanceInput;
+    }) =>
+      replaceClassSessionAttendance(
+        teacherAssignmentId,
+        classSessionId,
+        payload,
+      ),
+    onSuccess: (_, { teacherAssignmentId, classSessionId }) =>
+      queryClient.invalidateQueries({
+        queryKey: classSessionsKeys.attendance(
+          teacherAssignmentId,
+          classSessionId,
+        ),
+      }),
   });
 }
 
@@ -45,7 +87,10 @@ export function useCreateClassSession() {
   const invalidateClassSessions = useInvalidateClassSessions();
 
   return useMutation({
-    mutationFn: ({ teacherAssignmentId, payload }: {
+    mutationFn: ({
+      teacherAssignmentId,
+      payload,
+    }: {
       teacherAssignmentId: string;
       payload: CreateClassSessionInput;
     }) => createClassSession(teacherAssignmentId, payload),
@@ -59,17 +104,18 @@ export function useUpdateClassSession() {
   const invalidateClassSessions = useInvalidateClassSessions();
 
   return useMutation({
-    mutationFn: ({ teacherAssignmentId, classSessionId, payload }: {
+    mutationFn: ({
+      teacherAssignmentId,
+      classSessionId,
+      payload,
+    }: {
       teacherAssignmentId: string;
       classSessionId: string;
       payload: UpdateClassSessionInput;
     }) => updateClassSession(teacherAssignmentId, classSessionId, payload),
     onSuccess: (_, { teacherAssignmentId, classSessionId }) => {
       void queryClient.invalidateQueries({
-        queryKey: classSessionsKeys.detail(
-          teacherAssignmentId,
-          classSessionId,
-        ),
+        queryKey: classSessionsKeys.detail(teacherAssignmentId, classSessionId),
       });
       return invalidateClassSessions(teacherAssignmentId);
     },

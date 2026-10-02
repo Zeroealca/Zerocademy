@@ -3,6 +3,8 @@ import type {
   ClassSession,
   CreateClassSessionInput,
   UpdateClassSessionInput,
+  ClassSessionAttendanceRoster,
+  ReplaceClassSessionAttendanceInput,
 } from "@/features/academic-execution/types";
 
 const classSessionsPath = (teacherAssignmentId: string) =>
@@ -39,4 +41,22 @@ export const updateClassSession = (
       method: "PATCH",
       body: payload,
     },
+  );
+
+export const fetchClassSessionAttendance = (
+  teacherAssignmentId: string,
+  classSessionId: string,
+) =>
+  apiClient<ClassSessionAttendanceRoster>(
+    `${classSessionsPath(teacherAssignmentId)}/${classSessionId}/attendance`,
+  );
+
+export const replaceClassSessionAttendance = (
+  teacherAssignmentId: string,
+  classSessionId: string,
+  payload: ReplaceClassSessionAttendanceInput,
+) =>
+  apiClient<void>(
+    `${classSessionsPath(teacherAssignmentId)}/${classSessionId}/attendance`,
+    { method: "PUT", body: payload },
   );

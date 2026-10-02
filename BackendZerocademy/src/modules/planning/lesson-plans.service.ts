@@ -132,7 +132,14 @@ export class LessonPlansService {
     unitId: string,
     lessonPlanIds: string[],
   ): Promise<void> {
-    await this.findUnitOrThrow(actor, planId, unitId, true);
+    const unit = await this.findUnitOrThrow(actor, planId, unitId, true);
+    await this.requireWritePermission(
+      actor,
+      unit,
+      PERMISSIONS.ACADEMIC_PLANNING.UPDATE,
+      'academicUnit',
+      unit.id,
+    );
     if (new Set(lessonPlanIds).size !== lessonPlanIds.length) {
       throw new BadRequestException('Lesson plan ids must not repeat');
     }

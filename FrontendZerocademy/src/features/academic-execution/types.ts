@@ -19,3 +19,27 @@ export interface CreateClassSessionInput {
 }
 
 export type UpdateClassSessionInput = Partial<CreateClassSessionInput>;
+
+export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+export interface ClassSessionAttendanceRoster {
+  classSession: Pick<
+    ClassSession,
+    "id" | "status" | "scheduledDate" | "occurredOn"
+  >;
+  isReadOnly: boolean;
+  records: Array<{
+    enrollmentId: string;
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    status: AttendanceStatus | null;
+    note: string | null;
+  }>;
+}
+export interface ReplaceClassSessionAttendanceInput {
+  records: Array<{
+    enrollmentId: string;
+    status: AttendanceStatus;
+    note?: string | null;
+  }>;
+}
