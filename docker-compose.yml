@@ -97,6 +97,8 @@ services:
       - ./BackendZerocademy/tsconfig.json:/app/BackendZerocademy/tsconfig.json:ro
       - ./BackendZerocademy/tsconfig.build.json:/app/BackendZerocademy/tsconfig.build.json:ro
       - ./BackendZerocademy/nest-cli.json:/app/BackendZerocademy/nest-cli.json:ro
+      # Git-ignored local QA credentials and generated local-only IDs.
+      - ./qa:/app/qa
       # node_modules live in the image only. After package.json / lock changes:
       #   docker compose build backend && docker compose up -d backend
     depends_on:

@@ -260,11 +260,14 @@ async function upsertStudentEnrollment(
   return { userId, profileId: profile.id };
 }
 
-async function ensureInstitutionEvaluation(
+export async function ensureInstitutionEvaluation(
   ctx: SeedContext,
   institutionId: string,
   activePeriodId: string,
-): Promise<{ schemeId: string; categoryIds: { formative: string; summative: string } }> {
+): Promise<{
+  schemeId: string;
+  categoryIds: { formative: string; summative: string };
+}> {
   const platformScheme = await ctx.prisma.gradingScheme.findFirst({
     where: { institutionId: null, name: ECUADOR_DEFAULT_SCHEME_NAME },
     include: { gradeScales: true },
@@ -391,19 +394,22 @@ async function ensureInstitutionEvaluation(
   };
 }
 
-async function upsertAssessment(ctx: SeedContext, data: {
-  institutionId: string;
-  academicPeriodId: string;
-  academicTermId: string;
-  subjectId: string;
-  teacherAssignmentId: string;
-  assessmentCategoryId: string;
-  title: string;
-  description: string;
-  maxScore: number;
-  weight: number;
-  assessmentDate: Date;
-}): Promise<{ id: string; inserted: boolean }> {
+async function upsertAssessment(
+  ctx: SeedContext,
+  data: {
+    institutionId: string;
+    academicPeriodId: string;
+    academicTermId: string;
+    subjectId: string;
+    teacherAssignmentId: string;
+    assessmentCategoryId: string;
+    title: string;
+    description: string;
+    maxScore: number;
+    weight: number;
+    assessmentDate: Date;
+  },
+): Promise<{ id: string; inserted: boolean }> {
   const existing = await ctx.prisma.assessment.findFirst({
     where: {
       institutionId: data.institutionId,
@@ -557,24 +563,26 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
     gradeLevelId: gradeLevel.id,
   });
 
-  const coursesBySlot: Record<DemoCourseSlot, { courseId: string; periodId: string; enrollmentDate: Date }> =
-    {
-      'current-A': {
-        courseId: courseCurrentA,
-        periodId: currentPeriod.id,
-        enrollmentDate: new Date('2025-09-01'),
-      },
-      'current-B': {
-        courseId: courseCurrentB,
-        periodId: currentPeriod.id,
-        enrollmentDate: new Date('2025-09-01'),
-      },
-      'previous-A': {
-        courseId: coursePreviousA,
-        periodId: previousPeriod.id,
-        enrollmentDate: new Date('2024-09-01'),
-      },
-    };
+  const coursesBySlot: Record<
+    DemoCourseSlot,
+    { courseId: string; periodId: string; enrollmentDate: Date }
+  > = {
+    'current-A': {
+      courseId: courseCurrentA,
+      periodId: currentPeriod.id,
+      enrollmentDate: new Date('2025-09-01'),
+    },
+    'current-B': {
+      courseId: courseCurrentB,
+      periodId: currentPeriod.id,
+      enrollmentDate: new Date('2025-09-01'),
+    },
+    'previous-A': {
+      courseId: coursePreviousA,
+      periodId: previousPeriod.id,
+      enrollmentDate: new Date('2024-09-01'),
+    },
+  };
 
   const adminUserId = await upsertUser(ctx, {
     ...DEMO_GRADES_CREDENTIALS.admin,
@@ -800,13 +808,14 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
     counters.updated += 1;
   }
 
-  const existingTransition = await ctx.prisma.academicPeriodTransition.findFirst({
-    where: {
-      institutionId: institution.id,
-      fromAcademicPeriodId: previousPeriod.id,
-      toAcademicPeriodId: currentPeriod.id,
-    },
-  });
+  const existingTransition =
+    await ctx.prisma.academicPeriodTransition.findFirst({
+      where: {
+        institutionId: institution.id,
+        fromAcademicPeriodId: previousPeriod.id,
+        toAcademicPeriodId: currentPeriod.id,
+      },
+    });
 
   if (!existingTransition) {
     await ctx.prisma.academicPeriodTransition.create({
@@ -907,4 +916,7 @@ export async function seedGradesDemo(
   return summary;
 }
 
-export { DEMO_GRADES_CREDENTIALS, DEMO_GRADES_INSTITUTION_CODE } from './grades-demo.data';
+export {
+  DEMO_GRADES_CREDENTIALS,
+  DEMO_GRADES_INSTITUTION_CODE,
+} from './grades-demo.data';

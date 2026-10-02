@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "purpose": "Zerocademy manual and automated QA accounts",
+    "lastVerifiedAt": null
+  },
+  "environment": {
+    "name": "",
+    "frontendUrl": "",
+    "backendUrl": ""
+  },
+  "accounts": [
+    {
+      "key": "superAdmin",
+      "role": "SUPER_ADMIN",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": null,
+      "academicContext": null,
+      "notes": "Platform-level QA account."
+    },
+    {
+      "key": "adminPrimary",
+      "role": "ADMIN",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": {
+        "id": null,
+        "name": ""
+      },
+      "academicContext": null,
+      "notes": "Institution administrator QA account."
+    },
+    {
+      "key": "teacherPrimary",
+      "role": "TEACHER",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": {
+        "id": null,
+        "name": ""
+      },
+      "academicContext": {
+        "academicPeriodId": null,
+        "courseIds": [],
+        "subjectIds": [],
+        "teacherAssignmentIds": [],
+        "excludedTeacherAssignmentIds": []
+      },
+      "notes": "Use teacherAssignmentIds for assignments owned by this teacher."
+    },
+    {
+      "key": "teacherSecondary",
+      "role": "TEACHER",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": {
+        "id": null,
+        "name": ""
+      },
+      "academicContext": {
+        "academicPeriodId": null,
+        "courseIds": [],
+        "subjectIds": [],
+        "teacherAssignmentIds": [],
+        "excludedTeacherAssignmentIds": []
+      },
+      "notes": "Use excludedTeacherAssignmentIds for ownership and isolation QA."
+    },
+    {
+      "key": "studentPrimary",
+      "role": "STUDENT",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": {
+        "id": null,
+        "name": ""
+      },
+      "academicContext": {
+        "academicPeriodId": null,
+        "enrollmentId": null,
+        "courseId": null
+      },
+      "notes": "Primary student QA account."
+    },
+    {
+      "key": "studentSecondary",
+      "role": "STUDENT",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": {
+        "id": null,
+        "name": ""
+      },
+      "academicContext": {
+        "academicPeriodId": null,
+        "enrollmentId": null,
+        "courseId": null
+      },
+      "notes": "Useful for student visibility and isolation QA."
+    },
+    {
+      "key": "representativePrimary",
+      "role": "REPRESENTATIVE",
+      "firstName": "",
+      "lastName": "",
+      "email": "",
+      "password": "",
+      "institution": {
+        "id": null,
+        "name": ""
+      },
+      "academicContext": null,
+      "linkedStudentKeys": ["studentPrimary"],
+      "notes": "Linked students are referenced by stable account keys."
+    }
+  ]
+}
