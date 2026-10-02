@@ -37,6 +37,7 @@ export function AssessmentsTable({
               <th className="px-4 py-3 font-medium">Materia</th>
               <th className="px-4 py-3 font-medium">Trimestre</th>
               <th className="px-4 py-3 font-medium">Fecha</th>
+              <th className="px-4 py-3 font-medium">Estado</th>
               <th className="px-4 py-3 font-medium">Máx.</th>
               <th className="px-4 py-3 font-medium text-right">Acciones</th>
             </tr>
@@ -53,6 +54,7 @@ export function AssessmentsTable({
                 <td className="px-4 py-3">{assessment.subjectName}</td>
                 <td className="px-4 py-3">{assessment.academicTermName}</td>
                 <td className="px-4 py-3">{assessment.assessmentDate}</td>
+                <td className="px-4 py-3">{assessment.status === "PUBLISHED" ? "Publicada" : "Borrador"}</td>
                 <td className="px-4 py-3">{assessment.maxScore}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
@@ -70,14 +72,14 @@ export function AssessmentsTable({
                             Notas
                           </Link>
                         </Button>
-                        <Button asChild variant="ghost" size="sm">
+                        {assessment.status === "DRAFT" ? <Button asChild variant="ghost" size="sm">
                           <Link
                             href={`/grades/assessments/${assessment.id}/edit`}
                           >
                             Editar
                           </Link>
-                        </Button>
-                        {onDelete ? (
+                        </Button> : null}
+                        {onDelete && assessment.status === "DRAFT" ? (
                           <Button
                             variant="ghost"
                             size="sm"

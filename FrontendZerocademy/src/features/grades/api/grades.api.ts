@@ -3,6 +3,7 @@ import type {
   BulkGradeResult,
   BulkUpsertGradesInput,
   CreateGradeInput,
+  CorrectPublishedGradeInput,
   Grade,
   GradeEntrySheet,
   GradesFilters,
@@ -53,6 +54,16 @@ export function bulkUpsertGrades(
   payload: BulkUpsertGradesInput,
 ): Promise<BulkGradeResult> {
   return apiClient<BulkGradeResult>("/v1/grades/bulk", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function correctPublishedGrade(
+  assessmentId: string,
+  payload: CorrectPublishedGradeInput,
+): Promise<Grade | null> {
+  return apiClient<Grade | null>(`/v1/grades/assessments/${assessmentId}/corrections`, {
     method: "POST",
     body: payload,
   });

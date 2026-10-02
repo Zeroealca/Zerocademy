@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect -- server-query changes intentionally reset local grade-sheet drafts. */
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -14,16 +15,18 @@ import { useGradeEntrySheet } from "@/features/grades/hooks/use-grades";
 import { useGradeMutations } from "@/features/grades/hooks/use-grade-mutations";
 import { useTeacherAssignments } from "@/features/teacher-assignments/hooks/use-teacher-assignments";
 import { useCourses } from "@/features/courses/hooks/use-courses";
-import {
-  canManageGrades,
-  canViewGradeEntry,
-} from "@/lib/permissions";
+import { canManageGrades, canViewGradeEntry } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
+import type { BulkGradeEntryInput, GradeEntryRow } from "@/features/grades/types";
 
 interface DraftRow {
   enrollmentId: string;
   score: string;
   observations: string;
+  serverScore: number | null;
+  serverObservations: string | null;
+  expectedUpdatedAt: string | null;
+  clearRequested: boolean;
 }
 
 export function GradeEntryPage() {
@@ -42,6 +45,10 @@ export function GradeEntryPage() {
   );
   const [draftRows, setDraftRows] = useState<DraftRow[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [correctionRow, setCorrectionRow] = useState<GradeEntryRow | null>(null);
+  const [correctionScore, setCorrectionScore] = useState("");
+  const [correctionObservations, setCorrectionObservations] = useState("");
+  const [correctionReason, setCorrectionReason] = useState("");
 
   useEffect(() => {
     if (effectivePeriodId) setAcademicPeriodId(effectivePeriodId);
@@ -81,7 +88,7 @@ export function GradeEntryPage() {
     refetch,
   } = useGradeEntrySheet(assessmentId || undefined);
 
-  const { bulkMutation } = useGradeMutations();
+  const { bulkMutation, correctionMutation } = useGradeMutations();
 
   const subjects = useMemo(() => {
     const map = new Map<string, string>();
@@ -98,6 +105,10 @@ export function GradeEntryPage() {
         enrollmentId: row.enrollmentId,
         score: row.score != null ? String(row.score) : "",
         observations: row.observations ?? "",
+        serverScore: row.score,
+        serverObservations: row.observations,
+        expectedUpdatedAt: row.updatedAt,
+        clearRequested: false,
       })),
     );
   }, [entrySheet]);
@@ -105,7 +116,9 @@ export function GradeEntryPage() {
   if (!canViewGradeEntry(currentUser?.role)) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Acceso denegado
+        </h1>
         <Button asChild variant="outline">
           <Link href="/dashboard">Volver al panel</Link>
         </Button>
@@ -114,31 +127,98 @@ export function GradeEntryPage() {
   }
 
   const canEdit = canManageGrades(currentUser?.role);
+  const published = entrySheet?.assessment.status === "PUBLISHED";
   const maxAssessmentScore = entrySheet?.assessment.maxScore;
+  const entries = draftRows.flatMap<BulkGradeEntryInput>((row) => {
+    if (row.clearRequested) {
+      return [
+        {
+          enrollmentId: row.enrollmentId,
+          operation: "CLEAR" as const,
+          expectedUpdatedAt: row.expectedUpdatedAt,
+        },
+      ];
+    }
+    if (row.score.trim() === "") return [];
+    const score = Number(row.score);
+    const observations = row.observations.trim() || null;
+    if (score === row.serverScore && observations === row.serverObservations) {
+      return [];
+    }
+    return [
+      {
+        enrollmentId: row.enrollmentId,
+        operation: "SET" as const,
+        score,
+        observations,
+        expectedUpdatedAt: row.expectedUpdatedAt,
+      },
+    ];
+  });
+  const hasInvalidScore = entries.some(
+    (entry) =>
+      entry.operation === "SET" &&
+      (!Number.isFinite(entry.score ?? Number.NaN) ||
+        (entry.score ?? Number.NaN) < 0 ||
+        (maxAssessmentScore !== undefined &&
+          (entry.score ?? Number.NaN) > maxAssessmentScore)),
+  );
 
   const handleSave = async () => {
     if (!assessmentId) return;
     setFeedback(null);
 
-    const grades = draftRows
-      .filter((row) => row.score.trim() !== "")
-      .map((row) => ({
-        enrollmentId: row.enrollmentId,
-        score: Number(row.score),
-        observations: row.observations || undefined,
-      }));
-
-    if (grades.length === 0) {
-      setFeedback("Ingresa al menos una nota antes de guardar.");
+    if (entries.length === 0 || hasInvalidScore) {
+      setFeedback(
+        hasInvalidScore
+          ? "Revisa las notas antes de guardar."
+          : "No hay cambios para guardar.",
+      );
       return;
     }
+    try {
+      const result = await bulkMutation.mutateAsync({ assessmentId, entries });
+      setFeedback(
+        `Guardado: ${result.createdCount} creadas, ${result.updatedCount} actualizadas y ${result.clearedCount} eliminadas.`,
+      );
+      await refetch();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo guardar la hoja de notas.";
+      setFeedback(
+        message.includes("changed since")
+          ? "Las notas cambiaron desde que cargaste la hoja. Actualiza antes de volver a guardar."
+          : message,
+      );
+    }
+  };
 
-    const result = await bulkMutation.mutateAsync({ assessmentId, grades });
-    setFeedback(
-      `Guardado: ${result.createdCount} creadas, ${result.updatedCount} actualizadas` +
-        (result.failedCount > 0 ? `, ${result.failedCount} con error.` : "."),
-    );
-    void refetch();
+  const openCorrection = (row: GradeEntryRow) => {
+    setCorrectionRow(row);
+    setCorrectionScore(row.score == null ? "" : String(row.score));
+    setCorrectionObservations(row.observations ?? "");
+    setCorrectionReason("");
+  };
+  const submitCorrection = async (clear = false) => {
+    if (!entrySheet || !correctionRow) return;
+    if (!correctionReason.trim()) { setFeedback("El motivo de la corrección es obligatorio."); return; }
+    const score = Number(correctionScore);
+    if (!clear && (!Number.isFinite(score) || score < 0 || score > entrySheet.assessment.maxScore)) {
+      setFeedback("Revisa la nota corregida."); return;
+    }
+    try {
+      await correctionMutation.mutateAsync({ assessmentId: entrySheet.assessment.id, payload: {
+        enrollmentId: correctionRow.enrollmentId, operation: clear ? "CLEAR" : "SET",
+        ...(clear ? {} : { score, observations: correctionObservations.trim() || null }),
+        reason: correctionReason.trim(), expectedUpdatedAt: correctionRow.updatedAt,
+      }});
+      setCorrectionRow(null); setFeedback("Corrección guardada."); await refetch();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo guardar la corrección.";
+      setFeedback(message.includes("changed since") ? "La calificación cambió. Actualiza la hoja antes de corregir." : message);
+    }
   };
 
   return (
@@ -148,13 +228,17 @@ export function GradeEntryPage() {
           Registro de notas
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Selecciona período, curso, materia, trimestre y evaluación para ingresar calificaciones.
+          Selecciona período, curso, materia, trimestre y evaluación para
+          ingresar calificaciones.
         </p>
       </header>
 
       <div className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5">
         <FilterField label="Curso / paralelo">
-          <Select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
+          <Select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+          >
             <option value="">Selecciona curso</option>
             {(coursesData?.data ?? []).map((course) => (
               <option key={course.id} value={course.id}>
@@ -165,7 +249,10 @@ export function GradeEntryPage() {
         </FilterField>
 
         <FilterField label="Materia">
-          <Select value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
+          <Select
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value)}
+          >
             <option value="">Selecciona materia</option>
             {subjects.map(([id, name]) => (
               <option key={id} value={id}>
@@ -223,7 +310,16 @@ export function GradeEntryPage() {
               {entrySheet.gradingSchemeMaxScore} · Máximo evaluación:{" "}
               {entrySheet.assessment.maxScore}
             </p>
+            {published ? <p className="mt-2 font-medium text-amber-700">Evaluación publicada: el roster está congelado y las notas normales son de solo lectura.</p> : null}
           </div>
+
+          {published && correctionRow ? <div className="space-y-3 rounded-lg border border-amber-300 p-4 text-sm">
+            <p className="font-medium">Corregir calificación: {correctionRow.studentLastName}, {correctionRow.studentFirstName}</p>
+            <div className="grid gap-3 sm:grid-cols-2"><Input type="number" value={correctionScore} onChange={(e) => setCorrectionScore(e.target.value)} placeholder="Nota corregida" /><Input value={correctionObservations} onChange={(e) => setCorrectionObservations(e.target.value)} placeholder="Observaciones (opcional)" /></div>
+            <Input value={correctionReason} onChange={(e) => setCorrectionReason(e.target.value)} placeholder="Motivo obligatorio de la corrección" />
+            <div className="flex gap-2"><Button onClick={() => void submitCorrection()} disabled={correctionMutation.isPending}>{correctionMutation.isPending ? "Guardando…" : "Guardar corrección"}</Button>{correctionRow.score != null ? <Button variant="destructive" onClick={() => void submitCorrection(true)} disabled={correctionMutation.isPending}>Quitar calificación</Button> : null}<Button variant="outline" onClick={() => setCorrectionRow(null)}>Cancelar</Button></div>
+            <p className="text-muted-foreground">Quitar la calificación deja al estudiante sin calificar, pero conserva su lugar en el roster.</p>
+          </div> : null}
 
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full min-w-[640px] text-sm">
@@ -232,6 +328,7 @@ export function GradeEntryPage() {
                   <th className="px-4 py-3 font-medium">Estudiante</th>
                   <th className="px-4 py-3 font-medium">Nota</th>
                   <th className="px-4 py-3 font-medium">Observaciones</th>
+                  <th className="px-4 py-3 font-medium">Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -246,13 +343,17 @@ export function GradeEntryPage() {
                         step="0.01"
                         min={0}
                         max={maxAssessmentScore}
-                        disabled={!canEdit}
+                        disabled={!canEdit || published}
+                        aria-invalid={
+                          draftRows[index]?.clearRequested || undefined
+                        }
                         value={draftRows[index]?.score ?? ""}
                         onChange={(event) => {
                           const next = [...draftRows];
                           next[index] = {
                             ...next[index],
                             score: event.target.value,
+                            clearRequested: false,
                           };
                           setDraftRows(next);
                         }}
@@ -261,17 +362,66 @@ export function GradeEntryPage() {
                     </td>
                     <td className="px-4 py-3">
                       <Input
-                        disabled={!canEdit}
+                        disabled={!canEdit || published}
+                        aria-disabled={draftRows[index]?.clearRequested}
                         value={draftRows[index]?.observations ?? ""}
                         onChange={(event) => {
                           const next = [...draftRows];
                           next[index] = {
                             ...next[index],
                             observations: event.target.value,
+                            clearRequested: false,
                           };
                           setDraftRows(next);
                         }}
                       />
+                    </td>
+                    <td className="px-4 py-3">
+                      {published ? <Button type="button" size="sm" variant="outline" disabled={!canEdit} onClick={() => openCorrection(row)}>Corregir calificación</Button> : draftRows[index]?.clearRequested ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={!canEdit}
+                          onClick={() => {
+                            const next = [...draftRows];
+                            const draft = next[index];
+                            next[index] = {
+                              ...draft,
+                              score:
+                                draft.serverScore != null
+                                  ? String(draft.serverScore)
+                                  : "",
+                              observations: draft.serverObservations ?? "",
+                              clearRequested: false,
+                            };
+                            setDraftRows(next);
+                          }}
+                        >
+                          Deshacer
+                        </Button>
+                      ) : draftRows[index]?.serverScore != null ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={!canEdit}
+                          onClick={() => {
+                            const next = [...draftRows];
+                            next[index] = {
+                              ...next[index],
+                              clearRequested: true,
+                            };
+                            setDraftRows(next);
+                          }}
+                        >
+                          Quitar calificación
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Sin calificación
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -279,9 +429,16 @@ export function GradeEntryPage() {
             </table>
           </div>
 
-          {canEdit ? (
+          {canEdit && !published ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Button onClick={() => void handleSave()} disabled={bulkMutation.isPending}>
+              <Button
+                onClick={() => void handleSave()}
+                disabled={
+                  bulkMutation.isPending ||
+                  entries.length === 0 ||
+                  hasInvalidScore
+                }
+              >
                 {bulkMutation.isPending ? "Guardando…" : "Guardar notas"}
               </Button>
               {feedback ? (

@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAssessment } from "@/features/grades/hooks/use-assessments";
+import { useAssessmentMutations } from "@/features/grades/hooks/use-assessment-mutations";
 import {
   canManageAssessments,
   canViewAssessments,
@@ -22,6 +23,7 @@ interface AssessmentDetailPageProps {
 export function AssessmentDetailPage({ assessmentId }: AssessmentDetailPageProps) {
   const currentUser = useAuthStore((state) => state.user);
   const { data: assessment, isLoading, isError } = useAssessment(assessmentId);
+  const { publishMutation } = useAssessmentMutations();
 
   if (!canViewAssessments(currentUser?.role)) {
     return (
@@ -50,6 +52,11 @@ export function AssessmentDetailPage({ assessmentId }: AssessmentDetailPageProps
   }
 
   const canManage = canManageAssessments(currentUser?.role);
+  const published = assessment.status === "PUBLISHED";
+  const publish = async () => {
+    if (!window.confirm("Al publicar, los estudiantes verán los resultados, el roster actual quedará congelado y los cambios futuros requerirán una corrección con motivo. ¿Continuar?")) return;
+    await publishMutation.mutateAsync(assessment.id);
+  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -66,6 +73,7 @@ export function AssessmentDetailPage({ assessmentId }: AssessmentDetailPageProps
             {assessment.subjectName} · {assessment.academicTermName} ·{" "}
             {assessment.academicPeriodName}
           </p>
+          <p className="mt-2 text-sm font-medium">{published ? "Publicada" : "Borrador"}</p>
         </div>
         {canManage ? (
           <div className="flex gap-2">
@@ -74,11 +82,14 @@ export function AssessmentDetailPage({ assessmentId }: AssessmentDetailPageProps
                 Registrar notas
               </Link>
             </Button>
-            <Button asChild>
-              <Link href={`/grades/assessments/${assessment.id}/edit`}>
-                Editar
-              </Link>
-            </Button>
+            {published ? null : <>
+              <Button onClick={() => void publish()} disabled={publishMutation.isPending}>
+                {publishMutation.isPending ? "Publicando…" : "Publicar evaluación"}
+              </Button>
+              <Button asChild>
+                <Link href={`/grades/assessments/${assessment.id}/edit`}>Editar</Link>
+              </Button>
+            </>}
           </div>
         ) : null}
       </header>

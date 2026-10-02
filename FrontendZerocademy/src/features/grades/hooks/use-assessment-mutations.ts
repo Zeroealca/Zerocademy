@@ -5,6 +5,7 @@ import {
   createAssessment,
   deleteAssessment,
   updateAssessment,
+  publishAssessment,
 } from "@/features/grades/api/assessments.api";
 import { assessmentsKeys } from "@/features/grades/api/grades.keys";
 import type {
@@ -39,6 +40,10 @@ export function useAssessmentMutations() {
     mutationFn: (id: string) => deleteAssessment(id),
     onSuccess: invalidate,
   });
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => publishAssessment(id),
+    onSuccess: invalidate,
+  });
 
-  return { createMutation, updateMutation, deleteMutation };
+  return { createMutation, updateMutation, deleteMutation, publishMutation };
 }

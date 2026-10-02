@@ -1,11 +1,12 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { bulkUpsertGrades, createGrade } from "@/features/grades/api/grades.api";
+import { bulkUpsertGrades, correctPublishedGrade, createGrade } from "@/features/grades/api/grades.api";
 import { gradesKeys } from "@/features/grades/api/grades.keys";
 import type {
   BulkUpsertGradesInput,
   CreateGradeInput,
+  CorrectPublishedGradeInput,
 } from "@/features/grades/types";
 
 export function useGradeMutations() {
@@ -25,5 +26,11 @@ export function useGradeMutations() {
     onSuccess: invalidate,
   });
 
-  return { createMutation, bulkMutation };
+  const correctionMutation = useMutation({
+    mutationFn: ({ assessmentId, payload }: { assessmentId: string; payload: CorrectPublishedGradeInput }) =>
+      correctPublishedGrade(assessmentId, payload),
+    onSuccess: invalidate,
+  });
+
+  return { createMutation, bulkMutation, correctionMutation };
 }

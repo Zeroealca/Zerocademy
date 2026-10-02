@@ -25,6 +25,8 @@ export interface Assessment {
   maxScore: number;
   weight: number;
   assessmentDate: string;
+  status: "DRAFT" | "PUBLISHED";
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -102,20 +104,31 @@ export interface CreateGradeInput {
 
 export interface BulkGradeEntryInput {
   enrollmentId: string;
-  score: number;
-  observations?: string;
+  operation: "SET" | "CLEAR";
+  score?: number;
+  observations?: string | null;
+  expectedUpdatedAt: string | null;
 }
 
 export interface BulkUpsertGradesInput {
   assessmentId: string;
-  grades: BulkGradeEntryInput[];
+  entries: BulkGradeEntryInput[];
 }
 
 export interface BulkGradeResult {
   createdCount: number;
   updatedCount: number;
-  failedCount: number;
-  errors: Array<{ enrollmentId: string; message: string }>;
+  clearedCount: number;
+  unchangedCount: number;
+}
+
+export interface CorrectPublishedGradeInput {
+  enrollmentId: string;
+  operation: "SET" | "CLEAR";
+  score?: number;
+  observations?: string | null;
+  reason: string;
+  expectedUpdatedAt: string | null;
 }
 
 export interface GradeEntryRow {
@@ -126,6 +139,7 @@ export interface GradeEntryRow {
   gradeId: string | null;
   score: number | null;
   observations: string | null;
+  updatedAt: string | null;
 }
 
 export interface GradeEntrySheet {

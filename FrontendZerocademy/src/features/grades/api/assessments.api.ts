@@ -61,3 +61,7 @@ export function updateAssessment(
 export function deleteAssessment(id: string): Promise<void> {
   return apiClient<void>(`/v1/assessments/${id}`, { method: "DELETE" });
 }
+
+export function publishAssessment(id: string): Promise<Assessment> {
+  return apiClient<Assessment>(`/v1/assessments/${id}/publish`, { method: "POST" });
+}
