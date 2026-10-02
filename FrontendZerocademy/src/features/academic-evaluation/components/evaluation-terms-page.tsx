@@ -13,6 +13,7 @@ import { WeightProgressBar } from "@/features/academic-evaluation/components/wei
 import {
   useAcademicEvaluationMutations,
   useEvaluationTerms,
+  useInstitutionConfiguration,
 } from "@/features/academic-evaluation/hooks/use-academic-evaluation";
 import { evaluationTermSchema } from "@/features/academic-evaluation/schemas/academic-evaluation.schema";
 import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
@@ -32,13 +33,17 @@ export function EvaluationTermsPage() {
   const [institutionId, setInstitutionId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [showWeightsEditor, setShowWeightsEditor] = useState(false);
+  const { data: configuration, isLoading: isConfigurationLoading } =
+    useInstitutionConfiguration(institutionId || undefined);
+  const academicPeriodId =
+    effectivePeriodId ?? configuration?.activeAcademicPeriodId ?? undefined;
   const filters =
-    institutionId && effectivePeriodId
+    institutionId && academicPeriodId
       ? {
           page: 1,
           limit: 50,
           institutionId,
-          academicPeriodId: effectivePeriodId,
+          academicPeriodId,
         }
       : undefined;
 
@@ -72,11 +77,11 @@ export function EvaluationTermsPage() {
   const canManage = canManageAcademicEvaluation(currentUser?.role);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    if (!institutionId || !effectivePeriodId) return;
+    if (!institutionId || !academicPeriodId) return;
 
     await mutations.createEvaluationTerm.mutateAsync({
       institutionId,
-      academicPeriodId: effectivePeriodId,
+      academicPeriodId,
       ...values,
     });
     form.reset({ name: "", order: terms.length + 1, weight: 0 });
@@ -84,7 +89,7 @@ export function EvaluationTermsPage() {
   });
 
   const moveTerm = async (term: EvaluationTerm, direction: "up" | "down") => {
-    if (!institutionId || !effectivePeriodId) return;
+    if (!institutionId || !academicPeriodId) return;
 
     const sorted = [...terms].sort((a, b) => a.order - b.order);
     const index = sorted.findIndex((item) => item.id === term.id);
@@ -99,7 +104,7 @@ export function EvaluationTermsPage() {
 
     await mutations.reorderEvaluationTerms.mutateAsync({
       institutionId,
-      academicPeriodId: effectivePeriodId,
+      academicPeriodId,
       items: reordered.map((item) => ({ id: item.id, order: item.order })),
     });
   };
@@ -165,20 +170,22 @@ export function EvaluationTermsPage() {
         </form>
       ) : null}
 
-      {showWeightsEditor && canManage && institutionId && effectivePeriodId ? (
+      {showWeightsEditor && canManage && institutionId && academicPeriodId ? (
         <EvaluationTermWeightsEditor
           terms={activeTerms}
           institutionId={institutionId}
-          academicPeriodId={effectivePeriodId}
+          academicPeriodId={academicPeriodId}
           onClose={() => setShowWeightsEditor(false)}
         />
       ) : null}
 
-      {!effectivePeriodId ? (
+      {!academicPeriodId && !isConfigurationLoading ? (
         <p className="text-sm text-muted-foreground">
-          Seleccione un período académico en la barra superior para gestionar los
-          términos de evaluación.
+          La institución seleccionada no tiene un período académico activo en su
+          configuración de evaluación.
         </p>
+      ) : !academicPeriodId ? (
+        <p className="text-sm text-muted-foreground">Cargando período académico…</p>
       ) : isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando períodos…</p>
       ) : (

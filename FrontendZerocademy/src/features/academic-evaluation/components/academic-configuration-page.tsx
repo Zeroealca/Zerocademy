@@ -102,6 +102,14 @@ export function AcademicConfigurationPage() {
 
       <InstitutionScopeSelector value={institutionId} onChange={setInstitutionId} />
 
+      {!canManage ? (
+        <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          La configuración de esta institución es de solo lectura para Super
+          administrador. Un administrador de la institución puede modificarla;
+          los parámetros globales se administran desde Parámetros de plataforma.
+        </p>
+      ) : null}
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando configuración…</p>
       ) : (
@@ -120,6 +128,7 @@ export function AcademicConfigurationPage() {
               {(schemesData?.data ?? []).map((scheme) => (
                 <option key={scheme.id} value={scheme.id}>
                   {scheme.name}
+                  {scheme.institutionId ? "" : " (plantilla de plataforma)"}
                 </option>
               ))}
             </Select>

@@ -24,7 +24,7 @@ import {
 import type { AcademicTransitionPreview } from "@/features/academic-period-transitions/types";
 import { ApiError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
-import type { FieldErrors } from "react-hook-form";
+import type { FieldErrors, FieldPath } from "react-hook-form";
 
 interface AcademicTransitionWizardProps {
   institutionId: string;
@@ -63,6 +63,39 @@ export function AcademicTransitionWizard({
   const targetMode = form.watch("targetMode");
   const options = form.watch("options");
   const currentStep = TRANSITION_WIZARD_STEPS[stepIndex];
+
+  const advanceStep = async () => {
+    const fields: FieldPath<AcademicTransitionWizardValues>[] =
+      currentStep.id === "source"
+        ? ["fromAcademicPeriodId"]
+        : currentStep.id === "target"
+          ? targetMode === "existing"
+            ? ["toAcademicPeriodId"]
+            : [
+                "createTargetPeriod.name",
+                "createTargetPeriod.regime",
+                "createTargetPeriod.startDate",
+                "createTargetPeriod.endDate",
+              ]
+          : [];
+    const valid = await form.trigger(fields);
+
+    if (!valid) {
+      setPreviewError(
+        currentStep.id === "source"
+          ? "Selecciona el período origen antes de continuar."
+          : targetMode === "existing"
+            ? "Selecciona el período destino antes de continuar."
+            : "Completa el nombre, régimen y fechas del período destino antes de continuar.",
+      );
+      return;
+    }
+
+    setPreviewError(undefined);
+    setStepIndex((index) =>
+      Math.min(TRANSITION_WIZARD_STEPS.length - 1, index + 1),
+    );
+  };
 
   const runPreview = async () => {
     const values = form.getValues();
@@ -338,10 +371,7 @@ export function AcademicTransitionWizard({
               if (stepIndex === TRANSITION_WIZARD_STEPS.length - 2) {
                 void runPreview();
               } else {
-                setPreviewError(undefined);
-                setStepIndex((i) =>
-                  Math.min(TRANSITION_WIZARD_STEPS.length - 1, i + 1),
-                );
+                void advanceStep();
               }
             }}
           >

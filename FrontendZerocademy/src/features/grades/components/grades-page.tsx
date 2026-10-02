@@ -28,6 +28,10 @@ export function GradesPage() {
     return <StudentGradesPage />;
   }
 
+  if (role === "REPRESENTATIVE") {
+    return <StudentGradesPage />;
+  }
+
   if (
     !canViewAssessments(role) &&
     !canViewGradeEntry(role) &&
