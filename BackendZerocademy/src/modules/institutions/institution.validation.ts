@@ -44,7 +44,7 @@ export async function assertUniqueInstitutionCode(
   });
 
   if (existing) {
-    throw new ConflictException('An institution with this code already exists');
+    throw new ConflictException('Ya existe una institución con este código');
   }
 }
 

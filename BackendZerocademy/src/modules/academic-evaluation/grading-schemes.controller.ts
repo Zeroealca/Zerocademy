@@ -19,11 +19,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiRequireRoles, ApiRequireRolesStrict } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
   ACADEMIC_EVALUATION_PLATFORM_WRITE_ROLES,
   ACADEMIC_EVALUATION_READ_ROLES,
   ACADEMIC_EVALUATION_WRITE_ROLES,
 } from '../../common/rbac/rbac-role-sets';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateGradingSchemeDto } from './dto/create-grading-scheme.dto';
 import { GradingSchemeListResponseDto } from './dto/grading-scheme-list-response.dto';
 import { GradingSchemeResponseDto } from './dto/grading-scheme-response.dto';
@@ -42,16 +44,20 @@ export class GradingSchemesController {
   @ApiOkResponse({ type: GradingSchemeListResponseDto })
   findAll(
     @Query() query: ListGradingSchemesQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<GradingSchemeListResponseDto> {
-    return this.gradingSchemesService.findAll(query);
+    return this.gradingSchemesService.findAll(query, actor);
   }
 
   @Post()
   @ApiRequireRolesStrict(...ACADEMIC_EVALUATION_WRITE_ROLES)
   @ApiOperation({ summary: 'Create institution grading scheme' })
   @ApiCreatedResponse({ type: GradingSchemeResponseDto })
-  create(@Body() dto: CreateGradingSchemeDto): Promise<GradingSchemeResponseDto> {
-    return this.gradingSchemesService.create(dto);
+  create(
+    @Body() dto: CreateGradingSchemeDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<GradingSchemeResponseDto> {
+    return this.gradingSchemesService.create(dto, actor);
   }
 
   @Post('platform/templates')
@@ -81,8 +87,9 @@ export class GradingSchemesController {
   @ApiOkResponse({ type: GradingSchemeResponseDto })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<GradingSchemeResponseDto> {
-    return this.gradingSchemesService.findOne(id);
+    return this.gradingSchemesService.findOne(id, actor);
   }
 
   @Patch(':id')
@@ -92,8 +99,9 @@ export class GradingSchemesController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateGradingSchemeDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<GradingSchemeResponseDto> {
-    return this.gradingSchemesService.update(id, dto);
+    return this.gradingSchemesService.update(id, dto, actor);
   }
 
   @Post(':id/activate')

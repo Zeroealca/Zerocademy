@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import { useGradeLevels } from "@/features/grade-levels/hooks/use-grade-levels";
@@ -22,7 +22,6 @@ import {
 } from "@/features/courses/schemas/course.schema";
 import type { Course } from "@/features/courses/types";
 import { ApiError } from "@/lib/api-error";
-import { isSelectValueMissing } from "@/lib/select-utils";
 
 interface CourseFormProps {
   title: string;
@@ -114,28 +113,21 @@ export function CourseForm({
               name="academicPeriodId"
               control={control}
               render={({ field }) => (
-                <Select
+                <SearchableSelect
                   id="academicPeriodId"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   disabled={disabled || periodsLoading}
-                >
-                  <option value="">
-                    {periodsLoading ? "Cargando períodos…" : "Selecciona un período"}
-                  </option>
-                  {periodsLoading && isSelectValueMissing(
-                    field.value,
-                    periods.map((period) => period.id),
-                  ) ? (
-                    <option value={field.value}>Cargando período seleccionado…</option>
-                  ) : null}
-                  {periods.map((period) => (
-                    <option key={period.id} value={period.id}>
-                      {formatAcademicPeriodOptionLabel(period)}
-                    </option>
-                  ))}
-                </Select>
+                  loading={periodsLoading}
+                  placeholder="Selecciona un período"
+                  searchPlaceholder="Buscar período…"
+                  loadingSelectedLabel="Cargando período seleccionado…"
+                  options={periods.map((period) => ({
+                    value: period.id,
+                    label: formatAcademicPeriodOptionLabel(period),
+                  }))}
+                />
               )}
             />
             {errors.academicPeriodId ? (
@@ -151,28 +143,21 @@ export function CourseForm({
               name="gradeLevelId"
               control={control}
               render={({ field }) => (
-                <Select
+                <SearchableSelect
                   id="gradeLevelId"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   disabled={disabled || gradesLoading}
-                >
-                  <option value="">
-                    {gradesLoading ? "Cargando grados…" : "Selecciona un grado"}
-                  </option>
-                  {isSelectValueMissing(
-                    field.value,
-                    grades.map((grade) => grade.id),
-                  ) ? (
-                    <option value={field.value}>Cargando grado seleccionado…</option>
-                  ) : null}
-                  {grades.map((grade) => (
-                    <option key={grade.id} value={grade.id}>
-                      {grade.name} ({grade.code})
-                    </option>
-                  ))}
-                </Select>
+                  loading={gradesLoading}
+                  placeholder="Selecciona un grado"
+                  searchPlaceholder="Buscar grado…"
+                  loadingSelectedLabel="Cargando grado seleccionado…"
+                  options={grades.map((grade) => ({
+                    value: grade.id,
+                    label: `${grade.name} (${grade.code})`,
+                  }))}
+                />
               )}
             />
             {errors.gradeLevelId ? (

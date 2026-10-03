@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,10 +17,20 @@ import { useAuthStore } from "@/stores/use-auth-store";
 
 const DEFAULT_FILTERS: GradesFilters = { page: 1, limit: 50 };
 
-export function StudentGradesPage() {
+interface StudentGradesPageProps {
+  studentId?: string;
+}
+
+export function StudentGradesPage({ studentId }: StudentGradesPageProps) {
   const currentUser = useAuthStore((state) => state.user);
+  const searchParams = useSearchParams();
+  const representativeStudentId = studentId ?? searchParams.get("studentId") ?? undefined;
+  const isRepresentative = currentUser?.role === "REPRESENTATIVE";
   const effectivePeriodId = useEffectiveAcademicPeriodId();
-  const [filters, setFilters] = useState<GradesFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<GradesFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    ...(representativeStudentId ? { studentId: representativeStudentId } : {}),
+  }));
   const { data: periodsData } = useInstitutionAcademicPeriods();
   const { data: terms } = useAcademicTerms(filters.academicPeriodId ?? "");
   const { data, isLoading, isError, refetch } = useGrades(filters);
@@ -34,7 +45,10 @@ export function StudentGradesPage() {
     }
   }, [effectivePeriodId, filters.academicPeriodId]);
 
-  if (!canViewOwnGrades(currentUser?.role)) {
+  if (
+    !canViewOwnGrades(currentUser?.role) &&
+    !(isRepresentative && representativeStudentId)
+  ) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1>
@@ -57,9 +71,13 @@ export function StudentGradesPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Mis notas</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isRepresentative ? "Notas del estudiante" : "Mis notas"}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Consulta tus calificaciones por período, trimestre y materia.
+          {isRepresentative
+            ? "Consulta las calificaciones publicadas del estudiante autorizado."
+            : "Consulta tus calificaciones por período, trimestre y materia."}
         </p>
       </header>
 

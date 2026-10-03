@@ -48,7 +48,6 @@ describe('AttendanceJustificationsService authorization', () => {
           id: 'attendance-1',
           institutionId: 'institution-1',
           academicPeriod: { status: 'ACTIVE' },
-          enrollment: { student: { institutionId: 'institution-1' } },
         }),
       },
       attendanceJustification: {
@@ -74,6 +73,36 @@ describe('AttendanceJustificationsService authorization', () => {
 
     expect(prisma.attendanceRecord.findFirst).toHaveBeenCalledTimes(1);
     expect(prisma.attendanceJustification.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reject a representative when StudentProfile.institutionId diverges', async () => {
+    const prisma = {
+      attendanceRecord: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'attendance-1',
+          institutionId: 'qa-local-institution',
+          academicPeriod: { status: 'ACTIVE' },
+        }),
+      },
+      attendanceJustification: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({
+          id: 'justification-1',
+          status: 'PENDING',
+          createdAt: new Date(),
+        }),
+      },
+    };
+    const representativeService = new AttendanceJustificationsService(
+      prisma as never,
+      { log: jest.fn() } as never,
+    );
+
+    await expect(
+      representativeService.create(representative, 'attendance-1', {
+        reason: 'Linked student absence',
+      }),
+    ).resolves.toMatchObject({ id: 'justification-1', status: 'PENDING' });
   });
 
   it('does not reveal an unrelated attendance record to a representative', async () => {

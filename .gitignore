@@ -30,3 +30,6 @@ uploads/
 
 # Docker (optional local overrides)
 docker/pgadmin/pgpass
+
+# Local QA credentials (the committed example remains available as qa/qa-users.example.json)
+qa/qa-users.local.json

@@ -153,6 +153,7 @@ export function GradingSchemesPage() {
                 <th className="px-4 py-3 font-medium">Nombre</th>
                 <th className="px-4 py-3 font-medium">Rango</th>
                 <th className="px-4 py-3 font-medium">Aprobación</th>
+                <th className="px-4 py-3 font-medium">Ámbito</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Bandas cualitativas</th>
               </tr>
@@ -185,6 +186,9 @@ function SchemeRow({ scheme, canManage }: { scheme: GradingScheme; canManage: bo
       </td>
       <td className="px-4 py-3 tabular-nums">{scheme.passingScore}</td>
       <td className="px-4 py-3">
+        {scheme.institutionId ? "Institución" : "Plataforma"}
+      </td>
+      <td className="px-4 py-3">
         {scheme.isActive ? "Activo" : "Inactivo"}
       </td>
       <td className="px-4 py-3">
@@ -195,7 +199,7 @@ function SchemeRow({ scheme, canManage }: { scheme: GradingScheme; canManage: bo
     </tr>
     {expanded ? (
       <tr className="border-t border-border">
-        <td colSpan={5} className="p-4">
+        <td colSpan={6} className="p-4">
           <GradeScalesEditor scheme={scheme} canManage={canManage && Boolean(scheme.institutionId)} />
         </td>
       </tr>

@@ -178,7 +178,7 @@ export function DashboardSidebar() {
     navItems.push(academicLevelsNavItem, gradeLevelsNavItem);
   }
 
-  if (canViewSubjects(currentUser?.role)) {
+  if (currentUser?.role !== "STUDENT" && canViewSubjects(currentUser?.role)) {
     navItems.push(subjectsNavItem);
   }
 
@@ -215,11 +215,17 @@ export function DashboardSidebar() {
     navItems.push(academicPerformanceNavItem);
   }
 
-  if (canViewReportCards(currentUser?.role)) {
+  if (
+    currentUser?.role !== "STUDENT" &&
+    canViewReportCards(currentUser?.role)
+  ) {
     navItems.push(reportCardsNavItem);
   }
   if (canViewAttendance(currentUser?.role)) navItems.push(attendanceNavItem);
-  if (canViewOwnAttendance(currentUser?.role))
+  if (
+    currentUser?.role !== "STUDENT" &&
+    canViewOwnAttendance(currentUser?.role)
+  )
     navItems.push(myAttendanceNavItem);
 
   if (canViewInstitutions(currentUser?.role)) {

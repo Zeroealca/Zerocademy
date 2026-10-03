@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { assertInstitutionExistsAndActive } from './academic-evaluation.validation';
 import { ACADEMIC_EVALUATION_CONTEXT, ECUADOR_DEFAULT_SCHEME_NAME, ECUADOR_ASSESSMENT_CATEGORY_TEMPLATES } from './constants';
 import { GradingSchemeResponseDto } from './dto/grading-scheme-response.dto';
@@ -25,7 +27,9 @@ export class EcuadorDefaultsService {
 
   async initializeForInstitution(
     institutionId: string,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExistsAndActive(this.prisma, institutionId);
 
     const platform =
@@ -45,12 +49,16 @@ export class EcuadorDefaultsService {
       select: { activeAcademicPeriodId: true },
     });
 
-    const config = await this.configurationService.upsert(institutionId, {
-      gradingSchemeId: institutionScheme.id,
-      activeAcademicPeriodId: institution.activeAcademicPeriodId ?? undefined,
-      roundingStrategy: platform.roundingStrategy,
-      decimalPlaces: platform.decimalPlaces,
-    });
+    const config = await this.configurationService.upsert(
+      institutionId,
+      {
+        gradingSchemeId: institutionScheme.id,
+        activeAcademicPeriodId: institution.activeAcademicPeriodId ?? undefined,
+        roundingStrategy: platform.roundingStrategy,
+        decimalPlaces: platform.decimalPlaces,
+      },
+      actor,
+    );
 
     this.logger.log({
       context: ACADEMIC_EVALUATION_CONTEXT,

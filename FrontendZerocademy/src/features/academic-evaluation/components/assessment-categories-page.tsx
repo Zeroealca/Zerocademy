@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   useAssessmentCategories,
 } from "@/features/academic-evaluation/hooks/use-academic-evaluation";
 import { assessmentCategorySchema } from "@/features/academic-evaluation/schemas/academic-evaluation.schema";
+import { ApiError } from "@/lib/api-error";
 import {
   canManageAcademicEvaluation,
   canViewAcademicEvaluation,
@@ -26,6 +27,7 @@ export function AssessmentCategoriesPage() {
   const currentUser = useAuthStore((state) => state.user);
   const [institutionId, setInstitutionId] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const filters = institutionId
     ? { page: 1, limit: 50, institutionId }
     : undefined;
@@ -33,7 +35,7 @@ export function AssessmentCategoriesPage() {
   const { data, isLoading, refetch } = useAssessmentCategories(filters);
   const mutations = useAcademicEvaluationMutations();
   const categories = data?.data ?? [];
-  const weightTotal = useMemo(
+  const savedWeightTotal = useMemo(
     () => categories.reduce((sum, category) => sum + category.weight, 0),
     [categories],
   );
@@ -47,6 +49,10 @@ export function AssessmentCategoriesPage() {
     resolver: zodResolver(assessmentCategorySchema),
     defaultValues: { name: "", weight: 0, description: "" },
   });
+  const draftWeight = useWatch({ control: form.control, name: "weight" }) ?? 0;
+  const prospectiveTotal =
+    savedWeightTotal + (showForm && Number.isFinite(draftWeight) ? draftWeight : 0);
+  const exceedsTarget = prospectiveTotal > 100.01;
 
   if (!canViewAcademicEvaluation(currentUser?.role)) {
     return <p className="text-sm text-muted-foreground">Acceso denegado.</p>;
@@ -55,14 +61,24 @@ export function AssessmentCategoriesPage() {
   const canManage = canManageAcademicEvaluation(currentUser?.role);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    if (!institutionId) return;
+    if (!institutionId || exceedsTarget) return;
+    setSubmitError(null);
 
-    await mutations.createAssessmentCategory.mutateAsync({
-      institutionId,
-      ...values,
-    });
-    form.reset();
-    setShowForm(false);
+    try {
+      await mutations.createAssessmentCategory.mutateAsync({
+        institutionId,
+        ...values,
+      });
+      form.reset();
+      setShowForm(false);
+      void refetch();
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error.message
+          : "No se pudo guardar la categoría.",
+      );
+    }
   });
 
   return (
@@ -84,7 +100,16 @@ export function AssessmentCategoriesPage() {
       </header>
 
       <InstitutionScopeSelector value={institutionId} onChange={setInstitutionId} />
-      <WeightProgressBar label="Distribución de pesos" total={weightTotal} />
+      <WeightProgressBar
+        label="Distribución de pesos"
+        total={prospectiveTotal}
+      />
+      {Math.abs(savedWeightTotal - 100) >= 0.02 ? (
+        <p className="text-sm text-destructive">
+          La suma de pesos guardados debe ser 100% para usar las categorías en
+          calificaciones (actual: {savedWeightTotal.toFixed(2)}%).
+        </p>
+      ) : null}
 
       {showForm && canManage ? (
         <form
@@ -107,8 +132,19 @@ export function AssessmentCategoriesPage() {
           >
             <Input {...form.register("description")} />
           </Field>
-          <div className="flex items-end">
-            <Button type="submit" disabled={!institutionId}>
+          <div className="flex flex-col justify-end gap-2">
+            {exceedsTarget ? (
+              <p className="text-xs text-destructive">
+                La suma no puede superar 100% (quedaría en{" "}
+                {prospectiveTotal.toFixed(2)}%).
+              </p>
+            ) : null}
+            {submitError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {submitError}
+              </p>
+            ) : null}
+            <Button type="submit" disabled={!institutionId || exceedsTarget}>
               Guardar categoría
             </Button>
           </div>

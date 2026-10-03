@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   assertAcademicPeriodForInstitution,
   assertGradingSchemeAccessible,
@@ -41,7 +43,9 @@ export class InstitutionAcademicConfigurationService {
 
   async findByInstitution(
     institutionId: string,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto | null> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExistsAndActive(this.prisma, institutionId);
 
     const config = await this.prisma.institutionAcademicConfiguration.findUnique(
@@ -61,7 +65,9 @@ export class InstitutionAcademicConfigurationService {
   async upsert(
     institutionId: string,
     dto: UpsertInstitutionAcademicConfigurationDto,
+    actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExistsAndActive(this.prisma, institutionId);
     await assertGradingSchemeAccessible(
       this.prisma,
@@ -126,8 +132,10 @@ export class InstitutionAcademicConfigurationService {
 
   async getPreview(
     institutionId: string,
+    actor: AuthenticatedUser,
     academicPeriodId?: string,
   ): Promise<EvaluationConfigPreviewDto> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExistsAndActive(this.prisma, institutionId);
 
     const institution = await this.prisma.institution.findUnique({

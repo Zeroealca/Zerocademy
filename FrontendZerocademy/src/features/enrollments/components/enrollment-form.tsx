@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Select } from "@/components/ui/select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
@@ -141,7 +142,7 @@ export function EnrollmentForm({
                   name="academicPeriodId"
                   control={form.control}
                   render={({ field }) => (
-                    <Select
+                    <SearchableSelect
                       id="academicPeriodId"
                       value={field.value as string}
                       onChange={(e) => {
@@ -149,14 +150,13 @@ export function EnrollmentForm({
                         form.setValue("studentId", "");
                         form.setValue("courseId", "");
                       }}
-                    >
-                      <option value="">Seleccionar período</option>
-                      {(periodsData?.data ?? []).map((period) => (
-                        <option key={period.id} value={period.id}>
-                          {formatAcademicPeriodOptionLabel(period)}
-                        </option>
-                      ))}
-                    </Select>
+                      placeholder="Seleccionar período"
+                      searchPlaceholder="Buscar período…"
+                      options={(periodsData?.data ?? []).map((period) => ({
+                        value: period.id,
+                        label: formatAcademicPeriodOptionLabel(period),
+                      }))}
+                    />
                   )}
                 />
                 {"academicPeriodId" in form.formState.errors &&
@@ -172,23 +172,22 @@ export function EnrollmentForm({
                   name="studentId"
                   control={form.control}
                   render={({ field }) => (
-                    <Select
+                    <SearchableSelect
                       id="studentId"
                       value={field.value as string}
                       onChange={field.onChange}
                       disabled={!academicPeriodId}
-                    >
-                      <option value="">
-                        {academicPeriodId
+                      placeholder={
+                        academicPeriodId
                           ? "Seleccionar estudiante"
-                          : "Seleccione un período primero"}
-                      </option>
-                      {(studentsData?.data ?? []).map((student) => (
-                        <option key={student.id} value={student.id}>
-                          {formatStudentLabel(student)}
-                        </option>
-                      ))}
-                    </Select>
+                          : "Seleccione un período primero"
+                      }
+                      searchPlaceholder="Buscar estudiante…"
+                      options={(studentsData?.data ?? []).map((student) => ({
+                        value: student.id,
+                        label: formatStudentLabel(student),
+                      }))}
+                    />
                   )}
                 />
                 {"studentId" in form.formState.errors &&
@@ -204,19 +203,18 @@ export function EnrollmentForm({
                   name="courseId"
                   control={form.control}
                   render={({ field }) => (
-                    <Select
+                    <SearchableSelect
                       id="courseId"
                       value={field.value as string}
                       onChange={field.onChange}
                       disabled={!academicPeriodId}
-                    >
-                      <option value="">Seleccionar curso</option>
-                      {(coursesData?.data ?? []).map((course) => (
-                        <option key={course.id} value={course.id}>
-                          {course.name} ({course.section})
-                        </option>
-                      ))}
-                    </Select>
+                      placeholder="Seleccionar curso"
+                      searchPlaceholder="Buscar curso…"
+                      options={(coursesData?.data ?? []).map((course) => ({
+                        value: course.id,
+                        label: `${course.name} (${course.section})`,
+                      }))}
+                    />
                   )}
                 />
                 {"courseId" in form.formState.errors &&

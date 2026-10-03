@@ -17,10 +17,12 @@ describe('Grades module (e2e)', () => {
   beforeAll(async () => {
     await seedGradesDemo(prisma);
     app = await createTestApp();
-  });
+  }, 30_000);
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
     await prisma.$disconnect();
   });
 
