@@ -38,8 +38,17 @@ Existing user provisioning is reused. ADMIN can create `STUDENT` and `REPRESENTA
 
 ## Frontend
 
-`/representative` is a minimal representative portal with loading, error, and empty states. It lists all active relationships and links to existing academic surfaces. The attendance link supplies explicit student and academic-period context; the history query key includes the representative student ID, period, and date range to avoid cache leakage when one representative switches between students. Eligible absences use the same Spanish reason form as student self-service and show Pending, Approved, or Rejected status.
+`/representative` is a minimal representative portal with loading, error, and empty states. It lists all active relationships and links to existing academic surfaces (`/grades`, `/report-cards`, `/attendance/reports`). The attendance link supplies explicit student and academic-period context; the history query key includes the representative student ID, period, and date range to avoid cache leakage when one representative switches between students. Eligible absences use the same Spanish reason form as student self-service and show Pending, Approved, or Rejected status.
+
+Administrators manage relationships on the student edit screen (`/students/[id]/edit`): list active/inactive links, associate an existing `REPRESENTATIVE` user (server-paginated directory), change relationship type, mark the primary contact, and deactivate without deleting the historical row. Query keys invalidate after each mutation.
 
 ## Seed data
 
-The development demo account `rep.demo@zerocademy.edu` / `DemoRep123!` is linked to the first two demo students, giving a reproducible one-to-many authorization case.
+The grades demo account `rep.grades@zerocademy.edu` / `DemoRep123!` is linked as primary legal guardian of Ana and as a non-primary guardian of Luis. An inactive relationship to a validation student remains in the database so access denial after deactivation can be demonstrated. The older `rep.demo@zerocademy.edu` credential in shared seeds follows the same pattern when that seed path is used.
+
+## Deployment notes (`RepresentativeStudent`)
+
+1. Apply Prisma migrations (`npx prisma migrate deploy`) so `representative_students` and `RepresentativeRelationshipType` exist.
+2. Run `npx prisma validate` and `npx prisma generate`.
+3. Re-run the institution seed or QA setup that creates representative users and relationships.
+4. Rollback operationally by deactivating relationships (`DELETE /v1/representatives/:relationshipId` soft-deactivates) before reversing a migration; do not drop the table while historical justifications still reference submitter users.

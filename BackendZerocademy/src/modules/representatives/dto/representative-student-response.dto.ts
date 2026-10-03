@@ -20,8 +20,21 @@ export class RepresentativeStudentResponseDto {
   @ApiProperty()
   isActive: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      'Student display name (portal). Prefer representativeFullName on admin lists.',
+  })
   fullName: string;
+
+  @ApiPropertyOptional({
+    description: 'Representative display name for administrator relationship lists',
+  })
+  representativeFullName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Representative email for administrator relationship lists',
+  })
+  representativeEmail?: string;
 
   @ApiPropertyOptional()
   academicPeriodId?: string;

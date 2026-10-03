@@ -11,7 +11,8 @@ Esta sección resume **qué menú ve cada rol**, **qué puede hacer** y **qué n
 | `SUPER_ADMIN` | Super administrador | Gestión de la plataforma completa: instituciones, catálogo global, calendario nacional, usuarios. |
 | `ADMIN` | Administrador | Operación diaria de **su institución**: estudiantes, matrículas, cursos, docentes, evaluación. |
 | `TEACHER` | Docente | Consulta de cursos, estudiantes y matrículas **asignados**; lectura de evaluación académica. |
-| `STUDENT` | Estudiante | Consulta de **sus propias** matrículas y (próximamente) notas. |
+| `STUDENT` | Estudiante | Consulta de **sus propias** matrículas y notas. |
+| `REPRESENTATIVE` | Representante | Consulta de notas, libreta y asistencia de estudiantes **vinculados activos**; puede enviar justificaciones de ausencia elegibles. |
 
 ---
 
@@ -57,7 +58,8 @@ Esta sección resume **qué menú ve cada rol**, **qué puede hacer** y **qué n
 | Matrículas | Sí | Matrícula individual, masiva, cambio de estado | — |
 | Instituciones | Sí | Ver institución; editar **configuración**, logo y colores; ver miembros | Crear o eliminar instituciones; asignar miembros (super admin) |
 | Transiciones de período | Desde Instituciones → Transiciones | Previsualizar y **ejecutar** cambio de año lectivo | — |
-| Usuarios | Sí | Crear y editar usuarios; buscar, filtrar y ordenar el directorio (sin ver super administradores) | Crear super administradores; asignar roles distintos de Estudiante al crear usuarios |
+| Usuarios | Sí | Crear y editar usuarios; buscar, filtrar y ordenar el directorio (sin ver super administradores); crear roles **Estudiante** y **Representante** | Crear super administradores; asignar roles Docente/Admin al crear |
+| Representantes (en ficha estudiante) | Desde Estudiantes → Editar | Asociar, marcar principal y desactivar vínculos | Gestionar representantes de otra institución |
 | Selector de período (cabecera) | Sí | Elegir período de trabajo | — |
 
 **Enfoque:** operación completa de **su institución educativa**.
@@ -99,14 +101,31 @@ Esta sección resume **qué menú ve cada rol**, **qué puede hacer** y **qué n
 
 ---
 
+### Representante (`REPRESENTATIVE`)
+
+| Área | ¿Ve en el menú? | Puede hacer | No puede hacer |
+|------|-----------------|-------------|----------------|
+| Resumen | Sí | Ver panel de bienvenida | — |
+| Mis estudiantes | Sí | Ver estudiantes con vínculo activo; abrir libreta, notas y asistencia | Ver estudiantes ajenos o con vínculo inactivo |
+| Notas / Libreta / Asistencia | Desde Mis estudiantes | Consultar datos del estudiante seleccionado; enviar justificación de ausencia elegible | Editar notas; registrar asistencia diaria; aprobar/rechazar justificaciones |
+| Estudiantes / Matrículas / Usuarios (admin) | **No** | — | Gestión institucional |
+| Selector de período (cabecera) | Sí | Filtrar consultas por período | — |
+
+**Enfoque:** seguimiento académico de **hijos o representados** autorizados.
+
+Detalle operativo: [17 — Representantes](./17-representantes.md).
+
+---
+
 ## Resumen visual del menú lateral
 
 ```
-Todos          → Resumen
-SUPER_ADMIN    → Períodos | Niveles | Grados | Materias | Instituciones | Usuarios
-ADMIN          → Cursos | Asignaciones | Estructura | Evaluación | Estudiantes | Matrículas | Instituciones | Usuarios
-TEACHER        → Cursos | Asignaciones | Estructura | Evaluación | Estudiantes | Matrículas
-STUDENT        → Mis matrículas | Notas
+Todos            → Resumen
+SUPER_ADMIN      → Períodos | Niveles | Grados | Materias | Instituciones | Usuarios
+ADMIN            → Cursos | Asignaciones | Estructura | Evaluación | Estudiantes | Matrículas | Instituciones | Usuarios
+TEACHER          → Cursos | Asignaciones | Estructura | Evaluación | Estudiantes | Matrículas
+STUDENT          → Mis matrículas | Notas
+REPRESENTATIVE   → Mis estudiantes
 ```
 
 ---

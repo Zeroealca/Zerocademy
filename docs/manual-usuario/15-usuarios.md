@@ -7,7 +7,7 @@
 | Listar, crear, editar y desactivar usuarios | **Super administrador**, **Administrador** |
 | Crear super administradores | Solo **Super administrador** |
 | Asignar cualquier rol al crear | **Super administrador** |
-| Asignar solo rol Estudiante al crear | **Administrador** |
+| Asignar roles Estudiante o Representante al crear | **Administrador** |
 
 ---
 
@@ -34,6 +34,7 @@ La gestión de usuarios es distinta de los **perfiles académicos** (estudiante,
 | Administrador | Operación de institución |
 | Docente | Enseñanza y consulta acotada |
 | Estudiante | Consulta de datos propios |
+| Representante | Consulta de estudiantes vinculados (ver [17 — Representantes](./17-representantes.md)) |
 
 ---
 
@@ -55,7 +56,13 @@ La gestión de usuarios es distinta de los **perfiles académicos** (estudiante,
 
 ### Administrador: crear un estudiante
 
-- Puede hacerlo desde **Usuarios** (solo rol Estudiante) o preferiblemente desde **Estudiantes**, que completa también el perfil académico.
+- Puede hacerlo desde **Usuarios** (rol Estudiante) o preferiblemente desde **Estudiantes**, que completa también el perfil académico.
+
+### Administrador: crear un representante
+
+1. Cree el usuario con rol **Representante**.
+2. Abra la ficha del estudiante → **Editar** → sección **Representantes** y asocie la cuenta.
+3. El representante verá al estudiante en **Mis estudiantes** solo mientras el vínculo esté activo.
 
 ### Filtrar el directorio
 

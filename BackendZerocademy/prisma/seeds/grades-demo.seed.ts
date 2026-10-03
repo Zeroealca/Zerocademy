@@ -761,18 +761,18 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
   }
 
   for (const [index, student] of primaryStudentProfiles.slice(0, 2).entries()) {
-    const existingPrimaryRelationship = await ctx.prisma.representativeStudent.findFirst({
-      where: {
-        studentId: student.id,
-        isActive: true,
-        isPrimary: true,
-      },
-      select: { representativeUserId: true },
-    });
-    const canBePrimary =
-      index === 0 &&
-      (!existingPrimaryRelationship ||
-        existingPrimaryRelationship.representativeUserId === representativeUserId);
+    const isPrimary = index === 0;
+    if (isPrimary) {
+      await ctx.prisma.representativeStudent.updateMany({
+        where: {
+          studentId: student.id,
+          isActive: true,
+          isPrimary: true,
+          representativeUserId: { not: representativeUserId },
+        },
+        data: { isPrimary: false },
+      });
+    }
 
     await ctx.prisma.representativeStudent.upsert({
       where: {
@@ -785,11 +785,41 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
         representativeUserId,
         studentId: student.id,
         relationshipType: RepresentativeRelationshipType.LEGAL_GUARDIAN,
-        isPrimary: canBePrimary,
+        isPrimary,
         isActive: true,
       },
-      update: { isActive: true, isPrimary: canBePrimary },
+      update: { isActive: true, isPrimary },
     });
+  }
+
+  // Inactive relationship on a validation student: auditable, no portal access.
+  const inactiveStudentEmail = DEMO_VALIDATION_STUDENTS[0]?.email;
+  if (inactiveStudentEmail) {
+    const inactiveStudent = await ctx.prisma.studentProfile.findFirst({
+      where: {
+        institutionId: institution.id,
+        user: { email: inactiveStudentEmail },
+      },
+      select: { id: true },
+    });
+    if (inactiveStudent) {
+      await ctx.prisma.representativeStudent.upsert({
+        where: {
+          representativeUserId_studentId: {
+            representativeUserId,
+            studentId: inactiveStudent.id,
+          },
+        },
+        create: {
+          representativeUserId,
+          studentId: inactiveStudent.id,
+          relationshipType: RepresentativeRelationshipType.OTHER,
+          isPrimary: false,
+          isActive: false,
+        },
+        update: { isActive: false, isPrimary: false },
+      });
+    }
   }
 
   const firstTerm = currentTerms[0];

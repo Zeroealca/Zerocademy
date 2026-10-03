@@ -53,6 +53,7 @@ Registra a las **personas estudiantes** de la institución: datos personales, co
 2. Abra **Editar**.
 3. Modifique los campos permitidos (no cambie la cédula si ya está en uso por otro).
 4. Guarde.
+5. En la misma pantalla, gestione **Representantes** asociados (ver [17 — Representantes](./17-representantes.md)): asociar una cuenta existente, cambiar el tipo de relación, marcar principal o desactivar el vínculo.
 
 ---
 

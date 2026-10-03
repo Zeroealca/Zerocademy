@@ -17,6 +17,9 @@ import type {
 import type { RepresentativeStudentResponseDto } from './dto/representative-student-response.dto';
 
 const relationshipInclude = {
+  representativeUser: {
+    select: { id: true, firstName: true, lastName: true, email: true },
+  },
   student: {
     select: {
       id: true,
@@ -245,6 +248,7 @@ export class RepresentativesService {
     }>,
   ): RepresentativeStudentResponseDto {
     const enrollment = relationship.student.enrollments[0];
+    const representative = relationship.representativeUser;
     return {
       id: relationship.id,
       representativeUserId: relationship.representativeUserId,
@@ -253,6 +257,8 @@ export class RepresentativesService {
       isPrimary: relationship.isPrimary,
       isActive: relationship.isActive,
       fullName: `${relationship.student.user.firstName} ${relationship.student.user.lastName}`,
+      representativeFullName: `${representative.firstName} ${representative.lastName}`,
+      representativeEmail: representative.email,
       academicPeriodId: enrollment?.academicPeriod.id,
       academicPeriodName: enrollment?.academicPeriod.name,
       gradeLevelName: enrollment?.course.gradeLevel.name,

@@ -1,6 +1,6 @@
 # Manual de usuario — Zerocademy
 
-Manual orientado a **usuarios finales** (administradores, docentes y estudiantes) de la plataforma Zerocademy. Está organizado según las **pestañas del menú lateral** del panel de control.
+Manual orientado a **usuarios finales** (administradores, docentes, estudiantes y representantes) de la plataforma Zerocademy. Está organizado según las **pestañas del menú lateral** del panel de control.
 
 > **Nota para publicación:** Este manual está redactado en Markdown para facilitar su **importación a Confluence** u otras wikis. Al importar, revise que los enlaces relativos entre páginas se conviertan correctamente en enlaces internos de Confluence.
 
@@ -32,6 +32,7 @@ Manual orientado a **usuarios finales** (administradores, docentes y estudiantes
 | Matrículas | [12 — Matrículas](./12-matriculas.md) | Administrador, docente |
 | Mis matrículas | [16 — Vistas del estudiante](./16-estudiante-mis-vistas.md) | Estudiante |
 | Notas | [16 — Vistas del estudiante](./16-estudiante-mis-vistas.md) | Estudiante |
+| Mis estudiantes | [17 — Representantes](./17-representantes.md) | Representante |
 | Instituciones | [10 — Instituciones](./10-instituciones.md) | Super administrador, administrador |
 | Usuarios | [15 — Usuarios](./15-usuarios.md) | Super administrador, administrador |
 

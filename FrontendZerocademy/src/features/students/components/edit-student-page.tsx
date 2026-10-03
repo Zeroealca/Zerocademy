@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { StudentRepresentativesPanel } from "@/features/representatives/components/student-representatives-panel";
 import { StudentForm } from "@/features/students/components/student-form";
 import { useStudentMutations } from "@/features/students/hooks/use-student-mutations";
 import { useStudent } from "@/features/students/hooks/use-student";
@@ -58,6 +59,7 @@ export function EditStudentPage({ studentId }: EditStudentPageProps) {
         defaultValues={student}
         onSubmit={handleSubmit}
       />
+      <StudentRepresentativesPanel studentId={studentId} />
     </div>
   );
 }
