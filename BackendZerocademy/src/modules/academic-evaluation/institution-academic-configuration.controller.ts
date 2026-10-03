@@ -15,10 +15,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiRequireRoles, ApiRequireRolesStrict } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
   ACADEMIC_EVALUATION_READ_ROLES,
   ACADEMIC_EVALUATION_WRITE_ROLES,
 } from '../../common/rbac/rbac-role-sets';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { EcuadorDefaultsService } from './ecuador-defaults.service';
 import { EvaluationConfigPreviewDto } from './dto/evaluation-config-preview.dto';
 import { InstitutionAcademicConfigurationResponseDto } from './dto/institution-academic-configuration-response.dto';
@@ -39,8 +41,9 @@ export class InstitutionAcademicConfigurationController {
   @ApiOkResponse({ type: InstitutionAcademicConfigurationResponseDto })
   getConfiguration(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto | null> {
-    return this.configurationService.findByInstitution(institutionId);
+    return this.configurationService.findByInstitution(institutionId, actor);
   }
 
   @Put('configuration')
@@ -50,8 +53,9 @@ export class InstitutionAcademicConfigurationController {
   upsertConfiguration(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
     @Body() dto: UpsertInstitutionAcademicConfigurationDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto> {
-    return this.configurationService.upsert(institutionId, dto);
+    return this.configurationService.upsert(institutionId, dto, actor);
   }
 
   @Get('preview')
@@ -60,10 +64,12 @@ export class InstitutionAcademicConfigurationController {
   @ApiOkResponse({ type: EvaluationConfigPreviewDto })
   getPreview(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @CurrentUser() actor: AuthenticatedUser,
     @Query('academicPeriodId') academicPeriodId?: string,
   ): Promise<EvaluationConfigPreviewDto> {
     return this.configurationService.getPreview(
       institutionId,
+      actor,
       academicPeriodId,
     );
   }
@@ -77,8 +83,12 @@ export class InstitutionAcademicConfigurationController {
   @ApiCreatedResponse({ type: InstitutionAcademicConfigurationResponseDto })
   applyPlatformDefaults(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto> {
-    return this.ecuadorDefaultsService.initializeForInstitution(institutionId);
+    return this.ecuadorDefaultsService.initializeForInstitution(
+      institutionId,
+      actor,
+    );
   }
 
   /** @deprecated Use apply-platform-defaults */
@@ -90,7 +100,11 @@ export class InstitutionAcademicConfigurationController {
   @ApiCreatedResponse({ type: InstitutionAcademicConfigurationResponseDto })
   initializeEcuadorForInstitution(
     @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<InstitutionAcademicConfigurationResponseDto> {
-    return this.ecuadorDefaultsService.initializeForInstitution(institutionId);
+    return this.ecuadorDefaultsService.initializeForInstitution(
+      institutionId,
+      actor,
+    );
   }
 }

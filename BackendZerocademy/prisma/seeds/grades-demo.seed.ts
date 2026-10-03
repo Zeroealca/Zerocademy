@@ -59,24 +59,70 @@ async function upsertUser(
   },
 ): Promise<string> {
   const email = data.email.toLowerCase();
-  const existing = await ctx.prisma.user.findUnique({ where: { email } });
-
-  if (existing) {
-    return existing.id;
-  }
-
-  const user = await ctx.prisma.user.create({
-    data: {
+  const passwordHash = await hashPassword(data.password);
+  const user = await ctx.prisma.user.upsert({
+    where: { email },
+    create: {
       email,
-      passwordHash: await hashPassword(data.password),
+      passwordHash,
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
       isActive: true,
     },
+    update: {
+      passwordHash,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: data.role,
+      isActive: true,
+      deletedAt: null,
+    },
   });
 
   return user.id;
+}
+
+/** One teacher per subject/course/period — reassign if another teacher holds the slot. */
+async function upsertDemoTeacherAssignment(
+  ctx: SeedContext,
+  data: {
+    institutionId: string;
+    teacherId: string;
+    subjectId: string;
+    courseId: string;
+    academicPeriodId: string;
+  },
+) {
+  const existing = await ctx.prisma.teacherAssignment.findUnique({
+    where: {
+      subjectId_courseId_academicPeriodId: {
+        subjectId: data.subjectId,
+        courseId: data.courseId,
+        academicPeriodId: data.academicPeriodId,
+      },
+    },
+  });
+
+  if (existing) {
+    return ctx.prisma.teacherAssignment.update({
+      where: { id: existing.id },
+      data: {
+        teacherId: data.teacherId,
+        institutionId: data.institutionId,
+      },
+    });
+  }
+
+  return ctx.prisma.teacherAssignment.create({
+    data: {
+      institutionId: data.institutionId,
+      teacherId: data.teacherId,
+      subjectId: data.subjectId,
+      courseId: data.courseId,
+      academicPeriodId: data.academicPeriodId,
+    },
+  });
 }
 
 async function upsertMembership(
@@ -209,32 +255,66 @@ async function upsertStudentEnrollment(
     enrollmentDate: Date;
   },
 ): Promise<{ userId: string; profileId: string }> {
-  const userId = await upsertUser(ctx, {
-    email: data.email,
-    password: data.password,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    role: Role.STUDENT,
+  const email = data.email.toLowerCase();
+  const passwordHash = await hashPassword(data.password);
+  const profileFields = {
+    institutionId: data.institutionId,
+    nationalId: data.nationalId,
+    gender: data.gender,
+    birthDate: new Date(data.birthDate),
+    phone: '0990000000',
+    address: DEMO_INSTITUTION_PROFILE.address,
+    emergencyContact: '0991112233',
+    isActive: true,
+  };
+
+  // Prefer existing profile by nationalId so email renames stay idempotent.
+  const byNationalId = await ctx.prisma.studentProfile.findUnique({
+    where: { nationalId: data.nationalId },
   });
+
+  let userId: string;
+  if (byNationalId) {
+    userId = byNationalId.userId;
+    const targetUser = await ctx.prisma.user.findUnique({ where: { email } });
+    if (targetUser && targetUser.id !== userId) {
+      const targetProfile = await ctx.prisma.studentProfile.findUnique({
+        where: { userId: targetUser.id },
+      });
+      if (!targetProfile) {
+        await ctx.prisma.user.delete({ where: { id: targetUser.id } });
+      }
+    }
+    await ctx.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email,
+        passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: Role.STUDENT,
+        isActive: true,
+        deletedAt: null,
+      },
+    });
+  } else {
+    userId = await upsertUser(ctx, {
+      email,
+      password: data.password,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: Role.STUDENT,
+    });
+  }
 
   const profile = await ctx.prisma.studentProfile.upsert({
     where: { userId },
-    create: {
-      userId,
-      institutionId: data.institutionId,
-      nationalId: data.nationalId,
-      gender: data.gender,
-      birthDate: new Date(data.birthDate),
-      phone: '0990000000',
-      address: DEMO_INSTITUTION_PROFILE.address,
-      emergencyContact: '0991112233',
-      isActive: true,
-    },
+    create: { userId, ...profileFields },
     update: {
-      institutionId: data.institutionId,
-      nationalId: data.nationalId,
-      gender: data.gender,
-      birthDate: new Date(data.birthDate),
+      institutionId: profileFields.institutionId,
+      nationalId: profileFields.nationalId,
+      gender: profileFields.gender,
+      birthDate: profileFields.birthDate,
       isActive: true,
     },
   });
@@ -637,42 +717,20 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
     update: { institutionId: institution.id },
   });
 
-  const mathAssignment = await ctx.prisma.teacherAssignment.upsert({
-    where: {
-      teacherId_subjectId_courseId_academicPeriodId: {
-        teacherId: teacherProfile.id,
-        subjectId: mathSubject.id,
-        courseId: courseCurrentA,
-        academicPeriodId: currentPeriod.id,
-      },
-    },
-    create: {
-      institutionId: institution.id,
-      teacherId: teacherProfile.id,
-      subjectId: mathSubject.id,
-      courseId: courseCurrentA,
-      academicPeriodId: currentPeriod.id,
-    },
-    update: { institutionId: institution.id },
+  const mathAssignment = await upsertDemoTeacherAssignment(ctx, {
+    institutionId: institution.id,
+    teacherId: teacherProfile.id,
+    subjectId: mathSubject.id,
+    courseId: courseCurrentA,
+    academicPeriodId: currentPeriod.id,
   });
 
-  await ctx.prisma.teacherAssignment.upsert({
-    where: {
-      teacherId_subjectId_courseId_academicPeriodId: {
-        teacherId: teacherProfile.id,
-        subjectId: languageSubject.id,
-        courseId: courseCurrentB,
-        academicPeriodId: currentPeriod.id,
-      },
-    },
-    create: {
-      institutionId: institution.id,
-      teacherId: teacherProfile.id,
-      subjectId: languageSubject.id,
-      courseId: courseCurrentB,
-      academicPeriodId: currentPeriod.id,
-    },
-    update: { institutionId: institution.id },
+  await upsertDemoTeacherAssignment(ctx, {
+    institutionId: institution.id,
+    teacherId: teacherProfile.id,
+    subjectId: languageSubject.id,
+    courseId: courseCurrentB,
+    academicPeriodId: currentPeriod.id,
   });
 
   const primaryStudentProfiles: Array<{ id: string }> = [];
@@ -703,6 +761,19 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
   }
 
   for (const [index, student] of primaryStudentProfiles.slice(0, 2).entries()) {
+    const existingPrimaryRelationship = await ctx.prisma.representativeStudent.findFirst({
+      where: {
+        studentId: student.id,
+        isActive: true,
+        isPrimary: true,
+      },
+      select: { representativeUserId: true },
+    });
+    const canBePrimary =
+      index === 0 &&
+      (!existingPrimaryRelationship ||
+        existingPrimaryRelationship.representativeUserId === representativeUserId);
+
     await ctx.prisma.representativeStudent.upsert({
       where: {
         representativeUserId_studentId: {
@@ -714,10 +785,10 @@ async function runGradesDemoStep(ctx: SeedContext): Promise<SeedStepResult> {
         representativeUserId,
         studentId: student.id,
         relationshipType: RepresentativeRelationshipType.LEGAL_GUARDIAN,
-        isPrimary: index === 0,
+        isPrimary: canBePrimary,
         isActive: true,
       },
-      update: { isActive: true, isPrimary: index === 0 },
+      update: { isActive: true, isPrimary: canBePrimary },
     });
   }
 

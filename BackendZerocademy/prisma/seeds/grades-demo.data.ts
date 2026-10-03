@@ -22,24 +22,29 @@ export const DEMO_INSTITUTION_PROFILE = {
   secondaryColor: '#F4D03F',
 } as const;
 
+/**
+ * Dedicated emails for the grades demo institution.
+ * Must not collide with local QA accounts in qa/qa-users.local.json
+ * (admin.demo@, teacher.demo@, student1.demo@, …).
+ */
 export const DEMO_GRADES_CREDENTIALS = {
   admin: {
-    email: 'admin.demo@zerocademy.edu',
+    email: 'admin.grades@zerocademy.edu',
     password: 'DemoAdmin123!',
   },
   teacher: {
-    email: 'teacher.demo@zerocademy.edu',
+    email: 'teacher.grades@zerocademy.edu',
     password: 'DemoTeacher123!',
   },
   representative: {
-    email: 'rep.demo@zerocademy.edu',
+    email: 'rep.grades@zerocademy.edu',
     password: 'DemoRep123!',
     firstName: 'Carmen',
     lastName: 'Representante',
   },
   students: [
     {
-      email: 'student1.demo@zerocademy.edu',
+      email: 'student1.grades@zerocademy.edu',
       password: 'DemoStudent123!',
       firstName: 'Ana',
       lastName: 'Demo',
@@ -48,7 +53,7 @@ export const DEMO_GRADES_CREDENTIALS = {
       birthDate: '2012-03-15',
     },
     {
-      email: 'student2.demo@zerocademy.edu',
+      email: 'student2.grades@zerocademy.edu',
       password: 'DemoStudent123!',
       firstName: 'Luis',
       lastName: 'Demo',

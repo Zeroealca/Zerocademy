@@ -22,10 +22,12 @@ import {
   ApiRequireRoles,
   ApiRequireRolesStrict,
 } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
   ACADEMIC_EVALUATION_READ_ROLES,
   ACADEMIC_EVALUATION_WRITE_ROLES,
 } from '../../common/rbac/rbac-role-sets';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateEvaluationTermDto } from './dto/create-evaluation-term.dto';
 import { EvaluationTermListResponseDto } from './dto/evaluation-term-list-response.dto';
 import { EvaluationTermResponseDto } from './dto/evaluation-term-response.dto';
@@ -48,8 +50,9 @@ export class EvaluationTermsController {
   @ApiOkResponse({ type: EvaluationTermListResponseDto })
   findAll(
     @Query() query: ListEvaluationTermsQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermListResponseDto> {
-    return this.evaluationTermsService.findAll(query);
+    return this.evaluationTermsService.findAll(query, actor);
   }
 
   @Post()
@@ -58,8 +61,9 @@ export class EvaluationTermsController {
   @ApiCreatedResponse({ type: EvaluationTermResponseDto })
   create(
     @Body() dto: CreateEvaluationTermDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto> {
-    return this.evaluationTermsService.create(dto);
+    return this.evaluationTermsService.create(dto, actor);
   }
 
   @Post('reorder')
@@ -70,11 +74,13 @@ export class EvaluationTermsController {
     @Query('institutionId', ParseUUIDPipe) institutionId: string,
     @Query('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
     @Body() dto: ReorderEvaluationTermsDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto[]> {
     return this.evaluationTermsService.reorder(
       institutionId,
       academicPeriodId,
       dto,
+      actor,
     );
   }
 
@@ -89,11 +95,13 @@ export class EvaluationTermsController {
     @Query('institutionId', ParseUUIDPipe) institutionId: string,
     @Query('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
     @Body() dto: UpdateEvaluationTermWeightsDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto[]> {
     return this.evaluationTermsService.updateWeights(
       institutionId,
       academicPeriodId,
       dto,
+      actor,
     );
   }
 
@@ -103,8 +111,9 @@ export class EvaluationTermsController {
   @ApiOkResponse({ type: EvaluationTermResponseDto })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto> {
-    return this.evaluationTermsService.findOne(id);
+    return this.evaluationTermsService.findOne(id, actor);
   }
 
   @Patch(':id')
@@ -114,8 +123,9 @@ export class EvaluationTermsController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateEvaluationTermDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto> {
-    return this.evaluationTermsService.update(id, dto);
+    return this.evaluationTermsService.update(id, dto, actor);
   }
 
   @Post(':id/deactivate')
@@ -124,8 +134,9 @@ export class EvaluationTermsController {
   @ApiOkResponse({ type: EvaluationTermResponseDto })
   deactivate(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto> {
-    return this.evaluationTermsService.deactivate(id);
+    return this.evaluationTermsService.deactivate(id, actor);
   }
 
   @Delete(':id')
@@ -133,7 +144,10 @@ export class EvaluationTermsController {
   @ApiRequireRolesStrict(...ACADEMIC_EVALUATION_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete evaluation term' })
   @ApiNoContentResponse()
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.evaluationTermsService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<void> {
+    return this.evaluationTermsService.remove(id, actor);
   }
 }

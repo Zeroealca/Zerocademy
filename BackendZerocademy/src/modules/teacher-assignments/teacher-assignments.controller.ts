@@ -51,8 +51,9 @@ export class TeacherAssignmentsController {
   @ApiOkResponse({ type: TeacherAssignmentListResponseDto })
   findAll(
     @Query() query: ListTeacherAssignmentsQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentListResponseDto> {
-    return this.teacherAssignmentsService.findAll(query);
+    return this.teacherAssignmentsService.findAll(query, actor);
   }
 
   @Get('hierarchy/by-period')
@@ -65,8 +66,9 @@ export class TeacherAssignmentsController {
   @ApiOkResponse({ type: AssignmentHierarchyResponseDto })
   getHierarchy(
     @Query() query: AssignmentHierarchyQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AssignmentHierarchyResponseDto> {
-    return this.teacherAssignmentsService.getHierarchy(query);
+    return this.teacherAssignmentsService.getHierarchy(query, actor);
   }
 
   @Get(':id')
@@ -75,8 +77,9 @@ export class TeacherAssignmentsController {
   @ApiOkResponse({ type: TeacherAssignmentResponseDto })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentResponseDto> {
-    return this.teacherAssignmentsService.findOne(id);
+    return this.teacherAssignmentsService.findOne(id, actor);
   }
 
   @Post()

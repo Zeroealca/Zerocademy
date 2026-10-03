@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import {
   AcademicPeriodStatus,
   AcademicRegime,
+  AttendanceStatus,
   EnrollmentStatus,
   InstitutionMembershipRole,
   InstitutionRegion,
@@ -48,6 +49,8 @@ interface StudentContext {
   academicPeriodId: string | null;
   enrollmentId: string | null;
   courseId: string | null;
+  /** ABSENT daily attendance row for representative justification QA (DEMY-90). */
+  absentAttendanceRecordId?: string | null;
 }
 
 interface QaAccount {
@@ -279,9 +282,11 @@ async function main(): Promise<void> {
         },
       });
     }
+    // Only deactivate sibling periods of this QA institution. Never close
+    // periods belonging to demo-grades or other institutions.
     await prisma.academicPeriod.updateMany({
       where: {
-        regime: AcademicRegime.SIERRA_AMAZONIA,
+        institutionId: institution.id,
         isActive: true,
         id: { not: period.id },
       },
@@ -506,6 +511,33 @@ async function main(): Promise<void> {
         update: { isPrimary: studentKey === 'studentPrimary', isActive: true },
       });
     }
+
+    const primaryStudentRow = students.get('studentPrimary')!;
+    const qaAbsentDate = new Date('2026-09-15');
+    const absentAttendance = await prisma.attendanceRecord.upsert({
+      where: {
+        enrollmentId_date: {
+          enrollmentId: primaryStudentRow.enrollmentId,
+          date: qaAbsentDate,
+        },
+      },
+      create: {
+        institutionId: institution.id,
+        academicPeriodId: period.id,
+        courseId: course.id,
+        enrollmentId: primaryStudentRow.enrollmentId,
+        date: qaAbsentDate,
+        status: AttendanceStatus.ABSENT,
+        notes: 'QA fixture: absent day for representative justification',
+        recordedByUserId: primaryTeacherId,
+      },
+      update: {
+        status: AttendanceStatus.ABSENT,
+        notes: 'QA fixture: absent day for representative justification',
+        recordedByUserId: primaryTeacherId,
+      },
+    });
+
     await seedMembershipPermissionProfileAssignments(prisma);
 
     for (const item of [
@@ -538,6 +570,8 @@ async function main(): Promise<void> {
         academicPeriodId: period.id,
         courseId: course.id,
         enrollmentId: student.enrollmentId,
+        absentAttendanceRecordId:
+          item.key === 'studentPrimary' ? absentAttendance.id : null,
       });
     }
     config.metadata.lastVerifiedAt = new Date().toISOString();

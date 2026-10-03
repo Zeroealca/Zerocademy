@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useAcademicLevels } from "@/features/academic-levels/hooks/use-academic-levels";
 import {
   createGradeLevelSchema,
@@ -20,7 +20,6 @@ import {
 } from "@/features/grade-levels/schemas/grade-level.schema";
 import type { GradeLevel } from "@/features/grade-levels/types";
 import { ApiError } from "@/lib/api-error";
-import { isSelectValueMissing } from "@/lib/select-utils";
 
 interface GradeLevelFormProps {
   title: string;
@@ -105,28 +104,21 @@ export function GradeLevelForm({
               name="academicLevelId"
               control={control}
               render={({ field }) => (
-                <Select
+                <SearchableSelect
                   id="academicLevelId"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   disabled={disabled || levelsLoading}
-                >
-                  <option value="">
-                    {levelsLoading ? "Cargando niveles…" : "Selecciona un nivel"}
-                  </option>
-                  {isSelectValueMissing(
-                    field.value,
-                    academicLevels.map((level) => level.id),
-                  ) ? (
-                    <option value={field.value}>Cargando nivel seleccionado…</option>
-                  ) : null}
-                  {academicLevels.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.name} ({level.code})
-                    </option>
-                  ))}
-                </Select>
+                  loading={levelsLoading}
+                  placeholder="Selecciona un nivel"
+                  searchPlaceholder="Buscar nivel académico…"
+                  loadingSelectedLabel="Cargando nivel seleccionado…"
+                  options={academicLevels.map((level) => ({
+                    value: level.id,
+                    label: `${level.name} (${level.code})`,
+                  }))}
+                />
               )}
             />
             {errors.academicLevelId ? (

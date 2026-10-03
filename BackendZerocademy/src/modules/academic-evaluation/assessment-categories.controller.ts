@@ -19,10 +19,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiRequireRoles, ApiRequireRolesStrict } from '../../common/decorators/api';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {
   ACADEMIC_EVALUATION_READ_ROLES,
   ACADEMIC_EVALUATION_WRITE_ROLES,
 } from '../../common/rbac/rbac-role-sets';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AssessmentCategoriesService } from './assessment-categories.service';
 import { AssessmentCategoryListResponseDto } from './dto/assessment-category-list-response.dto';
 import { AssessmentCategoryResponseDto } from './dto/assessment-category-response.dto';
@@ -43,8 +45,9 @@ export class AssessmentCategoriesController {
   @ApiOkResponse({ type: AssessmentCategoryListResponseDto })
   findAll(
     @Query() query: ListAssessmentCategoriesQueryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryListResponseDto> {
-    return this.assessmentCategoriesService.findAll(query);
+    return this.assessmentCategoriesService.findAll(query, actor);
   }
 
   @Get(':id')
@@ -53,8 +56,9 @@ export class AssessmentCategoriesController {
   @ApiOkResponse({ type: AssessmentCategoryResponseDto })
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryResponseDto> {
-    return this.assessmentCategoriesService.findOne(id);
+    return this.assessmentCategoriesService.findOne(id, actor);
   }
 
   @Post()
@@ -63,8 +67,9 @@ export class AssessmentCategoriesController {
   @ApiCreatedResponse({ type: AssessmentCategoryResponseDto })
   create(
     @Body() dto: CreateAssessmentCategoryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryResponseDto> {
-    return this.assessmentCategoriesService.create(dto);
+    return this.assessmentCategoriesService.create(dto, actor);
   }
 
   @Patch(':id')
@@ -74,8 +79,9 @@ export class AssessmentCategoriesController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAssessmentCategoryDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryResponseDto> {
-    return this.assessmentCategoriesService.update(id, dto);
+    return this.assessmentCategoriesService.update(id, dto, actor);
   }
 
   @Post(':id/deactivate')
@@ -84,8 +90,9 @@ export class AssessmentCategoriesController {
   @ApiOkResponse({ type: AssessmentCategoryResponseDto })
   deactivate(
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryResponseDto> {
-    return this.assessmentCategoriesService.deactivate(id);
+    return this.assessmentCategoriesService.deactivate(id, actor);
   }
 
   @Delete(':id')
@@ -93,7 +100,10 @@ export class AssessmentCategoriesController {
   @ApiRequireRolesStrict(...ACADEMIC_EVALUATION_WRITE_ROLES)
   @ApiOperation({ summary: 'Delete assessment category' })
   @ApiNoContentResponse()
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.assessmentCategoriesService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthenticatedUser,
+  ): Promise<void> {
+    return this.assessmentCategoriesService.remove(id, actor);
   }
 }

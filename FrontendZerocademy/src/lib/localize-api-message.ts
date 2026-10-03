@@ -364,6 +364,12 @@ const PATTERN_MESSAGES: Array<{
       `Los pesos de ${localizeLabel(match[1] ?? "")} deben sumar 100 (suma actual: ${match[2]})`,
   },
   {
+    pattern:
+      /^(.+) weights must not exceed 100 \(current sum: (.+)\)$/,
+    replace: (match) =>
+      `Los pesos de ${localizeLabel(match[1] ?? "")} no pueden superar 100 (suma actual: ${match[2]})`,
+  },
+  {
     pattern: /^(.+) weight must be greater than 0 and at most 100$/,
     replace: (match) =>
       `El peso de ${localizeLabel(match[1] ?? "")} debe ser mayor que 0 y como máximo 100`,

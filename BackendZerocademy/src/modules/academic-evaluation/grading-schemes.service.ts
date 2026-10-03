@@ -10,7 +10,9 @@ import {
   buildPaginationMeta,
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   assertInstitutionExistsAndActive,
   assertCompleteGradeScaleCoverage,
@@ -38,7 +40,15 @@ export class GradingSchemesService {
 
   async findAll(
     query: ListGradingSchemesQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<GradingSchemeListResponseDto> {
+    if (query.institutionId) {
+      await assertActorCanAccessInstitution(
+        this.prisma,
+        actor,
+        query.institutionId,
+      );
+    }
     const where = this.buildListWhere(query);
     const skip = getPaginationSkip(query.page, query.limit);
 
@@ -59,15 +69,35 @@ export class GradingSchemesService {
     };
   }
 
-  async findOne(id: string): Promise<GradingSchemeResponseDto> {
+  async findOne(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<GradingSchemeResponseDto> {
     const scheme = await this.findSchemeOrThrow(id);
+    if (scheme.institutionId) {
+      await assertActorCanAccessInstitution(
+        this.prisma,
+        actor,
+        scheme.institutionId,
+      );
+    }
     return toGradingSchemeResponseDto(scheme);
   }
 
-  async create(dto: CreateGradingSchemeDto): Promise<GradingSchemeResponseDto> {
+  async create(
+    dto: CreateGradingSchemeDto,
+    actor?: AuthenticatedUser,
+  ): Promise<GradingSchemeResponseDto> {
     const institutionId = dto.institutionId ?? null;
 
     if (institutionId) {
+      if (actor) {
+        await assertActorCanAccessInstitution(
+          this.prisma,
+          actor,
+          institutionId,
+        );
+      }
       await assertInstitutionExistsAndActive(this.prisma, institutionId);
     }
 
@@ -121,12 +151,21 @@ export class GradingSchemesService {
   async update(
     id: string,
     dto: UpdateGradingSchemeDto,
+    actor?: AuthenticatedUser,
   ): Promise<GradingSchemeResponseDto> {
     const existing = await this.findSchemeOrThrow(id);
 
     if (existing.institutionId === null) {
       throw new BadRequestException(
         'Global grading schemes must be updated via the platform route',
+      );
+    }
+
+    if (actor) {
+      await assertActorCanAccessInstitution(
+        this.prisma,
+        actor,
+        existing.institutionId,
       );
     }
     const minScore = dto.minScore ?? Number(existing.minScore);

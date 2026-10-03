@@ -73,7 +73,7 @@ export function parseStudentCsvContent(content: string): {
     if (parts.length !== STUDENT_CSV_FIELD_COUNT) {
       failures.push({
         rowNumber,
-        message: `Expected ${STUDENT_CSV_FIELD_COUNT} comma-separated fields before ';', received ${parts.length}`,
+        message: `Se esperaban ${STUDENT_CSV_FIELD_COUNT} campos separados por comas antes de ';' y se recibieron ${parts.length}`,
       });
       return;
     }
@@ -92,14 +92,14 @@ export function parseStudentCsvContent(content: string): {
     ] = parts;
 
     if (!EMAIL_REGEX.test(email)) {
-      failures.push({ rowNumber, message: 'Invalid email format' });
+      failures.push({ rowNumber, message: 'El correo electrónico no tiene un formato válido' });
       return;
     }
 
     if (!password || password.length < 8) {
       failures.push({
         rowNumber,
-        message: 'Password is required and must be at least 8 characters',
+        message: 'La contraseña es obligatoria y debe tener al menos 8 caracteres',
       });
       return;
     }
@@ -107,20 +107,20 @@ export function parseStudentCsvContent(content: string): {
     if (!firstName || !lastName) {
       failures.push({
         rowNumber,
-        message: 'firstName and lastName are required',
+        message: 'El nombre y el apellido son obligatorios',
       });
       return;
     }
 
     if (!nationalId) {
-      failures.push({ rowNumber, message: 'nationalId is required' });
+      failures.push({ rowNumber, message: 'La cédula o identificación nacional es obligatoria' });
       return;
     }
 
     if (birthDateRaw && !DATE_REGEX.test(birthDateRaw)) {
       failures.push({
         rowNumber,
-        message: 'birthDate must use YYYY-MM-DD format when provided',
+        message: 'La fecha de nacimiento debe usar el formato AAAA-MM-DD cuando se proporciona',
       });
       return;
     }
@@ -130,7 +130,7 @@ export function parseStudentCsvContent(content: string): {
       failures.push({
         rowNumber,
         message:
-          'gender must be MALE, FEMALE, OTHER, UNSPECIFIED, or empty',
+          'El género debe ser MALE, FEMALE, OTHER, UNSPECIFIED o estar vacío',
       });
       return;
     }

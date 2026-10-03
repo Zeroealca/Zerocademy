@@ -23,7 +23,7 @@ export function WeightProgressBar({
         <span
           className={cn(
             "font-medium tabular-nums",
-            isValid ? "text-foreground" : "text-destructive",
+            isValid ? "text-emerald-700 dark:text-emerald-400" : "text-destructive",
           )}
         >
           {total.toFixed(2)}% / {target}%
@@ -40,7 +40,7 @@ export function WeightProgressBar({
         <div
           className={cn(
             "h-full rounded-full transition-all",
-            isValid ? "bg-primary" : "bg-destructive",
+            isValid ? "bg-emerald-600" : "bg-destructive",
           )}
           style={{ width: `${percentage}%` }}
         />

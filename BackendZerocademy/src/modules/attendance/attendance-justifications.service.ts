@@ -65,17 +65,9 @@ export class AttendanceJustificationsService {
         id: true,
         institutionId: true,
         academicPeriod: { select: { status: true } },
-        enrollment: {
-          select: { student: { select: { institutionId: true } } },
-        },
       },
     });
     if (!attendance)
-      throw new NotFoundException('Eligible attendance record not found');
-    if (
-      actor.role === Role.REPRESENTATIVE &&
-      attendance.enrollment.student.institutionId !== attendance.institutionId
-    )
       throw new NotFoundException('Eligible attendance record not found');
     if (
       attendance.academicPeriod.status === AcademicPeriodStatus.CLOSED ||

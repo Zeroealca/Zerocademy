@@ -1,5 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
+import {
+  assertActorCanAccessInstitution,
+  resolveActorInstitutionIds,
+} from '../../common/rbac/academic-scope.util';
+import { RoleUtils } from '../../common/rbac/role.utils';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { Prisma } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
@@ -38,8 +42,12 @@ export class TeacherAssignmentsService {
 
   async findAll(
     query: ListTeacherAssignmentsQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<TeacherAssignmentListResponseDto> {
-    const where = this.buildListWhere(query);
+    const where = await this.applyActorInstitutionScope(
+      this.buildListWhere(query),
+      actor,
+    );
     const skip = getPaginationSkip(query.page, query.limit);
 
     const [total, assignments] = await this.prisma.$transaction([
@@ -59,13 +67,25 @@ export class TeacherAssignmentsService {
     };
   }
 
-  async findOne(id: string): Promise<TeacherAssignmentResponseDto> {
+  async findOne(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<TeacherAssignmentResponseDto> {
     const assignment = await this.findAssignmentOrThrow(id);
+    if (!assignment.institutionId) {
+      throw new NotFoundException('Teacher assignment not found');
+    }
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      assignment.institutionId,
+    );
     return toTeacherAssignmentResponseDto(assignment);
   }
 
   async getHierarchy(
     query: AssignmentHierarchyQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<AssignmentHierarchyResponseDto> {
     const where: Prisma.TeacherAssignmentWhereInput = {
       academicPeriodId: query.academicPeriodId,
@@ -76,7 +96,7 @@ export class TeacherAssignmentsService {
     }
 
     const assignments = await this.prisma.teacherAssignment.findMany({
-      where,
+      where: await this.applyActorInstitutionScope(where, actor),
       orderBy: [
         { teacher: { user: { lastName: 'asc' } } },
         { subject: { name: 'asc' } },
@@ -279,6 +299,18 @@ export class TeacherAssignmentsService {
     }
 
     return where;
+  }
+
+  private async applyActorInstitutionScope(
+    where: Prisma.TeacherAssignmentWhereInput,
+    actor: AuthenticatedUser,
+  ): Promise<Prisma.TeacherAssignmentWhereInput> {
+    if (RoleUtils.isSuperAdmin(actor.role)) {
+      return where;
+    }
+
+    const institutionIds = await resolveActorInstitutionIds(this.prisma, actor);
+    return { AND: [where, { institutionId: { in: institutionIds } }] };
   }
 
   private async findAssignmentOrThrow(id: string) {

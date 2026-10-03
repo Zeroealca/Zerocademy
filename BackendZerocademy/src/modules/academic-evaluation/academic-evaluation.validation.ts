@@ -143,6 +143,24 @@ export function assertWeightsSumToTarget(
   }
 }
 
+/** Allows building a distribution incrementally (e.g. 50 then 50). */
+export function assertWeightsDoNotExceedTarget(
+  weights: number[],
+  label: string,
+): void {
+  if (weights.length === 0) {
+    return;
+  }
+
+  const sum = weights.reduce((total, weight) => total + weight, 0);
+
+  if (sum > WEIGHT_SUM_TARGET + WEIGHT_SUM_TOLERANCE) {
+    throw new BadRequestException(
+      `${label} weights must not exceed ${WEIGHT_SUM_TARGET} (current sum: ${sum.toFixed(2)})`,
+    );
+  }
+}
+
 export function assertValidWeight(weight: number, label: string): void {
   if (weight <= 0 || weight > WEIGHT_SUM_TARGET) {
     throw new BadRequestException(

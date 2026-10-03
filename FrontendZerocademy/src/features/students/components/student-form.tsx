@@ -42,6 +42,12 @@ type StudentFormProps =
       onSubmit: (values: UpdateStudentInput) => Promise<void>;
     };
 
+function omitEmptyOptionalValues<T extends Record<string, unknown>>(values: T): T {
+  return Object.fromEntries(
+    Object.entries(values).filter(([, value]) => value !== ""),
+  ) as T;
+}
+
 export function StudentForm({
   mode,
   title,
@@ -85,11 +91,11 @@ export function StudentForm({
     try {
       if (isCreate) {
         await (onSubmit as (v: CreateStudentInput) => Promise<void>)(
-          values as CreateStudentInput,
+          omitEmptyOptionalValues(values) as CreateStudentInput,
         );
       } else {
         await (onSubmit as (v: UpdateStudentInput) => Promise<void>)(
-          values as UpdateStudentInput,
+          omitEmptyOptionalValues(values) as UpdateStudentInput,
         );
       }
     } catch (error) {

@@ -9,10 +9,13 @@ import {
   buildPaginationMeta,
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   assertInstitutionExistsAndActive,
   assertValidWeight,
+  assertWeightsDoNotExceedTarget,
   assertWeightsSumToTarget,
   decimalToNumber,
 } from './academic-evaluation.validation';
@@ -33,7 +36,13 @@ export class AssessmentCategoriesService {
 
   async findAll(
     query: ListAssessmentCategoriesQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryListResponseDto> {
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      query.institutionId,
+    );
     await assertInstitutionExistsAndActive(this.prisma, query.institutionId);
 
     const where: Prisma.AssessmentCategoryWhereInput = {
@@ -62,16 +71,36 @@ export class AssessmentCategoriesService {
     };
   }
 
-  async findOne(id: string): Promise<AssessmentCategoryResponseDto> {
+  async findOne(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<AssessmentCategoryResponseDto> {
     const category = await this.findCategoryOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      category.institutionId,
+    );
     return toAssessmentCategoryResponseDto(category);
   }
 
   async create(
     dto: CreateAssessmentCategoryDto,
+    actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryResponseDto> {
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      dto.institutionId,
+    );
     await assertInstitutionExistsAndActive(this.prisma, dto.institutionId);
     assertValidWeight(dto.weight, 'Assessment category');
+    await this.assertProspectiveCategoryWeights(
+      dto.institutionId,
+      new Map(),
+      dto.weight,
+      'max',
+    );
 
     try {
       const category = await this.prisma.assessmentCategory.create({
@@ -83,8 +112,6 @@ export class AssessmentCategoriesService {
           isActive: true,
         },
       });
-
-      await this.validateCategoryWeights(dto.institutionId);
 
       this.logger.log({
         context: ACADEMIC_EVALUATION_CONTEXT,
@@ -106,11 +133,24 @@ export class AssessmentCategoriesService {
   async update(
     id: string,
     dto: UpdateAssessmentCategoryDto,
+    actor: AuthenticatedUser,
   ): Promise<AssessmentCategoryResponseDto> {
     const existing = await this.findCategoryOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      existing.institutionId,
+    );
 
     if (dto.weight !== undefined) {
       assertValidWeight(dto.weight, 'Assessment category');
+    }
+
+    if (dto.weight !== undefined && existing.isActive) {
+      await this.assertProspectiveCategoryWeights(
+        existing.institutionId,
+        new Map([[id, dto.weight]]),
+      );
     }
 
     const category = await this.prisma.assessmentCategory.update({
@@ -124,8 +164,6 @@ export class AssessmentCategoriesService {
       },
     });
 
-    await this.validateCategoryWeights(existing.institutionId);
-
     this.logger.log({
       context: ACADEMIC_EVALUATION_CONTEXT,
       event: 'ASSESSMENT_CATEGORY_UPDATED',
@@ -136,7 +174,16 @@ export class AssessmentCategoriesService {
     return toAssessmentCategoryResponseDto(category);
   }
 
-  async deactivate(id: string): Promise<AssessmentCategoryResponseDto> {
+  async deactivate(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<AssessmentCategoryResponseDto> {
+    const existing = await this.findCategoryOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      existing.institutionId,
+    );
     const category = await this.prisma.assessmentCategory.update({
       where: { id },
       data: { isActive: false },
@@ -152,8 +199,13 @@ export class AssessmentCategoriesService {
     return toAssessmentCategoryResponseDto(category);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, actor: AuthenticatedUser): Promise<void> {
     const existing = await this.findCategoryOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      existing.institutionId,
+    );
     await this.prisma.assessmentCategory.delete({ where: { id } });
 
     this.logger.log({
@@ -167,20 +219,32 @@ export class AssessmentCategoriesService {
     });
   }
 
-  private async validateCategoryWeights(institutionId: string): Promise<void> {
+  private async assertProspectiveCategoryWeights(
+    institutionId: string,
+    overrides: Map<string, number>,
+    additionalWeight?: number,
+    mode: 'exact' | 'max' = 'exact',
+  ): Promise<void> {
     const activeCategories = await this.prisma.assessmentCategory.findMany({
       where: { institutionId, isActive: true },
-      select: { weight: true },
+      select: { id: true, weight: true },
     });
 
-    if (activeCategories.length === 0) {
+    const weights = activeCategories.map(
+      (category) =>
+        overrides.get(category.id) ?? decimalToNumber(category.weight),
+    );
+
+    if (additionalWeight !== undefined) {
+      weights.push(additionalWeight);
+    }
+
+    if (mode === 'max') {
+      assertWeightsDoNotExceedTarget(weights, 'Assessment category');
       return;
     }
 
-    assertWeightsSumToTarget(
-      activeCategories.map((category) => decimalToNumber(category.weight)),
-      'Assessment category',
-    );
+    assertWeightsSumToTarget(weights, 'Assessment category');
   }
 
   private async findCategoryOrThrow(id: string) {

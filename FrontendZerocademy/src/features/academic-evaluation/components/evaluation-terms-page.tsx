@@ -18,6 +18,7 @@ import {
 import { evaluationTermSchema } from "@/features/academic-evaluation/schemas/academic-evaluation.schema";
 import { useEffectiveAcademicPeriodId } from "@/features/academic-periods/hooks/use-academic-period-context";
 import type { EvaluationTerm } from "@/features/academic-evaluation/types";
+import { ApiError } from "@/lib/api-error";
 import {
   canManageAcademicEvaluation,
   canViewAcademicEvaluation,
@@ -33,6 +34,7 @@ export function EvaluationTermsPage() {
   const [institutionId, setInstitutionId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [showWeightsEditor, setShowWeightsEditor] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { data: configuration, isLoading: isConfigurationLoading } =
     useInstitutionConfiguration(institutionId || undefined);
   const academicPeriodId =
@@ -78,14 +80,23 @@ export function EvaluationTermsPage() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!institutionId || !academicPeriodId) return;
+    setSubmitError(null);
 
-    await mutations.createEvaluationTerm.mutateAsync({
-      institutionId,
-      academicPeriodId,
-      ...values,
-    });
-    form.reset({ name: "", order: terms.length + 1, weight: 0 });
-    setShowForm(false);
+    try {
+      await mutations.createEvaluationTerm.mutateAsync({
+        institutionId,
+        academicPeriodId,
+        ...values,
+      });
+      form.reset({ name: "", order: terms.length + 1, weight: 0 });
+      setShowForm(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error.message
+          : "No se pudo crear el período de evaluación.",
+      );
+    }
   });
 
   const moveTerm = async (term: EvaluationTerm, direction: "up" | "down") => {
@@ -162,8 +173,13 @@ export function EvaluationTermsPage() {
               {...form.register("weight", { valueAsNumber: true })}
             />
           </Field>
-          <div className="flex items-end">
-            <Button type="submit" disabled={!institutionId || !effectivePeriodId}>
+          <div className="flex flex-col justify-end gap-2">
+            {submitError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {submitError}
+              </p>
+            ) : null}
+            <Button type="submit" disabled={!institutionId || !academicPeriodId}>
               Guardar período
             </Button>
           </div>

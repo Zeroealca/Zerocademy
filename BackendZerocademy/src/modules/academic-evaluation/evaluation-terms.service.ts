@@ -10,11 +10,14 @@ import {
   buildPaginationMeta,
   getPaginationSkip,
 } from '../../common/utils/pagination.util';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   assertAcademicPeriodForInstitution,
   assertInstitutionExistsAndActive,
   assertValidWeight,
+  assertWeightsDoNotExceedTarget,
   assertWeightsSumToTarget,
   decimalToNumber,
 } from './academic-evaluation.validation';
@@ -37,7 +40,13 @@ export class EvaluationTermsService {
 
   async findAll(
     query: ListEvaluationTermsQueryDto,
+    actor: AuthenticatedUser,
   ): Promise<EvaluationTermListResponseDto> {
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      query.institutionId,
+    );
     await assertInstitutionExistsAndActive(this.prisma, query.institutionId);
     await assertAcademicPeriodForInstitution(
       this.prisma,
@@ -69,14 +78,28 @@ export class EvaluationTermsService {
     };
   }
 
-  async findOne(id: string): Promise<EvaluationTermResponseDto> {
+  async findOne(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<EvaluationTermResponseDto> {
     const term = await this.findTermOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      term.institutionId,
+    );
     return toEvaluationTermResponseDto(term);
   }
 
   async create(
     dto: CreateEvaluationTermDto,
+    actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto> {
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      dto.institutionId,
+    );
     await assertInstitutionExistsAndActive(this.prisma, dto.institutionId);
     await assertAcademicPeriodForInstitution(
       this.prisma,
@@ -84,6 +107,13 @@ export class EvaluationTermsService {
       dto.academicPeriodId,
     );
     assertValidWeight(dto.weight, 'Evaluation term');
+    await this.assertProspectiveTermWeights(
+      dto.institutionId,
+      dto.academicPeriodId,
+      new Map(),
+      dto.weight,
+      'max',
+    );
 
     try {
       const term = await this.prisma.evaluationTerm.create({
@@ -98,8 +128,6 @@ export class EvaluationTermsService {
           isActive: true,
         },
       });
-
-      await this.validateTermWeights(dto.institutionId, dto.academicPeriodId);
 
       this.logger.log({
         context: ACADEMIC_EVALUATION_CONTEXT,
@@ -125,8 +153,14 @@ export class EvaluationTermsService {
   async update(
     id: string,
     dto: UpdateEvaluationTermDto,
+    actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto> {
     const existing = await this.findTermOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      existing.institutionId,
+    );
 
     if (dto.weight !== undefined) {
       assertValidWeight(dto.weight, 'Evaluation term');
@@ -169,7 +203,9 @@ export class EvaluationTermsService {
     institutionId: string,
     academicPeriodId: string,
     dto: UpdateEvaluationTermWeightsDto,
+    actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto[]> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExistsAndActive(this.prisma, institutionId);
     await assertAcademicPeriodForInstitution(
       this.prisma,
@@ -228,7 +264,9 @@ export class EvaluationTermsService {
     institutionId: string,
     academicPeriodId: string,
     dto: ReorderEvaluationTermsDto,
+    actor: AuthenticatedUser,
   ): Promise<EvaluationTermResponseDto[]> {
+    await assertActorCanAccessInstitution(this.prisma, actor, institutionId);
     await assertInstitutionExistsAndActive(this.prisma, institutionId);
     await assertAcademicPeriodForInstitution(
       this.prisma,
@@ -238,10 +276,17 @@ export class EvaluationTermsService {
 
     const terms = await this.prisma.evaluationTerm.findMany({
       where: { institutionId, academicPeriodId },
+      select: { id: true },
     });
 
     const termIds = new Set(terms.map((term) => term.id));
     const orders = new Set<number>();
+
+    if (dto.items.length !== terms.length) {
+      throw new BadRequestException(
+        'Reorder items must include every evaluation term exactly once',
+      );
+    }
 
     for (const item of dto.items) {
       if (!termIds.has(item.id)) {
@@ -259,14 +304,23 @@ export class EvaluationTermsService {
       orders.add(item.order);
     }
 
-    await this.prisma.$transaction(
-      dto.items.map((item) =>
-        this.prisma.evaluationTerm.update({
+    // Unique (institutionId, academicPeriodId, order) requires a two-phase
+    // write so swaps do not collide mid-transaction.
+    await this.prisma.$transaction(async (tx) => {
+      for (const [index, item] of dto.items.entries()) {
+        await tx.evaluationTerm.update({
+          where: { id: item.id },
+          data: { order: 10_000 + index },
+        });
+      }
+
+      for (const item of dto.items) {
+        await tx.evaluationTerm.update({
           where: { id: item.id },
           data: { order: item.order },
-        }),
-      ),
-    );
+        });
+      }
+    });
 
     const updated = await this.prisma.evaluationTerm.findMany({
       where: { institutionId, academicPeriodId },
@@ -283,7 +337,16 @@ export class EvaluationTermsService {
     return updated.map(toEvaluationTermResponseDto);
   }
 
-  async deactivate(id: string): Promise<EvaluationTermResponseDto> {
+  async deactivate(
+    id: string,
+    actor: AuthenticatedUser,
+  ): Promise<EvaluationTermResponseDto> {
+    const existing = await this.findTermOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      existing.institutionId,
+    );
     const term = await this.prisma.evaluationTerm.update({
       where: { id },
       data: { isActive: false },
@@ -299,8 +362,13 @@ export class EvaluationTermsService {
     return toEvaluationTermResponseDto(term);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, actor: AuthenticatedUser): Promise<void> {
     const existing = await this.findTermOrThrow(id);
+    await assertActorCanAccessInstitution(
+      this.prisma,
+      actor,
+      existing.institutionId,
+    );
     await this.prisma.evaluationTerm.delete({ where: { id } });
 
     this.logger.log({
@@ -311,41 +379,32 @@ export class EvaluationTermsService {
     });
   }
 
-  private async validateTermWeights(
-    institutionId: string,
-    academicPeriodId: string,
-  ): Promise<void> {
-    const activeTerms = await this.prisma.evaluationTerm.findMany({
-      where: { institutionId, academicPeriodId, isActive: true },
-      select: { weight: true },
-    });
-
-    if (activeTerms.length === 0) {
-      return;
-    }
-
-    assertWeightsSumToTarget(
-      activeTerms.map((term) => decimalToNumber(term.weight)),
-      'Evaluation term',
-    );
-  }
-
   private async assertProspectiveTermWeights(
     institutionId: string,
     academicPeriodId: string,
     overrides: Map<string, number>,
+    additionalWeight?: number,
+    mode: 'exact' | 'max' = 'exact',
   ): Promise<void> {
     const activeTerms = await this.prisma.evaluationTerm.findMany({
       where: { institutionId, academicPeriodId, isActive: true },
       select: { id: true, weight: true },
     });
 
-    assertWeightsSumToTarget(
-      activeTerms.map(
-        (term) => overrides.get(term.id) ?? decimalToNumber(term.weight),
-      ),
-      'Evaluation term',
+    const weights = activeTerms.map(
+      (term) => overrides.get(term.id) ?? decimalToNumber(term.weight),
     );
+
+    if (additionalWeight !== undefined) {
+      weights.push(additionalWeight);
+    }
+
+    if (mode === 'max') {
+      assertWeightsDoNotExceedTarget(weights, 'Evaluation term');
+      return;
+    }
+
+    assertWeightsSumToTarget(weights, 'Evaluation term');
   }
 
   private async findTermOrThrow(id: string) {
