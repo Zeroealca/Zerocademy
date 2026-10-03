@@ -54,6 +54,7 @@ type PrismaMock = {
     findMany: jest.Mock;
     update: jest.Mock;
   };
+  institutionMembership: { findFirst: jest.Mock };
   $transaction: jest.Mock;
 };
 type TransactionOperation = (transaction: PrismaMock) => Promise<unknown>;
@@ -90,6 +91,9 @@ describe('AcademicUnitsService', () => {
             academicPeriod: { status: 'ACTIVE' },
           },
         }),
+      },
+      institutionMembership: {
+        findFirst: jest.fn().mockResolvedValue(null),
       },
       academicUnit: {
         aggregate: jest.fn().mockResolvedValue({ _max: { position: null } }),
@@ -154,6 +158,20 @@ describe('AcademicUnitsService', () => {
       { id: 'unit-a', title: 'Unit A', position: 1 },
       { id: 'unit-b', title: 'Unit B', position: 2 },
     ]);
+  });
+
+  it('lists units for an admin resolved via membership when JWT institutionId is absent', async () => {
+    const membershipAdmin: AuthenticatedUser = {
+      ...admin,
+      institutionId: undefined,
+    };
+    prisma.institutionMembership.findFirst.mockResolvedValue({ id: 'membership' });
+
+    await expect(service.list(membershipAdmin, 'plan')).resolves.toEqual([
+      { id: 'unit-a', title: 'Unit A', position: 1 },
+      { id: 'unit-b', title: 'Unit B', position: 2 },
+    ]);
+    expect(prisma.institutionMembership.findFirst).toHaveBeenCalled();
   });
 
   it('does not let an admin create units', async () => {

@@ -7,6 +7,7 @@ import {
 import { AcademicPeriodStatus, AcademicPlanStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
 import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permission-enforcer.service';
 import { PERMISSIONS } from '../../common/rbac/permission-catalog';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -187,10 +188,16 @@ export class AcademicUnitsService {
       actor.role === Role.TEACHER &&
       actor.profileId === p.teacherAssignment.teacherId
     ) {
+      // Ownership is verified above.
     } else if (
       actor.role === Role.ADMIN &&
-      actor.institutionId === p.teacherAssignment.institutionId
+      p.teacherAssignment.institutionId
     ) {
+      await assertActorCanAccessInstitution(
+        this.prisma,
+        actor,
+        p.teacherAssignment.institutionId,
+      );
     } else if (actor.role !== Role.SUPER_ADMIN)
       throw new NotFoundException('Academic plan not found');
     if (write) {
