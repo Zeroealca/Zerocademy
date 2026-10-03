@@ -48,7 +48,8 @@ One bounded context per row. Implement in the mapped folders only.
 | Courses | Classroom / parallel groups per period | `courses` | `courses` |
 | Subjects | Subject catalog, curricula links | `subjects` | `subjects` |
 | Teacher assignments | Staffing: teacher + subject + course + period | `teacher-assignments` | `teacher-assignments` |
-| Planning | Schedules, class groups, academic structure | `planning` | `planning` |
+| Timetables | Weekly schedule structure, teaching loads, generation, published timetable views | `timetables` | `timetables` |
+| Planning | Pedagogical academic plans (units/lessons); not weekly timetables | `planning` | `planning` |
 | Academic execution | Actual teaching occurrences and their operational lifecycle | `academic-execution` | `academic-execution` |
 | Grades | Assessments, entry, transcripts | `grades` | `grades` |
 | Academic performance | Grade calculation engine, averages, performance queries | `academic-performance` | `academic-performance` |

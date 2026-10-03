@@ -244,6 +244,9 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20260930090000_authorization_permission_catalog`     | Permission catalog + role allowed boundary tables                            |
 | `20260930100000_authorization_system_permission_profiles` | System permission profiles + composition join tables                     |
 | `20260930110000_authorization_membership_permission_profile_assignment` | Optional `InstitutionMembership.permissionProfileId` FK        |
+| `20261001110000_class_session_attendance_phase1`      | ClassSession attendance records (`class_session_attendance_records`)         |
+| `20261001120000_grade_entry_integrity_audit_history`  | Append-only `grade_audit_events` + `GradeAuditOperation`                     |
+| `20261001130000_assessment_publication`               | Assessment `DRAFT`/`PUBLISHED`, publication metadata, frozen roster entries  |
 
 Never edit applied migration SQL retroactively.
 

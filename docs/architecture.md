@@ -20,6 +20,7 @@ Canonical domains (from root `agent.md`):
 | Academic periods                  | `academic-periods`     | `academic-periods`                     |
 | Subjects                          | `subjects`             | `subjects`                             |
 | Teacher assignments               | `teacher-assignments`  | `teacher-assignments`                  |
+| Timetables                        | `timetables` *(planned)* | `timetables` *(planned)*             |
 | Academic execution                | `academic-execution`   | `academic-execution`                   |
 | Institutions                      | `institutions`         | `institutions`, `institution-settings` |
 | Academic evaluation               | `academic-evaluation`  | `academic-evaluation`                  |
@@ -31,14 +32,16 @@ Canonical domains (from root `agent.md`):
 
 ## Boundaries
 
-Academic Planning and Academic Execution remain separate graphs:
+Academic Planning, Timetables, and Academic Execution remain separate graphs:
 
 ```text
-Planning:  TeacherAssignment → AcademicPlan → AcademicUnit → LessonPlan
-Execution: TeacherAssignment → ClassSession → optional LessonPlan reference
+Planning:   TeacherAssignment → AcademicPlan → AcademicUnit → LessonPlan
+Timetables: Institution+Period → PeriodScheduleStructure / TeachingLoad → Timetable → TimetableSlot
+Execution:  TeacherAssignment → ClassSession → optional LessonPlan reference
+            (optional future TimetableSlot origin; never required)
 ```
 
-`ClassSession` represents an actual teaching occurrence; it is not an AttendanceRecord. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it.
+`TimetableSlot` is planned recurring scheduling; `ClassSession` is an actual teaching occurrence. They must not be collapsed. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it. Design spike: [timetables-scheduling.md](./timetables-scheduling.md).
 
 ## Authorization and permissions architecture
 
@@ -129,6 +132,7 @@ npm run docker:up
 - [subjects.md](./subjects.md)
 - [teacher-assignments.md](./teacher-assignments.md)
 - [academic-planning.md](./academic-planning.md)
+- [timetables-scheduling.md](./timetables-scheduling.md)
 - [curriculum.md](./curriculum.md)
 - [seeds.md](./seeds.md)
 - [ui-guidelines.md](./ui-guidelines.md)

@@ -4,7 +4,7 @@
 
 Assessment publication is now implemented locally with `DRAFT` and `PUBLISHED` lifecycle states, publication metadata, an atomic frozen `AssessmentRosterEntry` snapshot, and compatibility backfill of existing assessments to `PUBLISHED`. Published assessments cannot be normally edited, deleted, or graded. The dedicated published-grade correction endpoint is roster-scoped, optimistic-concurrency protected, requires a trimmed reason, and records the Phase 1 `GradeAuditEvent` history atomically.
 
-Student and representative grade/result surfaces exclude DRAFT inputs: grade lists, academic-performance calculations, dynamic report cards, and PDF-backed report-card data are publication-filtered. Teacher operational calculations remain allowed to preview DRAFT work. Teacher UI exposes Borrador/Publicada, explicit publication confirmation, frozen published sheets, and row-level correction controls. The additive publication migration remains local-only and must be reviewed with `prisma migrate status` before deployment; it has not been applied to Neon.
+Student and representative grade/result surfaces exclude DRAFT inputs: grade lists, academic-performance calculations, dynamic report cards, and PDF-backed report-card data are publication-filtered. Teacher operational calculations remain allowed to preview DRAFT work. Teacher UI exposes Borrador/Publicada, explicit publication confirmation, frozen published sheets, and row-level correction controls. As of 2026-10-02, `prisma migrate status` against the configured Neon database reports the publication migration (`20261001130000_assessment_publication`) and the grade-audit migration (`20261001120000_grade_entry_integrity_audit_history`) applied with schema up to date.
 
 ## Scope and status
 
@@ -14,9 +14,9 @@ complete and its migration is applied; it is not a prerequisite or a pending
 item for the work described here.
 
 The Grades domain is **partially end-to-end implemented**: it has persisted
-assessment and grade data, teacher entry, calculations, report cards, seed
-data, and scoped APIs. It does not yet provide an official grade-publication
-or period-closure workflow.
+assessment and grade data, teacher entry, assessment publication with frozen
+roster + correction audit, calculations, report cards, seed data, and scoped
+APIs. Period-closure / official term lock remains deferred.
 
 ## Existing model and configuration
 
@@ -61,7 +61,8 @@ in a future additive migration after production index inspection.
 | Grade entry sheet and bulk entry  | IMPLEMENTED     | `GET /v1/grades/entry-sheet/:assessmentId`, `POST /v1/grades/bulk`.                                     |
 | Calculated performance            | IMPLEMENTED     | Scoped `/v1/academic-performance/*` student, representative, teacher and admin queries.                 |
 | Report cards/PDF                  | IMPLEMENTED     | Scoped `/v1/report-cards/*` and PDF endpoints.                                                          |
-| Official publication/lock/closure | NOT IMPLEMENTED | No state/snapshot/publication model or write gate exists.                                               |
+| Assessment publication + frozen roster | IMPLEMENTED | `AssessmentStatus`, publication metadata, `AssessmentRosterEntry`, correction endpoint + `GradeAuditEvent`. |
+| Period-closure / official term lock | NOT IMPLEMENTED | No period-level closure snapshot or term-wide lock workflow.                                           |
 
 Teachers create an assessment only for their own assignment. The service
 validates assignment/subject/period/institution agreement, term membership,
