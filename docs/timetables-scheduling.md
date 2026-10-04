@@ -1,6 +1,6 @@
 # Timetables / Scheduling MVP — architecture and product spike
 
-Status: **design approved for implementation backlog** (no production schema, API, or UI in this document).  
+Status: **domain/schema foundation implemented and deployed to Neon by DEMY-134**; API, UI, generator, and ClassSession integration remain future work.
 Tracking: [DEMY-133 — Horarios académicos — Timetables / Scheduling MVP](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-133).  
 Related: [academic-planning.md](./academic-planning.md) (ClassSession execution), [teacher-assignments.md](./teacher-assignments.md), [authorization-permissions.md](./authorization-permissions.md), [ownership-strategy.md](./ownership-strategy.md).  
 Deferred: [DEMY-126](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-126) (global `User.role` → membership Role). Timetables does **not** depend on DEMY-126.
@@ -58,7 +58,7 @@ Maps to root `agent.md` registry. Does not replace Academic Planning (`AcademicP
 | `Timetable` | `institutionId` + `academicPeriodId` (unique in MVP) | One live aggregate per period |
 | `TimetableSlot` | Parent `Timetable` | References `TeacherAssignment` + `ScheduleBlock` + weekday |
 
-### Proposed entities (design only — do not implement in this spike)
+### Persisted domain entities (DEMY-134 foundation)
 
 ```text
 PeriodScheduleStructure
