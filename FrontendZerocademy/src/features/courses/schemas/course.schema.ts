@@ -18,6 +18,7 @@ export const createCourseSchema = z.object({
     .string()
     .uuid("Selecciona un período académico válido"),
   gradeLevelId: z.string().uuid("Selecciona un grado válido"),
+  subLevelId: z.string().uuid("Selecciona un subnivel válido"),
 });
 
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;

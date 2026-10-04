@@ -97,7 +97,7 @@ export function InstitutionTransitionsPage({
           {institutionPeriods.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No hay períodos del régimen de esta institución. Crea un período
-              académico (Costa/Galápagos o Sierra/Amazonía según la región) o
+              académico (Costa - Galápagos o Sierra - Amazonía según la región) o
               revisa la región/régimen en la ficha de la institución.
             </p>
           ) : (

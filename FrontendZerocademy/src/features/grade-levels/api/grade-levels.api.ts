@@ -24,6 +24,10 @@ function buildListQuery(filters: GradeLevelsFilters): string {
     params.set("academicLevelId", filters.academicLevelId);
   }
 
+  if (filters.subLevelId) {
+    params.set("subLevelId", filters.subLevelId);
+  }
+
   if (filters.isActive !== undefined) {
     params.set("isActive", String(filters.isActive));
   }

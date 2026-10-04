@@ -10,7 +10,7 @@ type InstitutionPeriodFilters = Omit<
 >;
 
 /**
- * Lists calendar periods for the actor's institution regime (Costa/Galápagos or Sierra/Amazonía).
+ * Lists calendar periods for the actor's institution regime (Costa - Galápagos or Sierra - Amazonía).
  */
 export function useInstitutionAcademicPeriods(
   filters: InstitutionPeriodFilters = { page: 1, limit: 100 },

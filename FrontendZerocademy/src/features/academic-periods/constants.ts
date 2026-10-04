@@ -16,8 +16,8 @@ export const ACADEMIC_PERIOD_STATUSES: AcademicPeriodStatus[] = [
 ];
 
 export const REGIME_LABELS: Record<AcademicRegime, string> = {
-  COSTA_GALAPAGOS: "Costa y Galápagos",
-  SIERRA_AMAZONIA: "Sierra y Amazonía",
+  COSTA_GALAPAGOS: "Costa - Galápagos",
+  SIERRA_AMAZONIA: "Sierra - Amazonía",
 };
 
 export const STATUS_LABELS: Record<AcademicPeriodStatus, string> = {

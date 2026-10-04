@@ -5,6 +5,7 @@ export interface Course {
   capacity?: number | null;
   academicPeriodId: string;
   gradeLevelId: string;
+  subLevelId?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +40,7 @@ export interface CreateCourseInput {
   capacity?: number;
   academicPeriodId: string;
   gradeLevelId: string;
+  subLevelId: string;
 }
 
 export type UpdateCourseInput = Partial<CreateCourseInput>;

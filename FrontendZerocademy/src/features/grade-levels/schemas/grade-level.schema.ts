@@ -26,9 +26,8 @@ export const createGradeLevelSchema = z.object({
     .int("El orden debe ser un número entero")
     .min(1, "El orden debe ser al menos 1"),
   description: optionalDescription,
-  academicLevelId: z
-    .string()
-    .uuid("Selecciona un nivel académico válido"),
+  academicLevelId: z.string().uuid("Selecciona un nivel académico válido"),
+  subLevelId: optionalUuid,
   institutionId: optionalUuid,
   isSystem: z.boolean().optional(),
 });

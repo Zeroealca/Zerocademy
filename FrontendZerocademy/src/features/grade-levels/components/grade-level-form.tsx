@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useAcademicLevels } from "@/features/academic-levels/hooks/use-academic-levels";
+import { useSubLevels } from "@/features/sub-levels/hooks/use-sub-levels";
 import {
   createGradeLevelSchema,
   type CreateGradeLevelInput,
@@ -49,6 +50,7 @@ export function GradeLevelForm({
     handleSubmit,
     control,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateGradeLevelInput>({
     resolver: zodResolver(createGradeLevelSchema),
@@ -58,12 +60,24 @@ export function GradeLevelForm({
       order: defaultValues?.order ?? 1,
       description: defaultValues?.description ?? "",
       academicLevelId: defaultValues?.academicLevelId ?? "",
+      subLevelId: defaultValues?.subLevelId ?? "",
       institutionId: defaultValues?.institutionId ?? "",
       isSystem: defaultValues?.isSystem ?? false,
     },
   });
 
   const academicLevels = levelsData?.data ?? [];
+  const selectedAcademicLevelId = useWatch({
+    control,
+    name: "academicLevelId",
+  });
+  const { data: subLevelsData, isLoading: subLevelsLoading } = useSubLevels({
+    page: 1,
+    limit: 100,
+    academicLevelId: selectedAcademicLevelId || undefined,
+    isActive: true,
+  });
+  const subLevels = subLevelsData?.data ?? [];
 
   const handleFormSubmit = handleSubmit(async (values) => {
     try {
@@ -71,6 +85,7 @@ export function GradeLevelForm({
         ...values,
         description: values.description?.trim() || undefined,
         institutionId: values.institutionId?.trim() || undefined,
+        subLevelId: values.subLevelId || undefined,
       };
       await onSubmit(payload);
     } catch (error) {
@@ -107,7 +122,10 @@ export function GradeLevelForm({
                 <SearchableSelect
                   id="academicLevelId"
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    setValue("subLevelId", "");
+                  }}
                   onBlur={field.onBlur}
                   disabled={disabled || levelsLoading}
                   loading={levelsLoading}
@@ -124,6 +142,42 @@ export function GradeLevelForm({
             {errors.academicLevelId ? (
               <p className="text-sm text-destructive">
                 {errors.academicLevelId.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="subLevelId">Subnivel (opcional)</Label>
+            <Controller
+              name="subLevelId"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  id="subLevelId"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  disabled={
+                    disabled || subLevelsLoading || !selectedAcademicLevelId
+                  }
+                  loading={subLevelsLoading}
+                  placeholder={
+                    selectedAcademicLevelId
+                      ? "Selecciona un subnivel"
+                      : "Selecciona un nivel primero"
+                  }
+                  searchPlaceholder="Buscar subnivel…"
+                  loadingSelectedLabel="Cargando subnivel seleccionado…"
+                  options={subLevels.map((subLevel) => ({
+                    value: subLevel.id,
+                    label: `${subLevel.name} (${subLevel.code})`,
+                  }))}
+                />
+              )}
+            />
+            {errors.subLevelId ? (
+              <p className="text-sm text-destructive">
+                {errors.subLevelId.message}
               </p>
             ) : null}
           </div>
@@ -178,9 +232,7 @@ export function GradeLevelForm({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="institutionId">
-              ID de institución (opcional)
-            </Label>
+            <Label htmlFor="institutionId">ID de institución (opcional)</Label>
             <Input
               id="institutionId"
               disabled={disabled}
@@ -224,13 +276,16 @@ export function GradeLevelForm({
   );
 }
 
-export function gradeLevelToFormValues(level: GradeLevel): CreateGradeLevelInput {
+export function gradeLevelToFormValues(
+  level: GradeLevel,
+): CreateGradeLevelInput {
   return {
     name: level.name,
     code: level.code,
     order: level.order,
     description: level.description ?? "",
     academicLevelId: level.academicLevelId,
+    subLevelId: level.subLevelId ?? "",
     institutionId: level.institutionId ?? "",
     isSystem: level.isSystem,
   };

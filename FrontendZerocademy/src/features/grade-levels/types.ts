@@ -5,6 +5,7 @@ export interface GradeLevel {
   order: number;
   description?: string | null;
   academicLevelId: string;
+  subLevelId?: string | null;
   institutionId?: string | null;
   isSystem: boolean;
   isActive: boolean;
@@ -30,6 +31,7 @@ export interface GradeLevelsFilters {
   search?: string;
   institutionId?: string;
   academicLevelId?: string;
+  subLevelId?: string;
   isActive?: boolean;
   isSystem?: boolean;
 }
@@ -40,6 +42,7 @@ export interface CreateGradeLevelInput {
   order: number;
   description?: string;
   academicLevelId: string;
+  subLevelId?: string;
   institutionId?: string;
   isSystem?: boolean;
 }

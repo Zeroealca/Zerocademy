@@ -45,7 +45,7 @@ export function CreateAcademicPeriodPage() {
       </Button>
       <AcademicPeriodForm
         title="Nuevo período académico"
-        description="Define un año lectivo para los regímenes Costa/Galápagos o Sierra/Amazonía."
+        description="Define un año lectivo para los regímenes Costa - Galápagos o Sierra - Amazonía."
         submitLabel="Crear período"
         onSubmit={handleSubmit}
       />

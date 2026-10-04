@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +16,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
 import { useGradeLevels } from "@/features/grade-levels/hooks/use-grade-levels";
+import { useSubLevels } from "@/features/sub-levels/hooks/use-sub-levels";
 import {
   createCourseSchema,
   type CreateCourseInput,
@@ -42,7 +43,7 @@ export function CourseForm({
 }: CourseFormProps) {
   const { data: periodsData, isLoading: periodsLoading } =
     useInstitutionAcademicPeriods({ page: 1, limit: 100, status: "ACTIVE" });
-  const { data: gradesData, isLoading: gradesLoading } = useGradeLevels({
+  const { data: subLevelsData, isLoading: subLevelsLoading } = useSubLevels({
     page: 1,
     limit: 100,
     isActive: true,
@@ -53,6 +54,7 @@ export function CourseForm({
     handleSubmit,
     control,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateCourseInput>({
     resolver: zodResolver(createCourseSchema),
@@ -62,15 +64,30 @@ export function CourseForm({
       capacity: defaultValues?.capacity,
       academicPeriodId: defaultValues?.academicPeriodId ?? "",
       gradeLevelId: defaultValues?.gradeLevelId ?? "",
+      subLevelId: defaultValues?.subLevelId ?? "",
     },
   });
 
   const periods = periodsData?.data ?? [];
+  const selectedSubLevelId = useWatch({ control, name: "subLevelId" });
+  const selectedSubLevel = (subLevelsData?.data ?? []).find(
+    (subLevel) => subLevel.id === selectedSubLevelId,
+  );
+  const { data: gradesData, isLoading: gradesLoading } = useGradeLevels({
+    page: 1,
+    limit: 100,
+    isActive: true,
+    academicLevelId: selectedSubLevel?.academicLevelId,
+    subLevelId: selectedSubLevelId || undefined,
+  });
   const grades = gradesData?.data ?? [];
+  const subLevels = subLevelsData?.data ?? [];
 
   const handleFormSubmit = handleSubmit(async (values) => {
     if (!periods.some((period) => period.id === values.academicPeriodId)) {
-      setError("academicPeriodId", { message: "Selecciona un periodo lectivo activo." });
+      setError("academicPeriodId", {
+        message: "Selecciona un periodo lectivo activo.",
+      });
       return;
     }
     try {
@@ -79,6 +96,7 @@ export function CourseForm({
         section: values.section,
         academicPeriodId: values.academicPeriodId,
         gradeLevelId: values.gradeLevelId,
+        subLevelId: values.subLevelId,
         ...(values.capacity !== undefined ? { capacity: values.capacity } : {}),
       };
       await onSubmit(payload);
@@ -138,6 +156,39 @@ export function CourseForm({
           </div>
 
           <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="subLevelId">Subnivel</Label>
+            <Controller
+              name="subLevelId"
+              control={control}
+              render={({ field }) => (
+                <SearchableSelect
+                  id="subLevelId"
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    setValue("gradeLevelId", "");
+                  }}
+                  onBlur={field.onBlur}
+                  disabled={disabled || subLevelsLoading}
+                  loading={subLevelsLoading}
+                  placeholder="Selecciona un subnivel"
+                  searchPlaceholder="Buscar subnivel…"
+                  loadingSelectedLabel="Cargando subnivel seleccionado…"
+                  options={subLevels.map((subLevel) => ({
+                    value: subLevel.id,
+                    label: `${subLevel.name} (${subLevel.code})`,
+                  }))}
+                />
+              )}
+            />
+            {errors.subLevelId ? (
+              <p className="text-sm text-destructive">
+                {errors.subLevelId.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="gradeLevelId">Grado</Label>
             <Controller
               name="gradeLevelId"
@@ -148,9 +199,13 @@ export function CourseForm({
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
-                  disabled={disabled || gradesLoading}
+                  disabled={disabled || gradesLoading || !selectedSubLevelId}
                   loading={gradesLoading}
-                  placeholder="Selecciona un grado"
+                  placeholder={
+                    selectedSubLevelId
+                      ? "Selecciona un grado"
+                      : "Selecciona un subnivel primero"
+                  }
                   searchPlaceholder="Buscar grado…"
                   loadingSelectedLabel="Cargando grado seleccionado…"
                   options={grades.map((grade) => ({
@@ -189,7 +244,9 @@ export function CourseForm({
               {...register("section")}
             />
             {errors.section ? (
-              <p className="text-sm text-destructive">{errors.section.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.section.message}
+              </p>
             ) : null}
           </div>
 
@@ -241,5 +298,6 @@ export function courseToFormValues(course: Course): CreateCourseInput {
     capacity: course.capacity ?? undefined,
     academicPeriodId: course.academicPeriodId,
     gradeLevelId: course.gradeLevelId,
+    subLevelId: course.subLevelId ?? "",
   };
 }

@@ -20,8 +20,8 @@ export const REGION_LABELS: Record<InstitutionRegion, string> = {
 };
 
 export const REGIME_LABELS: Record<AcademicRegime, string> = {
-  COSTA_GALAPAGOS: "Costa y Galápagos",
-  SIERRA_AMAZONIA: "Sierra y Amazonía",
+  COSTA_GALAPAGOS: "Costa - Galápagos",
+  SIERRA_AMAZONIA: "Sierra - Amazonía",
 };
 
 export const STATUS_LABELS = {
