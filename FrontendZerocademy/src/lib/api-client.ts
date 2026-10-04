@@ -7,6 +7,68 @@ export interface RequestOptions extends Omit<RequestInit, "body"> {
   skipAuth?: boolean;
 }
 
+const SENSITIVE_LOG_FIELD = /password|token|authorization|secret/i;
+
+function redactForLog(value: unknown, key?: string): unknown {
+  if (key && SENSITIVE_LOG_FIELD.test(key)) {
+    return "[REDACTADO]";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactForLog(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [
+        entryKey,
+        redactForLog(entryValue, entryKey),
+      ]),
+    );
+  }
+
+  return value;
+}
+
+function logApiRequest(url: string, method: string, body?: unknown): void {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  console.info("[API] Solicitud", {
+    url,
+    method,
+    payload: body === undefined ? undefined : redactForLog(body),
+  });
+}
+
+async function logApiResponse(url: string, response: Response): Promise<void> {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+
+  const responseCopy = response.clone();
+  const contentType = responseCopy.headers.get("content-type") ?? "";
+  let payload: unknown;
+
+  if (contentType.includes("application/json")) {
+    try {
+      payload = await responseCopy.json();
+    } catch {
+      payload = "[Respuesta JSON no legible]";
+    }
+  } else {
+    payload = responseCopy.statusText || undefined;
+  }
+
+  console.info("[API] Respuesta", {
+    url,
+    status: response.status,
+    ok: response.ok,
+    payload: redactForLog(payload),
+  });
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type") ?? "";
   const isJson = contentType.includes("application/json");
@@ -48,11 +110,15 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 
   try {
+    const url = `${getApiBaseUrl()}/v1/auth/refresh`;
+    const payload = { refreshToken };
+    logApiRequest(url, "POST", payload);
     const response = await fetch(`${getApiBaseUrl()}/v1/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify(payload),
     });
+    await logApiResponse(url, response);
 
     if (!response.ok) {
       clearAuth();
@@ -90,13 +156,17 @@ export async function apiUploadClient<T>(
     }
   }
 
-  const execute = () =>
-    fetch(url, {
+  const execute = async () => {
+    logApiRequest(url, rest.method ?? "POST", "[FormData]");
+    const response = await fetch(url, {
       ...rest,
       method: rest.method ?? "POST",
       headers: requestHeaders,
       body: formData,
     });
+    await logApiResponse(url, response);
+    return response;
+  };
 
   let response = await execute();
 
@@ -132,12 +202,16 @@ export async function apiClient<T>(
     }
   }
 
-  const execute = () =>
-    fetch(url, {
+  const execute = async () => {
+    logApiRequest(url, rest.method ?? "GET", body);
+    const response = await fetch(url, {
       ...rest,
       headers: requestHeaders,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+    await logApiResponse(url, response);
+    return response;
+  };
 
   let response = await execute();
   if (response.status === 401 && !skipAuth) {
@@ -167,10 +241,14 @@ export async function apiDownloadClient(path: string): Promise<Blob> {
   };
   setAuthorization();
 
+  logApiRequest(url, "GET");
   let response = await fetch(url, { headers: requestHeaders });
+  await logApiResponse(url, response);
   if (response.status === 401 && (await refreshAccessToken())) {
     setAuthorization();
+    logApiRequest(url, "GET");
     response = await fetch(url, { headers: requestHeaders });
+    await logApiResponse(url, response);
   }
 
   if (!response.ok) {
