@@ -160,7 +160,7 @@ export function SubjectsTable({
             </div>
 
             {meta.totalPages > 1 ? (
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
                   Página {meta.page} de {meta.totalPages}
                 </p>

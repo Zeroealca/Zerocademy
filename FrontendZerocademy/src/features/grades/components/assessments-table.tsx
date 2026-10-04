@@ -100,7 +100,7 @@ export function AssessmentsTable({
       </div>
 
       {meta.totalPages > 1 ? (
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <span className="text-muted-foreground">
             Página {meta.page} de {meta.totalPages}
           </span>
