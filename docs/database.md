@@ -120,15 +120,16 @@ Relations: one-to-many `AcademicTerm`.
 | startDate, endDate | Date   | Within parent period          |
 | academicPeriodId   | UUID   | FK → AcademicPeriod (CASCADE) |
 
-### AcademicLevel / GradeLevel / Course
+### AcademicLevel / SubLevel / GradeLevel / Course
 
 Reusable structure catalog plus period-scoped classroom groups. See [academic-structure.md](./academic-structure.md).
 
 | Model           | Reused across periods | Key relations                                       |
 | --------------- | --------------------- | --------------------------------------------------- |
 | `AcademicLevel` | Yes                   | optional `institutionId`                            |
-| `GradeLevel`    | Yes                   | `academicLevelId`                                   |
-| `Course`        | No (per period)       | `institutionId`, `academicPeriodId`, `gradeLevelId` |
+| `SubLevel`      | Yes                   | `academicLevelId`; managed by `SUPER_ADMIN`         |
+| `GradeLevel`    | Yes                   | `academicLevelId`, optional `subLevelId` for legacy/custom rows |
+| `Course`        | No (per period)       | `institutionId`, `academicPeriodId`, `subLevelId`, `gradeLevelId` |
 
 ### Subject / TeacherAssignment
 
@@ -247,6 +248,10 @@ Migrations live in `BackendZerocademy/prisma/migrations/`:
 | `20261001110000_class_session_attendance_phase1`      | ClassSession attendance records (`class_session_attendance_records`)         |
 | `20261001120000_grade_entry_integrity_audit_history`  | Append-only `grade_audit_events` + `GradeAuditOperation`                     |
 | `20261001130000_assessment_publication`               | Assessment `DRAFT`/`PUBLISHED`, publication metadata, frozen roster entries  |
+| `20261004160450_add_sub_levels_to_courses`            | Reusable `SubLevel` catalog and nullable `Course.subLevelId`                 |
+| `20261004162000_link_grades_to_sub_levels`            | Nullable `GradeLevel.subLevelId` mapping                                    |
+| `20261004170000_timetables_domain_foundation`         | Timetable structures, blocks, loads, aggregates, slots, and conflict keys   |
+| `20261004181000_backfill_academic_sublevels`          | Canonical Ecuador SubLevel rows + GradeLevel/Course sublevel backfill       |
 
 Never edit applied migration SQL retroactively.
 

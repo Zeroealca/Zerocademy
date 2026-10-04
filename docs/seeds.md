@@ -189,7 +189,7 @@ No passwords or tokens are logged.
 
 ## Legacy catalog note
 
-Earlier development seeds used abbreviated grade names (e.g. `8vo EGB`) and level code `BACH`. The Ecuador catalog uses official Spanish names and code `BGU`. Rerun seeds to upsert new rows; deactivate obsolete system rows manually if needed.
+Earlier development seeds used abbreviated grade names (e.g. `8vo EGB`) and level code `BACH`. The Ecuador catalog uses Spanish names and stable code `BGU` (display name **Bachillerato**). Migration `20261004181000_backfill_academic_sublevels` inserts canonical SubLevels and maps `INI-*` / `EGB-*` / `BGU-*` grades; legacy `BACH` / `BACH-*` rows are preserved without merge/delete and may remain unmapped until a dedicated cleanup. Fresh seeds create only the `BGU` catalog path.
 
 ## Adding a new country
 

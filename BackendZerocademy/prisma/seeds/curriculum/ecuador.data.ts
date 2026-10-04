@@ -1,6 +1,7 @@
 import type {
   AcademicLevelSeedRow,
   GradeLevelSeedRow,
+  SubLevelSeedRow,
   SubjectAssignmentSeedRow,
   SubjectSeedRow,
 } from '../types';
@@ -27,15 +28,37 @@ export const ecuadorAcademicLevels: AcademicLevelSeedRow[] = [
   },
   {
     code: 'BGU',
-    name: 'Bachillerato General Unificado',
+    name: 'Bachillerato',
     order: 3,
-    description: 'Unified general baccalaureate (grades 1–3 BGU, Ecuador)',
+    description:
+      'Tercer nivel del Sistema Nacional de Educación (grados 1.º a 3.º)',
   },
 ];
 
+/**
+ * Zerocademy catalog codes for official groupings. They are stable application
+ * identifiers, not MINEDUC-issued machine codes.
+ */
+export const ecuadorSubLevelsByAcademicLevelCode: Record<
+  string,
+  SubLevelSeedRow[]
+> = {
+  INICIAL: [
+    { code: 'INICIAL_1', name: 'Inicial 1', order: 1 },
+    { code: 'INICIAL_2', name: 'Inicial 2', order: 2 },
+  ],
+  EGB: [
+    { code: 'EGB_PREPARATORIA', name: 'Preparatoria', order: 1 },
+    { code: 'EGB_ELEMENTAL', name: 'Básica Elemental', order: 2 },
+    { code: 'EGB_MEDIA', name: 'Básica Media', order: 3 },
+    { code: 'EGB_SUPERIOR', name: 'Básica Superior', order: 4 },
+  ],
+  BGU: [{ code: 'BACHILLERATO', name: 'Bachillerato', order: 1 }],
+};
+
 const inicialGrades: GradeLevelSeedRow[] = [
-  { code: 'INI-1', name: 'Inicial 1', order: 1 },
-  { code: 'INI-2', name: 'Inicial 2', order: 2 },
+  { code: 'INI-1', name: 'Inicial 1', order: 1, subLevelCode: 'INICIAL_1' },
+  { code: 'INI-2', name: 'Inicial 2', order: 2, subLevelCode: 'INICIAL_2' },
 ];
 
 const egbGradeNames = [
@@ -51,16 +74,39 @@ const egbGradeNames = [
   'Décimo de EGB',
 ] as const;
 
-const egbGrades: GradeLevelSeedRow[] = egbGradeNames.map((name, index) => ({
-  code: `EGB-${index + 1}`,
-  name,
-  order: index + 1,
-}));
+const egbGrades: GradeLevelSeedRow[] = egbGradeNames.map((name, index) => {
+  const grade = index + 1;
+  const subLevelCode =
+    grade === 1
+      ? 'EGB_PREPARATORIA'
+      : grade <= 4
+        ? 'EGB_ELEMENTAL'
+        : grade <= 7
+          ? 'EGB_MEDIA'
+          : 'EGB_SUPERIOR';
+
+  return { code: `EGB-${grade}`, name, order: grade, subLevelCode };
+});
 
 const bguGrades: GradeLevelSeedRow[] = [
-  { code: 'BGU-1', name: 'Primero de BGU', order: 1 },
-  { code: 'BGU-2', name: 'Segundo de BGU', order: 2 },
-  { code: 'BGU-3', name: 'Tercero de BGU', order: 3 },
+  {
+    code: 'BGU-1',
+    name: 'Primero de Bachillerato',
+    order: 1,
+    subLevelCode: 'BACHILLERATO',
+  },
+  {
+    code: 'BGU-2',
+    name: 'Segundo de Bachillerato',
+    order: 2,
+    subLevelCode: 'BACHILLERATO',
+  },
+  {
+    code: 'BGU-3',
+    name: 'Tercero de Bachillerato',
+    order: 3,
+    subLevelCode: 'BACHILLERATO',
+  },
 ];
 
 export const ecuadorGradesByLevelCode: Record<string, GradeLevelSeedRow[]> = {
@@ -75,6 +121,28 @@ export const ecuadorAllGradeCodes: string[] = [
   ...egbGrades.map((grade) => grade.code),
   ...bguGrades.map((grade) => grade.code),
 ];
+
+/** Explicit GradeLevel → SubLevel mappings used by seeds and DEMY-146 backfill. */
+export type EcuadorGradeSubLevelMapping = {
+  academicLevelCode: string;
+  gradeCode: string;
+  subLevelCode: string;
+};
+
+export const ecuadorCanonicalGradeSubLevelMappings: EcuadorGradeSubLevelMapping[] =
+  Object.entries(ecuadorGradesByLevelCode).flatMap(
+    ([academicLevelCode, grades]) =>
+      grades
+        .filter(
+          (grade): grade is GradeLevelSeedRow & { subLevelCode: string } =>
+            typeof grade.subLevelCode === 'string',
+        )
+        .map((grade) => ({
+          academicLevelCode,
+          gradeCode: grade.code,
+          subLevelCode: grade.subLevelCode,
+        })),
+  );
 
 /**
  * Common Ecuadorian curriculum subjects / learning areas (Spanish names).
@@ -157,7 +225,6 @@ export const ecuadorSubjects: SubjectSeedRow[] = [
   },
 ];
 
-const INICIAL = ['INI-1', 'INI-2'] as const;
 const EGB_LOWER = [
   'EGB-1',
   'EGB-2',
@@ -180,27 +247,27 @@ const BGU_ALL = ['BGU-1', 'BGU-2', 'BGU-3'] as const;
 export const ecuadorSubjectAssignments: SubjectAssignmentSeedRow[] = [
   {
     subjectCode: 'LENGUA_LIT',
-    gradeLevelCodes: [...INICIAL, ...EGB_ALL, ...BGU_ALL],
+    gradeLevelCodes: [...EGB_ALL, ...BGU_ALL],
   },
   {
     subjectCode: 'MATEMATICA',
-    gradeLevelCodes: [...INICIAL, ...EGB_ALL, ...BGU_ALL],
+    gradeLevelCodes: [...EGB_ALL, ...BGU_ALL],
   },
   {
     subjectCode: 'CIENCIAS_NAT',
-    gradeLevelCodes: [...INICIAL, ...EGB_ALL, ...BGU_1],
+    gradeLevelCodes: [...EGB_ALL, ...BGU_1],
   },
   {
     subjectCode: 'ESTUDIOS_SOC',
-    gradeLevelCodes: [...INICIAL, ...EGB_ALL, ...BGU_1],
+    gradeLevelCodes: [...EGB_ALL, ...BGU_1],
   },
   {
     subjectCode: 'ED_FISICA',
-    gradeLevelCodes: [...INICIAL, ...EGB_ALL, ...BGU_ALL],
+    gradeLevelCodes: [...EGB_ALL, ...BGU_ALL],
   },
   {
     subjectCode: 'ED_CULTURAL_ART',
-    gradeLevelCodes: [...INICIAL, ...EGB_ALL, ...BGU_ALL],
+    gradeLevelCodes: [...EGB_ALL, ...BGU_ALL],
   },
   {
     subjectCode: 'INGLES',
