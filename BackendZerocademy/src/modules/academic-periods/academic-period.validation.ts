@@ -110,6 +110,6 @@ export function parseDateOnly(value: string | Date): Date {
 }
 
 export const ACADEMIC_REGIME_LABELS: Record<AcademicRegime, string> = {
-  [AcademicRegime.COSTA_GALAPAGOS]: 'Costa & Galápagos',
-  [AcademicRegime.SIERRA_AMAZONIA]: 'Sierra & Amazonía',
+  [AcademicRegime.COSTA_GALAPAGOS]: 'Costa - Galápagos',
+  [AcademicRegime.SIERRA_AMAZONIA]: 'Sierra - Amazonía',
 };

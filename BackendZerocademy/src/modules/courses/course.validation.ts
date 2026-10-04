@@ -1,5 +1,9 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { AcademicPeriod, GradeLevel } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { AcademicPeriod, GradeLevel, SubLevel } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { findActiveInstitutionOrThrow } from '../institutions/institution.validation';
 
@@ -39,10 +43,35 @@ export async function assertGradeLevelExistsAndActive(
   }
 
   if (!grade.isActive) {
-    throw new BadRequestException('Grade level must be active to assign a course');
+    throw new BadRequestException(
+      'Grade level must be active to assign a course',
+    );
   }
 
   return grade;
+}
+
+export async function assertSubLevelMatchesGradeAndIsActive(
+  prisma: PrismaService,
+  subLevelId: string,
+  gradeLevelId: string,
+): Promise<SubLevel> {
+  const [subLevel, gradeLevel] = await Promise.all([
+    prisma.subLevel.findUnique({ where: { id: subLevelId } }),
+    prisma.gradeLevel.findUnique({ where: { id: gradeLevelId } }),
+  ]);
+
+  if (!subLevel) throw new NotFoundException('Sublevel not found');
+  if (!subLevel.isActive) {
+    throw new BadRequestException('Sublevel must be active to assign a course');
+  }
+  if (!gradeLevel || gradeLevel.subLevelId !== subLevel.id) {
+    throw new BadRequestException(
+      'The selected grade must belong to the selected sublevel',
+    );
+  }
+
+  return subLevel;
 }
 
 export async function assertUniqueCourseSection(

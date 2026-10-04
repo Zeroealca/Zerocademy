@@ -3,44 +3,24 @@ import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
-export class ListGradeLevelsQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({
-    description: 'Filter by institution scope visibility',
-  })
+export class ListSubLevelsQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   institutionId?: string;
-
-  @ApiPropertyOptional({
-    format: 'uuid',
-    description: 'Filter by parent academic level',
-  })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   academicLevelId?: string;
-
-  @ApiPropertyOptional({
-    format: 'uuid',
-    description: 'Filter by parent sublevel',
-  })
-  @IsOptional()
-  @IsUUID()
-  subLevelId?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isActive?: boolean;
-
   @ApiPropertyOptional()
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isSystem?: boolean;
-
-  @ApiPropertyOptional({ description: 'Search by name or code' })
-  @IsOptional()
-  @IsString()
-  search?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
 }

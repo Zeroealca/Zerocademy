@@ -20,6 +20,9 @@ export class GradeLevelResponseDto {
   academicLevelId: string;
 
   @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  subLevelId?: string | null;
+
+  @ApiPropertyOptional({ format: 'uuid', nullable: true })
   institutionId?: string | null;
 
   @ApiProperty()

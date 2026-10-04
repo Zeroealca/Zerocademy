@@ -16,7 +16,10 @@ export class CreateCourseDto {
   @MaxLength(120)
   name: string;
 
-  @ApiProperty({ example: 'A', description: 'Parallel / section identifier within the grade' })
+  @ApiProperty({
+    example: 'A',
+    description: 'Parallel / section identifier within the grade',
+  })
   @IsString()
   @MinLength(1)
   @MaxLength(16)
@@ -35,4 +38,11 @@ export class CreateCourseDto {
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   gradeLevelId: string;
+
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Academic sublevel for the course',
+  })
+  @IsUUID()
+  subLevelId: string;
 }

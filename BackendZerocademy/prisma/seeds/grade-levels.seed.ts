@@ -33,6 +33,32 @@ export async function seedGradeLevels(
     }
 
     for (const grade of grades) {
+      const subLevel = grade.subLevelCode
+        ? await ctx.prisma.subLevel.findFirst({
+            where: {
+              code: grade.subLevelCode,
+              academicLevelId: parent.id,
+              institutionId: null,
+            },
+            select: { id: true },
+          })
+        : null;
+
+      if (grade.subLevelCode && !subLevel) {
+        seedWarn({
+          event: 'GRADE_LEVEL_SUB_LEVEL_MISSING',
+          message: 'Skipping grade: mapped sublevel not found',
+          metadata: {
+            gradeCode: grade.code,
+            levelCode,
+            subLevelCode: grade.subLevelCode,
+            catalogKey,
+          },
+        });
+        counters.skipped += 1;
+        continue;
+      }
+
       const existing = await ctx.prisma.gradeLevel.findUnique({
         where: {
           academicLevelId_code: {
@@ -64,6 +90,7 @@ export async function seedGradeLevels(
           order: grade.order,
           description: grade.description,
           academicLevelId: parent.id,
+          subLevelId: subLevel?.id,
           isSystem: true,
           isActive: true,
           institutionId: null,
@@ -74,6 +101,7 @@ export async function seedGradeLevels(
           description: grade.description,
           isSystem: true,
           isActive: true,
+          subLevelId: subLevel?.id,
         },
       });
 

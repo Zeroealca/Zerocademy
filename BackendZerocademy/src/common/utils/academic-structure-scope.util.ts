@@ -27,3 +27,13 @@ export function gradeLevelVisibilityFilter(
 
   return { institutionId: null };
 }
+
+export function subLevelVisibilityFilter(
+  institutionId?: string,
+): Prisma.SubLevelWhereInput {
+  if (institutionId) {
+    return { OR: [{ institutionId: null }, { institutionId }] };
+  }
+
+  return { institutionId: null };
+}

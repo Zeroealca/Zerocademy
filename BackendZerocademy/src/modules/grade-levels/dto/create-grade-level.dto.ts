@@ -40,6 +40,14 @@ export class CreateGradeLevelDto {
 
   @ApiPropertyOptional({
     format: 'uuid',
+    description: 'Parent sublevel when the academic level is subdivided',
+  })
+  @IsOptional()
+  @IsUUID()
+  subLevelId?: string;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
     description: 'Null for global catalog entries',
   })
   @IsOptional()

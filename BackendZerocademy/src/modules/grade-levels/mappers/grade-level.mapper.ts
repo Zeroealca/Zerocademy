@@ -11,6 +11,7 @@ export function toGradeLevelResponseDto(
     order: grade.order,
     description: grade.description ?? undefined,
     academicLevelId: grade.academicLevelId,
+    subLevelId: grade.subLevelId,
     institutionId: grade.institutionId,
     isSystem: grade.isSystem,
     isActive: grade.isActive,

@@ -14,6 +14,7 @@ import { COURSES_CONTEXT } from './constants';
 import {
   assertAcademicPeriodExists,
   assertGradeLevelExistsAndActive,
+  assertSubLevelMatchesGradeAndIsActive,
   assertUniqueCourseSection,
   normalizeCourseSection,
 } from './course.validation';
@@ -62,6 +63,11 @@ export class CoursesService {
       dto.academicPeriodId,
     );
     await assertGradeLevelExistsAndActive(this.prisma, dto.gradeLevelId);
+    await assertSubLevelMatchesGradeAndIsActive(
+      this.prisma,
+      dto.subLevelId,
+      dto.gradeLevelId,
+    );
 
     const section = normalizeCourseSection(dto.section);
     await assertUniqueCourseSection(this.prisma, {
@@ -78,6 +84,7 @@ export class CoursesService {
         institutionId: period.institutionId,
         academicPeriodId: dto.academicPeriodId,
         gradeLevelId: dto.gradeLevelId,
+        subLevelId: dto.subLevelId,
         isActive: true,
       },
     });
@@ -90,6 +97,7 @@ export class CoursesService {
         courseId: course.id,
         academicPeriodId: course.academicPeriodId,
         gradeLevelId: course.gradeLevelId,
+        subLevelId: course.subLevelId,
         section: course.section,
       },
     });
@@ -102,6 +110,7 @@ export class CoursesService {
 
     const academicPeriodId = dto.academicPeriodId ?? existing.academicPeriodId;
     const gradeLevelId = dto.gradeLevelId ?? existing.gradeLevelId;
+    const subLevelId = dto.subLevelId ?? existing.subLevelId;
     const section = dto.section
       ? normalizeCourseSection(dto.section)
       : existing.section;
@@ -117,6 +126,18 @@ export class CoursesService {
 
     if (dto.gradeLevelId) {
       await assertGradeLevelExistsAndActive(this.prisma, dto.gradeLevelId);
+    }
+    if ((dto.gradeLevelId || dto.subLevelId) && !subLevelId) {
+      throw new BadRequestException(
+        'Sublevel is required when changing a course grade',
+      );
+    }
+    if (subLevelId && (dto.gradeLevelId || dto.subLevelId)) {
+      await assertSubLevelMatchesGradeAndIsActive(
+        this.prisma,
+        subLevelId,
+        gradeLevelId,
+      );
     }
 
     const keysChanged =
@@ -140,6 +161,7 @@ export class CoursesService {
         ...(dto.capacity !== undefined ? { capacity: dto.capacity } : {}),
         ...(dto.academicPeriodId !== undefined ? { academicPeriodId } : {}),
         ...(dto.gradeLevelId !== undefined ? { gradeLevelId } : {}),
+        ...(dto.subLevelId !== undefined ? { subLevelId } : {}),
         ...(dto.academicPeriodId !== undefined ? { institutionId } : {}),
       },
     });
@@ -162,6 +184,16 @@ export class CoursesService {
     }
 
     await assertGradeLevelExistsAndActive(this.prisma, existing.gradeLevelId);
+    if (!existing.subLevelId) {
+      throw new BadRequestException(
+        'Course requires a sublevel before activation',
+      );
+    }
+    await assertSubLevelMatchesGradeAndIsActive(
+      this.prisma,
+      existing.subLevelId,
+      existing.gradeLevelId,
+    );
 
     const course = await this.prisma.course.update({
       where: { id },

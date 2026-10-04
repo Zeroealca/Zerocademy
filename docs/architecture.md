@@ -13,20 +13,20 @@ Package manager: **npm workspaces** (root `package.json`).
 
 Canonical domains (from root `agent.md`):
 
-| Domain                            | Backend module         | Frontend feature                       |
-| --------------------------------- | ---------------------- | -------------------------------------- |
-| Auth                              | `auth`                 | `auth`                                 |
-| Users                             | `users`                | `users`                                |
-| Academic periods                  | `academic-periods`     | `academic-periods`                     |
-| Subjects                          | `subjects`             | `subjects`                             |
-| Teacher assignments               | `teacher-assignments`  | `teacher-assignments`                  |
-| Timetables                        | `timetables` *(planned)* | `timetables` *(planned)*             |
-| Academic execution                | `academic-execution`   | `academic-execution`                   |
-| Institutions                      | `institutions`         | `institutions`, `institution-settings` |
-| Academic evaluation               | `academic-evaluation`  | `academic-evaluation`                  |
-| Grades                            | `grades`               | `grades`                               |
-| Academic performance              | `academic-performance` | `academic-performance`                 |
-| Students, Teachers, Attendance, … | Partial / planned      | Partial / planned                      |
+| Domain                            | Backend module           | Frontend feature                       |
+| --------------------------------- | ------------------------ | -------------------------------------- |
+| Auth                              | `auth`                   | `auth`                                 |
+| Users                             | `users`                  | `users`                                |
+| Academic periods                  | `academic-periods`       | `academic-periods`                     |
+| Subjects                          | `subjects`               | `subjects`                             |
+| Teacher assignments               | `teacher-assignments`    | `teacher-assignments`                  |
+| Timetables                        | `timetables` _(planned)_ | `timetables` _(planned)_               |
+| Academic execution                | `academic-execution`     | `academic-execution`                   |
+| Institutions                      | `institutions`           | `institutions`, `institution-settings` |
+| Academic evaluation               | `academic-evaluation`    | `academic-evaluation`                  |
+| Grades                            | `grades`                 | `grades`                               |
+| Academic performance              | `academic-performance`   | `academic-performance`                 |
+| Students, Teachers, Attendance, … | Partial / planned        | Partial / planned                      |
 
 **Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, the Academic Execution ClassSession backend/API contract and execution workspace, and Dashboard shell.
 
@@ -119,6 +119,7 @@ npm run docker:up
 - [institutions.md](./institutions.md)
 - [tenancy-strategy.md](./tenancy-strategy.md)
 - [academic-structure.md](./academic-structure.md)
+- [ecuador-academic-master-data.md](./ecuador-academic-master-data.md)
 - [academic-periods.md](./academic-periods.md)
 - [academic-evaluation.md](./academic-evaluation.md)
 - [grades.md](./grades.md)

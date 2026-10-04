@@ -37,6 +37,14 @@ export interface GradeLevelSeedRow {
   name: string;
   order: number;
   description?: string;
+  subLevelCode?: string;
+}
+
+export interface SubLevelSeedRow {
+  code: string;
+  name: string;
+  order: number;
+  description?: string;
 }
 
 export interface SubjectSeedRow {

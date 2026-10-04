@@ -22,6 +22,7 @@ import { ListGradeLevelsQueryDto } from './dto/list-grade-levels-query.dto';
 import { UpdateGradeLevelDto } from './dto/update-grade-level.dto';
 import {
   assertParentAcademicLevelExists,
+  assertSubLevelBelongsToAcademicLevel,
   assertSystemLevelRules,
   assertUniqueGradeLevelCode,
   normalizeAcademicCode,
@@ -67,13 +68,16 @@ export class GradeLevelsService {
     const institutionId = dto.institutionId ?? null;
     assertSystemLevelRules(isSystem, institutionId);
     await assertParentAcademicLevelExists(this.prisma, dto.academicLevelId);
+    if (dto.subLevelId) {
+      await assertSubLevelBelongsToAcademicLevel(
+        this.prisma,
+        dto.subLevelId,
+        dto.academicLevelId,
+      );
+    }
 
     const code = normalizeAcademicCode(dto.code);
-    await assertUniqueGradeLevelCode(
-      this.prisma,
-      dto.academicLevelId,
-      code,
-    );
+    await assertUniqueGradeLevelCode(this.prisma, dto.academicLevelId, code);
 
     const grade = await this.prisma.gradeLevel.create({
       data: {
@@ -82,6 +86,7 @@ export class GradeLevelsService {
         order: dto.order,
         description: dto.description?.trim(),
         academicLevelId: dto.academicLevelId,
+        subLevelId: dto.subLevelId,
         institutionId,
         isSystem,
         isActive: true,
@@ -110,13 +115,25 @@ export class GradeLevelsService {
     const existing = await this.findGradeOrThrow(id);
     const isSystem = dto.isSystem ?? existing.isSystem;
     const institutionId =
-      dto.institutionId !== undefined ? dto.institutionId : existing.institutionId;
+      dto.institutionId !== undefined
+        ? dto.institutionId
+        : existing.institutionId;
     assertSystemLevelRules(isSystem, institutionId);
 
     const academicLevelId = dto.academicLevelId ?? existing.academicLevelId;
 
     if (dto.academicLevelId) {
       await assertParentAcademicLevelExists(this.prisma, academicLevelId);
+    }
+
+    const subLevelId =
+      dto.subLevelId !== undefined ? dto.subLevelId : existing.subLevelId;
+    if (subLevelId) {
+      await assertSubLevelBelongsToAcademicLevel(
+        this.prisma,
+        subLevelId,
+        academicLevelId,
+      );
     }
 
     if (dto.code) {
@@ -140,6 +157,7 @@ export class GradeLevelsService {
           ? { description: dto.description?.trim() }
           : {}),
         ...(dto.academicLevelId !== undefined ? { academicLevelId } : {}),
+        ...(dto.subLevelId !== undefined ? { subLevelId: dto.subLevelId } : {}),
         ...(dto.institutionId !== undefined ? { institutionId } : {}),
         ...(dto.isSystem !== undefined ? { isSystem } : {}),
       },
@@ -157,7 +175,10 @@ export class GradeLevelsService {
 
   async activate(id: string): Promise<GradeLevelResponseDto> {
     const existing = await this.findGradeOrThrow(id);
-    await assertParentAcademicLevelExists(this.prisma, existing.academicLevelId);
+    await assertParentAcademicLevelExists(
+      this.prisma,
+      existing.academicLevelId,
+    );
 
     const grade = await this.prisma.gradeLevel.update({
       where: { id },
@@ -236,6 +257,10 @@ export class GradeLevelsService {
 
     if (query.academicLevelId) {
       where.academicLevelId = query.academicLevelId;
+    }
+
+    if (query.subLevelId) {
+      where.subLevelId = query.subLevelId;
     }
 
     if (query.isActive !== undefined) {

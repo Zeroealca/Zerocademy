@@ -53,7 +53,7 @@ Phase 25 completes LessonPlan mutation enforcement: parent-scoped REORDER requir
 | Can                                                          | Cannot                                                                                              |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
 | Create institutions                                          | Manage institution operational data (courses, assignments, students, enrollments) via strict routes |
-| Create academic levels, grades, subjects, periods            |                                                                                                     |
+| Create academic levels, sublevels, grades, subjects, periods |                                                                                                     |
 | Activate/deactivate periods (one active per regime globally) |                                                                                                     |
 | Create all user types                                        |                                                                                                     |
 | List, search, and filter users (including SUPER_ADMIN)       |                                                                                                     |
@@ -63,7 +63,7 @@ Phase 25 completes LessonPlan mutation enforcement: parent-scoped REORDER requir
 
 | Can                                                                      | Cannot                                              |
 | ------------------------------------------------------------------------ | --------------------------------------------------- |
-| Create students, enrollments, and CSV bulk import                        | Create academic levels, grade levels, or subjects   |
+| Create students, enrollments, and CSV bulk import                        | Create academic levels, sublevels, grade levels, or subjects   |
 | Manage courses/parallels and teacher assignments                         | Create academic periods or activate global calendar |
 | View academic levels, grades, and subjects (read-only catalog)           | Assign institution memberships                      |
 | List, search, and filter users (except SUPER_ADMIN)                      | Manage super admins                                 |
@@ -141,7 +141,7 @@ Returns `selectedPeriod`, `effectivePeriod`, and `activeByRegime`.
 
 - Period selector in dashboard header for ADMIN / TEACHER / STUDENT
 - Academic periods admin UI: SUPER_ADMIN only
-- Catalog nav (levels, grades, subjects): SUPER_ADMIN write; ADMIN/TEACHER view operations via courses
+- Catalog nav (levels, sublevels, grades, subjects): SUPER_ADMIN write; ADMIN/TEACHER view operations via courses
 - Students / enrollments (institution): ADMIN write; TEACHER read (scoped); hidden from SUPER_ADMIN on strict routes
 - **STUDENT** nav: `Mis matrículas` (`/my-enrollments`), `Notas` (`/grades`) only — no `/students` or `/enrollments` admin list
 - **Academic Planning / AcademicUnit / LessonPlan:** TEACHER can mutate only own open-period `DRAFT` plans; ADMIN and SUPER_ADMIN have scoped read-only access; STUDENT and REPRESENTATIVE have no Academic Planning route or API access. Frontend controls are UX-only and the backend enforces this policy. LessonPlans render within their parent units, with mutation controls limited to the mutable teacher context.

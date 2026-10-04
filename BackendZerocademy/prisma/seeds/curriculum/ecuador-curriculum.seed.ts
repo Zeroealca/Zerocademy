@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { seedAcademicLevels } from '../academic-levels.seed';
 import { seedGradeLevels } from '../grade-levels.seed';
+import { seedSubLevels } from '../sub-levels.seed';
 import { seedSubjectAssignments } from '../subject-assignments.seed';
 import { seedSubjects } from '../subjects.seed';
 import { buildRunSummary, logRunSummary } from '../seed-summary';
@@ -11,6 +12,7 @@ import {
   ecuadorAcademicLevels,
   ecuadorAllGradeCodes,
   ecuadorGradesByLevelCode,
+  ecuadorSubLevelsByAcademicLevelCode,
   ecuadorSubjectAssignments,
   ecuadorSubjects,
 } from './ecuador.data';
@@ -19,9 +21,9 @@ export interface EcuadorCurriculumSeedOptions {
   dryRun?: boolean;
 }
 
-async function runEcuadorSteps(ctx: SeedContext): Promise<
-  Awaited<ReturnType<typeof seedAcademicLevels>>[]
-> {
+async function runEcuadorSteps(
+  ctx: SeedContext,
+): Promise<Awaited<ReturnType<typeof seedAcademicLevels>>[]> {
   const catalogKey = ECUADOR_CATALOG_KEY;
   const expectedLevelCodes = new Set(
     ecuadorAcademicLevels.map((level) => level.code),
@@ -34,6 +36,14 @@ async function runEcuadorSteps(ctx: SeedContext): Promise<
   const levelStep = await seedAcademicLevels(ctx, ecuadorAcademicLevels, {
     catalogKey,
   });
+  const subLevelStep = await seedSubLevels(
+    ctx,
+    ecuadorSubLevelsByAcademicLevelCode,
+    {
+      catalogKey,
+      expectedAcademicLevelCodes: ctx.dryRun ? expectedLevelCodes : undefined,
+    },
+  );
   const gradeStep = await seedGradeLevels(ctx, ecuadorGradesByLevelCode, {
     catalogKey,
     expectedLevelCodes: ctx.dryRun ? expectedLevelCodes : undefined,
@@ -49,7 +59,7 @@ async function runEcuadorSteps(ctx: SeedContext): Promise<
     },
   );
 
-  return [levelStep, gradeStep, subjectStep, assignmentStep];
+  return [levelStep, subLevelStep, gradeStep, subjectStep, assignmentStep];
 }
 
 /**

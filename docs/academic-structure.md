@@ -15,57 +15,61 @@ Institutions can:
 
 ```
 AcademicLevel  (e.g. EGB, Bachillerato, Inicial)
-    └── GradeLevel  (e.g. 8vo, 9no, 1ro Bachillerato)
-            └── Course  (e.g. section A, B, C — per AcademicPeriod)
+    └── SubLevel  (e.g. Básica Media)
+            └── GradeLevel  (e.g. 8vo, 9no, 1ro Bachillerato)
+                    └── Course  (e.g. section A, B, C — per AcademicPeriod)
 ```
 
-- **Academic levels** and **grade levels** are reusable across academic periods.
-- **Courses** are always tied to one `academicPeriodId` and one `gradeLevelId`.
+- **Academic levels**, **sublevels**, and **grade levels** are reusable across academic periods.
+- **Courses** are always tied to one `academicPeriodId`, one `subLevelId`, and one `gradeLevelId`.
 
 ## Prisma models
 
-| Model | Table | Scope |
-|-------|-------|--------|
-| `AcademicLevel` | `academic_levels` | Global or institution-specific |
-| `GradeLevel` | `grade_levels` | Child of academic level |
-| `Course` | `courses` | Per period + grade (section/parallel) |
+| Model           | Table             | Scope                                                   |
+| --------------- | ----------------- | ------------------------------------------------------- |
+| `AcademicLevel` | `academic_levels` | Global or institution-specific                          |
+| `SubLevel`      | `sub_levels`      | Child of academic level; global or institution-specific |
+| `GradeLevel`    | `grade_levels`    | Child of academic level and optional sublevel            |
+| `Course`        | `courses`         | Per period + grade (section/parallel)                   |
 
 ### AcademicLevel
 
-| Field | Notes |
-|-------|--------|
-| `code` | Unique per scope (global partial unique index when `institutionId` is null) |
-| `order` | Display / sort order |
-| `isSystem` | Catalog entry managed by platform admins |
-| `institutionId` | `null` = global catalog |
+| Field           | Notes                                                                       |
+| --------------- | --------------------------------------------------------------------------- |
+| `code`          | Unique per scope (global partial unique index when `institutionId` is null) |
+| `order`         | Display / sort order                                                        |
+| `isSystem`      | Catalog entry managed by platform admins                                    |
+| `institutionId` | `null` = global catalog                                                     |
 
 ### GradeLevel
 
-| Field | Notes |
-|-------|--------|
-| `academicLevelId` | Required parent |
-| `code` | Unique per `academicLevelId` |
-| `institutionId` | Optional institution override scope |
+| Field             | Notes                                                                    |
+| ----------------- | ------------------------------------------------------------------------ |
+| `academicLevelId` | Required parent                                                          |
+| `subLevelId`      | Optional for legacy/custom catalog rows; required for mapped new courses |
+| `code`            | Unique per `academicLevelId`                                             |
+| `institutionId`   | Optional institution override scope                                      |
 
 ### Course
 
-| Field | Notes |
-|-------|--------|
-| `name` | Display name (e.g. grade label + parallel) |
-| `section` | Parallel identifier (A, B, C) |
-| `capacity` | Optional seat cap |
-| `academicPeriodId` | School year / period |
-| `gradeLevelId` | Grade within level |
+| Field              | Notes                                                      |
+| ------------------ | ---------------------------------------------------------- |
+| `name`             | Display name (e.g. grade label + parallel)                 |
+| `section`          | Parallel identifier (A, B, C)                              |
+| `capacity`         | Optional seat cap                                          |
+| `academicPeriodId` | School year / period                                       |
+| `gradeLevelId`     | Grade within level                                         |
+| `subLevelId`       | Required for new courses and must match the selected grade |
 
 Unique: `(academicPeriodId, gradeLevelId, section)`.
 
 ## API (prefix `/v1`)
 
-| Resource | Base path |
-|----------|-----------|
-| Academic levels | `/academic-levels` |
-| Grade levels | `/grade-levels` |
-| Classroom courses | `/courses` |
+| Resource          | Base path          |
+| ----------------- | ------------------ |
+| Academic levels   | `/academic-levels` |
+| Grade levels      | `/grade-levels`    |
+| Classroom courses | `/courses`         |
 
 ### Hierarchy endpoint
 
@@ -86,10 +90,10 @@ All three resources support:
 
 ### RBAC
 
-| Action | Roles |
-|--------|-------|
-| Read | `SUPER_ADMIN`, `ADMIN`, `TEACHER` |
-| Write | `SUPER_ADMIN`, `ADMIN` |
+| Action | Roles                             |
+| ------ | --------------------------------- |
+| Read   | `SUPER_ADMIN`, `ADMIN`, `TEACHER` |
+| Sublevel catalog write | `SUPER_ADMIN`                 |
 
 ## Business rules
 
@@ -98,27 +102,28 @@ All three resources support:
 3. Course sections are unique per period + grade.
 4. Deactivating an academic level requires no active child grades.
 5. Deleting levels/grades is blocked when dependent rows exist.
-6. Course creation validates that the period and grade exist and the grade is active.
+6. Course creation validates that the period, sublevel, and grade exist, are active, and form a valid mapping.
 
 ## Ecuador reference (seed only)
 
 The Ecuador national reference catalog is seeded via modular files under `prisma/seeds/curriculum/` (see [seeds.md](./seeds.md) and [curriculum.md](./curriculum.md)):
 
-- **Educación Inicial**, **Educación General Básica**, **Bachillerato General Unificado**
-- Grades such as *Primero de EGB*, *Décimo de EGB*, *Primero de BGU* (Spanish names)
+- **Educación Inicial**, **Educación General Básica**, **Bachillerato** and their Ecuador reference sublevels
+- Grades such as _Primero de EGB_, _Décimo de EGB_, _Primero de BGU_ (Spanish names)
 - Common subjects and `SubjectGradeLevel` links
 
 Institutions may add custom structures through the API; no Ecuador enum is enforced in application code.
+See [ecuador-academic-master-data.md](./ecuador-academic-master-data.md) for official-source traceability and code provenance.
 
 ## Frontend
 
-| Feature | Routes |
-|---------|--------|
-| Academic levels | `/academic-levels` |
-| Grade levels | `/grade-levels` |
-| Courses | `/courses` |
-| Hierarchy tree | `/academic-structure` |
-| Subjects | `/subjects` |
+| Feature             | Routes                 |
+| ------------------- | ---------------------- |
+| Academic levels     | `/academic-levels`     |
+| Grade levels        | `/grade-levels`        |
+| Courses             | `/courses`             |
+| Hierarchy tree      | `/academic-structure`  |
+| Subjects            | `/subjects`            |
 | Teacher assignments | `/teacher-assignments` |
 
 UI copy is Spanish; see `FrontendZerocademy/agent.md`.
@@ -147,13 +152,13 @@ See [subjects.md](./subjects.md) and [teacher-assignments.md](./teacher-assignme
 
 ## Institution ownership
 
-| Model | `institutionId` | Notes |
-|-------|-----------------|-------|
-| `AcademicLevel`, `GradeLevel` | Optional | Global catalog when null |
-| `AcademicPeriod` | Optional | Institution-specific school years |
-| `Course` | Set from period on create | Denormalized for filtering |
-| `Subject` | Optional | Global seed catalog when null |
-| `TeacherAssignment` | Set from course on create | Denormalized for filtering |
+| Model                         | `institutionId`           | Notes                             |
+| ----------------------------- | ------------------------- | --------------------------------- |
+| `AcademicLevel`, `SubLevel`, `GradeLevel` | Optional       | Global catalog when null          |
+| `AcademicPeriod`              | Optional                  | Institution-specific school years |
+| `Course`                      | Set from period on create | Denormalized for filtering        |
+| `Subject`                     | Optional                  | Global seed catalog when null     |
+| `TeacherAssignment`           | Set from course on create | Denormalized for filtering        |
 
 Only **active** institutions should receive new academic data (validated in services).
 

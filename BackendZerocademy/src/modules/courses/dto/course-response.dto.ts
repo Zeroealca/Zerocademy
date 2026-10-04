@@ -22,6 +22,9 @@ export class CourseResponseDto {
   @ApiProperty({ format: 'uuid' })
   gradeLevelId: string;
 
+  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  subLevelId?: string | null;
+
   @ApiProperty()
   isActive: boolean;
 

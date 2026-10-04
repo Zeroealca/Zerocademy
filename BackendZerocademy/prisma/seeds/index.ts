@@ -6,6 +6,7 @@ import type { SeedRunSummary } from './types';
 
 export { seedAcademicLevels } from './academic-levels.seed';
 export { seedGradeLevels } from './grade-levels.seed';
+export { seedSubLevels } from './sub-levels.seed';
 export { seedSubjects } from './subjects.seed';
 export { seedSubjectAssignments } from './subject-assignments.seed';
 export { seedEcuadorCurriculum } from './curriculum/ecuador-curriculum.seed';

@@ -63,3 +63,28 @@ export async function assertParentAcademicLevelExists(
     );
   }
 }
+
+export async function assertSubLevelBelongsToAcademicLevel(
+  prisma: PrismaService,
+  subLevelId: string,
+  academicLevelId: string,
+): Promise<void> {
+  const subLevel = await prisma.subLevel.findUnique({
+    where: { id: subLevelId },
+    select: { academicLevelId: true, isActive: true },
+  });
+
+  if (!subLevel) {
+    throw new NotFoundException('Sublevel not found');
+  }
+  if (!subLevel.isActive) {
+    throw new BadRequestException(
+      'Cannot assign a grade to an inactive sublevel',
+    );
+  }
+  if (subLevel.academicLevelId !== academicLevelId) {
+    throw new BadRequestException(
+      'The selected sublevel does not belong to the academic level',
+    );
+  }
+}

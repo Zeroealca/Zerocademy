@@ -10,6 +10,7 @@ export function toCourseResponseDto(course: Course): CourseResponseDto {
     institutionId: course.institutionId,
     academicPeriodId: course.academicPeriodId,
     gradeLevelId: course.gradeLevelId,
+    subLevelId: course.subLevelId,
     isActive: course.isActive,
     createdAt: course.createdAt.toISOString(),
     updatedAt: course.updatedAt.toISOString(),
