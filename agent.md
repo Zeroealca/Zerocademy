@@ -49,6 +49,7 @@ One bounded context per row. Implement in the mapped folders only.
 | Subjects | Subject catalog, curricula links | `subjects` | `subjects` |
 | Teacher assignments | Staffing: teacher + subject + course + period | `teacher-assignments` | `teacher-assignments` |
 | Timetables | Weekly schedule structure, teaching loads, generation, published timetable views | `timetables` | `timetables` |
+| Study plans | Versioned official MINEDUC reference catalog and institution-period adoption | `study-plans` | — *(foundation only)* |
 | Planning | Pedagogical academic plans (units/lessons); not weekly timetables | `planning` | `planning` |
 | Academic execution | Actual teaching occurrences and their operational lifecycle | `academic-execution` | `academic-execution` |
 | Grades | Assessments, entry, transcripts | `grades` | `grades` |

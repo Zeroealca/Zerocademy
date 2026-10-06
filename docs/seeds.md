@@ -147,6 +147,14 @@ E2E tests: `npm run test:e2e:grades` from repository root. Those tests keep two 
 
 ## Execution flow
 
+### Production official study-plan catalog
+
+`npm run prisma:seed:official-study-plans -w backend-zerocademy` runs only the curated versioned MINEDUC study-plan seed. It does not invoke `seed.ts`, so it cannot create admin accounts, demo institutions, QA data, courses, or example assignments. Existing immutable rows are verified and a conflict stops the run rather than mutating a historical version.
+
+The direct-Neon production verification on 2026-10-06 ran this isolated path
+twice and retained one plan, 21 entries, three allocation groups, and zero
+institution adoptions.
+
 1. `seed.ts` loads environment and connects Prisma.
 2. `seedAdminUser()` — skip if email exists.
 3. `seedHealthCheck()` — upsert probe row.

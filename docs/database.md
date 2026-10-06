@@ -204,6 +204,14 @@ Bootstrap table for infrastructure health probes.
 
 ## Migrations
 
+### Official study-plan catalog (DEMY-147)
+
+Migration `20261006130000_official_study_plans` adds the immutable,
+source-backed `official_study_plans` catalog; its entries and plan-local
+allocation groups; and explicit `institution_study_plan_adoptions`. It is
+additive and uses `RESTRICT` FKs to preserve reference/adoption history.
+`SubjectGradeLevel` and `TeachingLoad` remain separate operational concepts.
+
 ```bash
 # Development (from repo root)
 npm run prisma:migrate:dev -w backend-zerocademy

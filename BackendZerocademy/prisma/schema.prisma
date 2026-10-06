@@ -122,6 +122,7 @@ model User {
   gradeAuditEvents                  GradeAuditEvent[]              @relation("GradeAuditActor")
   assessmentsPublished              Assessment[]                   @relation("AssessmentPublishedBy")
   timetablesPublished               Timetable[]                    @relation("TimetablePublishedBy")
+  studyPlanAdoptions                InstitutionStudyPlanAdoption[]
   selectedAcademicPeriod            AcademicPeriod?                @relation("UserSelectedPeriod", fields: [selectedAcademicPeriodId], references: [id], onDelete: SetNull)
 
   @@index([role])
@@ -258,6 +259,7 @@ model Institution {
   attendanceRecords        AttendanceRecord[]
   periodScheduleStructures PeriodScheduleStructure[]
   timetables               Timetable[]
+  studyPlanAdoptions       InstitutionStudyPlanAdoption[]
 
   @@index([isActive])
   @@index([activeAcademicPeriodId])
@@ -377,6 +379,21 @@ enum AcademicPeriodStatus {
   ARCHIVED
 }
 
+/// Lifecycle of a curated, versioned official study-plan reference.
+enum OfficialStudyPlanStatus {
+  ACTIVE
+  SUPERSEDED
+}
+
+/// Interpretation of an official weekly-period reference.
+enum OfficialStudyPlanValuePolicy {
+  FIXED
+  MINIMUM
+  DEFAULT_EDITABLE
+  FLEXIBLE_POOL
+  REFERENCE_ONLY
+}
+
 model AcademicPeriod {
   id                       String                             @id @default(uuid())
   name                     String
@@ -403,6 +420,7 @@ model AcademicPeriod {
   attendanceRecords        AttendanceRecord[]
   periodScheduleStructures PeriodScheduleStructure[]
   timetables               Timetable[]
+  studyPlanAdoptions       InstitutionStudyPlanAdoption[]
 
   @@index([institutionId])
   @@index([regime])
@@ -458,23 +476,25 @@ model AcademicLevel {
 }
 
 model GradeLevel {
-  id                 String              @id @default(uuid())
-  name               String
-  code               String
-  order              Int
-  description        String?
-  academicLevelId    String
-  subLevelId         String?
-  institutionId      String?
-  isSystem           Boolean             @default(false)
-  isActive           Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  academicLevel      AcademicLevel       @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
-  subLevel           SubLevel?           @relation(fields: [subLevelId], references: [id], onDelete: Restrict)
-  institution        Institution?        @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  courses            Course[]
-  subjectGradeLevels SubjectGradeLevel[]
+  id                                String                             @id @default(uuid())
+  name                              String
+  code                              String
+  order                             Int
+  description                       String?
+  academicLevelId                   String
+  subLevelId                        String?
+  institutionId                     String?
+  isSystem                          Boolean                            @default(false)
+  isActive                          Boolean                            @default(true)
+  createdAt                         DateTime                           @default(now())
+  updatedAt                         DateTime                           @updatedAt
+  academicLevel                     AcademicLevel                      @relation(fields: [academicLevelId], references: [id], onDelete: Cascade)
+  subLevel                          SubLevel?                          @relation(fields: [subLevelId], references: [id], onDelete: Restrict)
+  institution                       Institution?                       @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  courses                           Course[]
+  subjectGradeLevels                SubjectGradeLevel[]
+  officialStudyPlanEntries          OfficialStudyPlanEntry[]
+  officialStudyPlanAllocationGroups OfficialStudyPlanAllocationGroup[]
 
   @@unique([academicLevelId, code])
   @@index([academicLevelId])
@@ -546,19 +566,20 @@ model Course {
 // Academic catalog — reusable subjects and teacher assignments
 // ---------------------------------------------------------------------------
 model Subject {
-  id                 String              @id @default(uuid())
-  name               String
-  code               String
-  description        String?
-  institutionId      String?
-  isSystem           Boolean             @default(false)
-  isActive           Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  institution        Institution?        @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  gradeLevelLinks    SubjectGradeLevel[]
-  teacherAssignments TeacherAssignment[]
-  assessments        Assessment[]
+  id                       String                   @id @default(uuid())
+  name                     String
+  code                     String
+  description              String?
+  institutionId            String?
+  isSystem                 Boolean                  @default(false)
+  isActive                 Boolean                  @default(true)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  institution              Institution?             @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  gradeLevelLinks          SubjectGradeLevel[]
+  teacherAssignments       TeacherAssignment[]
+  assessments              Assessment[]
+  officialStudyPlanEntries OfficialStudyPlanEntry[]
 
   @@index([institutionId])
   @@index([isActive])
@@ -579,6 +600,111 @@ model SubjectGradeLevel {
   @@index([subjectId])
   @@index([gradeLevelId])
   @@map("subject_grade_levels")
+}
+
+// ---------------------------------------------------------------------------
+// Official MINEDUC study-plan reference catalog — curated and versioned
+// ---------------------------------------------------------------------------
+
+/// Immutable, source-backed official reference version. A new regulation is a
+/// new row/version; the application deliberately exposes no plan mutation API.
+model OfficialStudyPlan {
+  id               String                             @id @default(uuid())
+  code             String
+  version          String
+  name             String
+  applicabilityKey String
+  sourceTitle      String
+  sourceReference  String
+  sourceUrl        String
+  issuedOn         DateTime                           @db.Date
+  effectiveFrom    DateTime                           @db.Date
+  effectiveTo      DateTime?                          @db.Date
+  status           OfficialStudyPlanStatus            @default(ACTIVE)
+  createdAt        DateTime                           @default(now())
+  updatedAt        DateTime                           @updatedAt
+  entries          OfficialStudyPlanEntry[]
+  allocationGroups OfficialStudyPlanAllocationGroup[]
+  adoptions        InstitutionStudyPlanAdoption[]
+
+  @@unique([code, version])
+  @@index([applicabilityKey, status])
+  @@index([effectiveFrom, effectiveTo])
+  @@map("official_study_plans")
+}
+
+/// Official subject/grade reference, separate from generic SubjectGradeLevel
+/// applicability and final operational TeachingLoad.
+model OfficialStudyPlanEntry {
+  id                   String                            @id @default(uuid())
+  officialStudyPlanId  String
+  gradeLevelId         String
+  subjectId            String
+  valuePolicy          OfficialStudyPlanValuePolicy
+  defaultWeeklyPeriods Int?
+  minimumWeeklyPeriods Int?
+  allocationGroupId    String?
+  sourceLocator        String
+  createdAt            DateTime                          @default(now())
+  officialStudyPlan    OfficialStudyPlan                 @relation(fields: [officialStudyPlanId], references: [id], onDelete: Restrict)
+  gradeLevel           GradeLevel                        @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
+  subject              Subject                           @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  allocationGroup      OfficialStudyPlanAllocationGroup? @relation(fields: [allocationGroupId], references: [id], onDelete: Restrict)
+
+  @@unique([officialStudyPlanId, gradeLevelId, subjectId])
+  @@index([officialStudyPlanId])
+  @@index([gradeLevelId])
+  @@index([subjectId])
+  @@index([allocationGroupId])
+  @@map("official_study_plan_entries")
+}
+
+/// Bounded allocation pool for a plan/grade, not a generic constraints engine.
+model OfficialStudyPlanAllocationGroup {
+  id                   String                       @id @default(uuid())
+  officialStudyPlanId  String
+  gradeLevelId         String
+  key                  String
+  name                 String
+  valuePolicy          OfficialStudyPlanValuePolicy
+  defaultWeeklyPeriods Int?
+  minimumWeeklyPeriods Int?
+  sourceLocator        String
+  createdAt            DateTime                     @default(now())
+  officialStudyPlan    OfficialStudyPlan            @relation(fields: [officialStudyPlanId], references: [id], onDelete: Restrict)
+  gradeLevel           GradeLevel                   @relation(fields: [gradeLevelId], references: [id], onDelete: Restrict)
+  entries              OfficialStudyPlanEntry[]
+
+  @@unique([officialStudyPlanId, gradeLevelId, key])
+  @@index([officialStudyPlanId])
+  @@index([gradeLevelId])
+  @@map("official_study_plan_allocation_groups")
+}
+
+/// Explicit institution-period selection of one official version per scope.
+/// No row is inferred from dates or generated for existing institutions.
+model InstitutionStudyPlanAdoption {
+  id                  String            @id @default(uuid())
+  institutionId       String
+  academicPeriodId    String
+  officialStudyPlanId String
+  applicabilityKey    String
+  adoptedByUserId     String
+  adoptedAt           DateTime          @default(now())
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  institution         Institution       @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  academicPeriod      AcademicPeriod    @relation(fields: [academicPeriodId], references: [id], onDelete: Restrict)
+  officialStudyPlan   OfficialStudyPlan @relation(fields: [officialStudyPlanId], references: [id], onDelete: Restrict)
+  adoptedByUser       User              @relation(fields: [adoptedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([institutionId, academicPeriodId, officialStudyPlanId], map: "institution_study_plan_adoptions_plan_key")
+  @@unique([institutionId, academicPeriodId, applicabilityKey], map: "institution_study_plan_adoptions_scope_key")
+  @@index([institutionId])
+  @@index([academicPeriodId])
+  @@index([officialStudyPlanId])
+  @@index([adoptedByUserId])
+  @@map("institution_study_plan_adoptions")
 }
 
 /// Assigns a teacher to teach a subject in a classroom course for an academic period.

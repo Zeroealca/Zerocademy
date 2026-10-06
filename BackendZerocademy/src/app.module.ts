@@ -32,6 +32,7 @@ import { AttendanceModule } from './modules/attendance/attendance.module';
 import { RepresentativesModule } from './modules/representatives/representatives.module';
 import { PlanningModule } from './modules/planning/planning.module';
 import { AcademicExecutionModule } from './modules/academic-execution/academic-execution.module';
+import { StudyPlansModule } from './modules/study-plans/study-plans.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AcademicExecutionModule } from './modules/academic-execution/academic-e
     RepresentativesModule,
     PlanningModule,
     AcademicExecutionModule,
+    StudyPlansModule,
   ],
   controllers: [AppController],
   providers: [
