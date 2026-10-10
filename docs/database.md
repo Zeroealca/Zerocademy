@@ -71,11 +71,11 @@ Relations: profiles, academic levels/grades, academic periods, courses, subjects
 
 ### InstitutionMembership
 
-| Column                | Type    | Notes                                    |
-| --------------------- | ------- | ---------------------------------------- |
-| institutionId, userId | UUID    | FKs; `@@unique([institutionId, userId])` |
-| role                  | Enum    | `ADMIN`, `TEACHER`                       |
-| isActive              | Boolean | Membership gate                          |
+| Column                | Type    | Notes                                                             |
+| --------------------- | ------- | ----------------------------------------------------------------- |
+| institutionId, userId | UUID    | FKs; `@@unique([institutionId, userId])`                          |
+| role                  | Enum    | `ADMIN`, `TEACHER`                                                |
+| isActive              | Boolean | Membership gate                                                   |
 | permissionProfileId   | UUID?   | Optional FK → `PermissionProfile` (`Restrict`); non-authoritative |
 
 See [memberships.md](./memberships.md).
@@ -124,11 +124,11 @@ Relations: one-to-many `AcademicTerm`.
 
 Reusable structure catalog plus period-scoped classroom groups. See [academic-structure.md](./academic-structure.md).
 
-| Model           | Reused across periods | Key relations                                       |
-| --------------- | --------------------- | --------------------------------------------------- |
-| `AcademicLevel` | Yes                   | optional `institutionId`                            |
-| `SubLevel`      | Yes                   | `academicLevelId`; managed by `SUPER_ADMIN`         |
-| `GradeLevel`    | Yes                   | `academicLevelId`, optional `subLevelId` for legacy/custom rows |
+| Model           | Reused across periods | Key relations                                                     |
+| --------------- | --------------------- | ----------------------------------------------------------------- |
+| `AcademicLevel` | Yes                   | optional `institutionId`                                          |
+| `SubLevel`      | Yes                   | `academicLevelId`; managed by `SUPER_ADMIN`                       |
+| `GradeLevel`    | Yes                   | `academicLevelId`, optional `subLevelId` for legacy/custom rows   |
 | `Course`        | No (per period)       | `institutionId`, `academicPeriodId`, `subLevelId`, `gradeLevelId` |
 
 ### Subject / TeacherAssignment
@@ -230,43 +230,45 @@ npm run docker:prisma:migrate
 
 Migrations live in `BackendZerocademy/prisma/migrations/`:
 
-| Migration                                             | Purpose                                                                      |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `20250516120000_init`                                 | Health check bootstrap                                                       |
-| `20250517120000_auth_users`                           | Users, refresh tokens, initial roles                                         |
-| `20250517140000_rbac_profiles`                        | `REPRESENTATIVE` role, institutions, academic profiles                       |
-| `20250517160000_academic_periods`                     | Academic periods and terms (Ecuador regimes)                                 |
-| `20250518120000_academic_structure`                   | Academic levels, grade levels, classroom courses                             |
-| `20250519120000_subjects_teacher_assignments`         | Subjects, subject–grade links, teacher assignments                           |
-| `20250520120000_institutions_foundation`              | Institution fields, ownership FKs on academic domain                         |
-| `20250521120000_memberships_transitions`              | Memberships, transition audit, `activeAcademicPeriodId`                      |
-| `20250521140000_user_selected_academic_period`        | `User.selectedAcademicPeriodId`                                              |
-| `20250521180000_students_enrollments`                 | Student profiles and period-scoped enrollments                               |
-| `20260519172008`                                      | Historical database alignment migration                                      |
-| `20260609120000_academic_evaluation`                  | Grading schemes, evaluation terms, assessment categories, institution config |
-| `20260609140000_platform_evaluation_defaults`         | Platform-level Ecuador evaluation defaults                                   |
-| `20260610120000_grades_assessments_phase1`            | Assessments and grade entries                                                |
-| `20260917120000_unique_teacher_per_subject_course`    | Teacher-assignment uniqueness enforcement                                    |
-| `20260917130000_student_registration_number`          | Student registration-number support                                          |
-| `20260919090000_attendance_daily_phase1`              | Daily attendance records and roster integrity                                |
-| `20260919093000_attendance_justifications_phase3`     | Attendance justifications and review audit metadata                          |
-| `20260919110000_representative_student_relationships` | Representative–student authorization relationships                           |
-| `20260920100000_academic_planning_phase1`             | Academic plans and publish lifecycle                                         |
-| `20260920110000_academic_units_phase2`                | Ordered academic units per plan                                              |
-| `20260921090000_lesson_plans_phase2b`                 | Ordered lesson plans per academic unit                                       |
-| `20260923090000_class_sessions_phase2c1`              | ClassSession execution persistence and operational lifecycle foundation      |
-| `20260930090000_authorization_permission_catalog`     | Permission catalog + role allowed boundary tables                            |
-| `20260930100000_authorization_system_permission_profiles` | System permission profiles + composition join tables                     |
-| `20260930110000_authorization_membership_permission_profile_assignment` | Optional `InstitutionMembership.permissionProfileId` FK        |
-| `20261001110000_class_session_attendance_phase1`      | ClassSession attendance records (`class_session_attendance_records`)         |
-| `20261001120000_grade_entry_integrity_audit_history`  | Append-only `grade_audit_events` + `GradeAuditOperation`                     |
-| `20261001130000_assessment_publication`               | Assessment `DRAFT`/`PUBLISHED`, publication metadata, frozen roster entries  |
-| `20261004160450_add_sub_levels_to_courses`            | Reusable `SubLevel` catalog and nullable `Course.subLevelId`                 |
-| `20261004162000_link_grades_to_sub_levels`            | Nullable `GradeLevel.subLevelId` mapping                                    |
-| `20261004170000_timetables_domain_foundation`         | Timetable structures, blocks, loads, aggregates, slots, and conflict keys   |
-| `20261004181000_backfill_academic_sublevels`          | Canonical Ecuador SubLevel rows + GradeLevel/Course sublevel backfill       |
+| Migration                                                               | Purpose                                                                      |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `20250516120000_init`                                                   | Health check bootstrap                                                       |
+| `20250517120000_auth_users`                                             | Users, refresh tokens, initial roles                                         |
+| `20250517140000_rbac_profiles`                                          | `REPRESENTATIVE` role, institutions, academic profiles                       |
+| `20250517160000_academic_periods`                                       | Academic periods and terms (Ecuador regimes)                                 |
+| `20250518120000_academic_structure`                                     | Academic levels, grade levels, classroom courses                             |
+| `20250519120000_subjects_teacher_assignments`                           | Subjects, subject–grade links, teacher assignments                           |
+| `20250520120000_institutions_foundation`                                | Institution fields, ownership FKs on academic domain                         |
+| `20250521120000_memberships_transitions`                                | Memberships, transition audit, `activeAcademicPeriodId`                      |
+| `20250521140000_user_selected_academic_period`                          | `User.selectedAcademicPeriodId`                                              |
+| `20250521180000_students_enrollments`                                   | Student profiles and period-scoped enrollments                               |
+| `20260519172008`                                                        | Historical database alignment migration                                      |
+| `20260609120000_academic_evaluation`                                    | Grading schemes, evaluation terms, assessment categories, institution config |
+| `20260609140000_platform_evaluation_defaults`                           | Platform-level Ecuador evaluation defaults                                   |
+| `20260610120000_grades_assessments_phase1`                              | Assessments and grade entries                                                |
+| `20260917120000_unique_teacher_per_subject_course`                      | Teacher-assignment uniqueness enforcement                                    |
+| `20260917130000_student_registration_number`                            | Student registration-number support                                          |
+| `20260919090000_attendance_daily_phase1`                                | Daily attendance records and roster integrity                                |
+| `20260919093000_attendance_justifications_phase3`                       | Attendance justifications and review audit metadata                          |
+| `20260919110000_representative_student_relationships`                   | Representative–student authorization relationships                           |
+| `20260920100000_academic_planning_phase1`                               | Academic plans and publish lifecycle                                         |
+| `20260920110000_academic_units_phase2`                                  | Ordered academic units per plan                                              |
+| `20260921090000_lesson_plans_phase2b`                                   | Ordered lesson plans per academic unit                                       |
+| `20260923090000_class_sessions_phase2c1`                                | ClassSession execution persistence and operational lifecycle foundation      |
+| `20260930090000_authorization_permission_catalog`                       | Permission catalog + role allowed boundary tables                            |
+| `20260930100000_authorization_system_permission_profiles`               | System permission profiles + composition join tables                         |
+| `20260930110000_authorization_membership_permission_profile_assignment` | Optional `InstitutionMembership.permissionProfileId` FK                      |
+| `20261001110000_class_session_attendance_phase1`                        | ClassSession attendance records (`class_session_attendance_records`)         |
+| `20261001120000_grade_entry_integrity_audit_history`                    | Append-only `grade_audit_events` + `GradeAuditOperation`                     |
+| `20261001130000_assessment_publication`                                 | Assessment `DRAFT`/`PUBLISHED`, publication metadata, frozen roster entries  |
+| `20261004160450_add_sub_levels_to_courses`                              | Reusable `SubLevel` catalog and nullable `Course.subLevelId`                 |
+| `20261004162000_link_grades_to_sub_levels`                              | Nullable `GradeLevel.subLevelId` mapping                                     |
+| `20261004170000_timetables_domain_foundation`                           | Timetable structures, blocks, loads, aggregates, slots, and conflict keys    |
+| `20261004181000_backfill_academic_sublevels`                            | Canonical Ecuador SubLevel rows + GradeLevel/Course sublevel backfill        |
 
 Never edit applied migration SQL retroactively.
+
+The DEMY-135 Schedule Structure API uses the existing `PeriodScheduleStructure.enabledWeekdays` array and `ScheduleBlock` tables from the timetable-domain foundation. No Prisma schema change or migration is required: the existing unique institution/period structure constraint, unique block position constraint, and restrictive `TimetableSlot.scheduleBlock` foreign key preserve its integrity.
 
 ### Migration checksum / EOL note (Phase 8)
 

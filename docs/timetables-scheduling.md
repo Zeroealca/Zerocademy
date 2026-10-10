@@ -1,6 +1,6 @@
 # Timetables / Scheduling MVP — architecture and product spike
 
-Status: **domain/schema foundation implemented and deployed to Neon by DEMY-134**; API, UI, generator, and ClassSession integration remain future work.
+Status: **DEMY-134 domain/schema foundation and DEMY-135 schedule-structure API are implemented**. Timetable generation, administration UI, and ClassSession integration remain future work.
 Tracking: [DEMY-133 — Horarios académicos — Timetables / Scheduling MVP](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-133).  
 Related: [academic-planning.md](./academic-planning.md) (ClassSession execution), [teacher-assignments.md](./teacher-assignments.md), [authorization-permissions.md](./authorization-permissions.md), [ownership-strategy.md](./ownership-strategy.md).  
 Deferred: [DEMY-126](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-126) (global `User.role` → membership Role). Timetables does **not** depend on DEMY-126.
@@ -133,6 +133,29 @@ flowchart TD
 Dashed ClassSession link is optional and deferred to the ClassSession integration ticket. Solid edges are MVP ownership/configuration relationships.
 
 ## Scheduling configuration
+
+### Schedule structure API (DEMY-135)
+
+An institutional `ADMIN` with an active ADMIN membership configures one structure for an institution and academic period. `SUPER_ADMIN` does not receive an implicit institutional-operator bypass, and teachers, students, and representatives cannot read or mutate this API.
+
+| Method         | Path                                                                                                 | Purpose                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| GET            | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure`              | Read blocks, readiness, and derived capacity |
+| PUT            | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure`              | Initialize/update enabled weekdays           |
+| POST           | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure/blocks`       | Add a block                                  |
+| PATCH / DELETE | `/v1/schedule-blocks/:scheduleBlockId`                                                               | Change/remove a block                        |
+| PUT            | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure/blocks/order` | Atomically reorder the complete block set    |
+| GET            | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure/validation`   | Read stable structural issues                |
+
+`enabledWeekdays` is explicit and uses the persisted `Weekday` enum. The current approved MVP enum contains MON–FRI; it is not inferred from a fixed client-side Monday–Friday configuration. Each block is shared by all enabled weekdays, has a stable id, and stores local time-only values (`HH:mm`); API conversion uses UTC clock fields solely to avoid timezone shifts.
+
+Blocks are ordered by `position`, may have unequal durations, and are one of `TEACHING`, `BREAK`, or `NON_TEACHING`. Blocks must have positive duration and cannot overlap. Only teaching blocks contribute to capacity. Reorder payloads must name every block exactly once; deletion is rejected once any `TimetableSlot` references a block.
+
+Structural validation returns machine-readable error statuses: `NO_ENABLED_WEEKDAYS`, `NO_TEACHING_BLOCKS`, `INVALID_TIME_RANGE`, `OVERLAPPING_BLOCKS`, and `DUPLICATE_POSITION`. A structure is ready only when it has enabled weekdays, at least one teaching block, and no structural errors. The capacity summary is `teaching blocks × enabled weekdays`; it does not represent TeachingLoad demand or timetable feasibility.
+
+PLANNED and ACTIVE periods allow configuration. CLOSED and ARCHIVED periods are read-only. Every nested request checks period/institution consistency, and block operations derive ownership from the block rather than trusting a client-supplied institution id.
+
+DEMY-137 and DEMY-138 may consume only ready structures and may create slots only for `TEACHING` blocks. They remain responsible for conflict and feasibility checks.
 
 ### Smallest useful model
 

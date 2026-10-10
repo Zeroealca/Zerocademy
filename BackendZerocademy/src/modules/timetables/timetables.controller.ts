@@ -2,12 +2,23 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
+  Post,
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import {
   ApiRequireRolesStrict,
@@ -23,12 +34,155 @@ import {
   TeachingLoadValidationResponseDto,
 } from './dto/teaching-load-response.dto';
 import { TimetablesService } from './timetables.service';
+import { ScheduleStructuresService } from './schedule-structures.service';
+import { UpdateScheduleStructureDto } from './dto/update-schedule-structure.dto';
+import {
+  CreateScheduleBlockDto,
+  UpdateScheduleBlockDto,
+} from './dto/schedule-block.dto';
+import { ReorderScheduleBlocksDto } from './dto/reorder-schedule-blocks.dto';
+import {
+  ScheduleBlockResponseDto,
+  ScheduleStructureDetailResponseDto,
+  ScheduleStructureResponseDto,
+  ScheduleStructureValidationResponseDto,
+} from './dto/schedule-structure-response.dto';
 
 @ApiTags('timetables')
 @ApiStandardErrorResponses()
 @Controller()
 export class TimetablesController {
-  constructor(private readonly timetables: TimetablesService) {}
+  constructor(
+    private readonly timetables: TimetablesService,
+    private readonly scheduleStructures: ScheduleStructuresService,
+  ) {}
+
+  @Get(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary:
+      'Get an institution academic-period schedule structure and capacity',
+  })
+  @ApiOkResponse({ type: ScheduleStructureDetailResponseDto })
+  getScheduleStructure(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+  ): Promise<ScheduleStructureDetailResponseDto> {
+    return this.scheduleStructures.findOne(
+      actor,
+      institutionId,
+      academicPeriodId,
+    );
+  }
+
+  @Put(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Create or update enabled weekdays for a schedule structure',
+  })
+  @ApiOkResponse({ type: ScheduleStructureResponseDto })
+  upsertScheduleStructure(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+    @Body() dto: UpdateScheduleStructureDto,
+  ): Promise<ScheduleStructureResponseDto> {
+    return this.scheduleStructures.upsert(
+      actor,
+      institutionId,
+      academicPeriodId,
+      dto,
+    );
+  }
+
+  @Post(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure/blocks',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Create an ordered schedule block' })
+  @ApiCreatedResponse({ type: ScheduleBlockResponseDto })
+  createScheduleBlock(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+    @Body() dto: CreateScheduleBlockDto,
+  ): Promise<ScheduleBlockResponseDto> {
+    return this.scheduleStructures.createBlock(
+      actor,
+      institutionId,
+      academicPeriodId,
+      dto,
+    );
+  }
+
+  @Patch('schedule-blocks/:scheduleBlockId')
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Update a schedule block' })
+  @ApiOkResponse({ type: ScheduleBlockResponseDto })
+  updateScheduleBlock(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('scheduleBlockId', ParseUUIDPipe) scheduleBlockId: string,
+    @Body() dto: UpdateScheduleBlockDto,
+  ): Promise<ScheduleBlockResponseDto> {
+    return this.scheduleStructures.updateBlock(actor, scheduleBlockId, dto);
+  }
+
+  @Delete('schedule-blocks/:scheduleBlockId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Delete an unreferenced schedule block' })
+  @ApiNoContentResponse()
+  deleteScheduleBlock(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('scheduleBlockId', ParseUUIDPipe) scheduleBlockId: string,
+  ): Promise<void> {
+    return this.scheduleStructures.removeBlock(actor, scheduleBlockId);
+  }
+
+  @Put(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure/blocks/order',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Atomically reorder every schedule block in a structure',
+  })
+  @ApiOkResponse({ type: ScheduleStructureResponseDto })
+  reorderScheduleBlocks(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+    @Body() dto: ReorderScheduleBlocksDto,
+  ): Promise<ScheduleStructureResponseDto> {
+    return this.scheduleStructures.reorderBlocks(
+      actor,
+      institutionId,
+      academicPeriodId,
+      dto,
+    );
+  }
+
+  @Get(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure/validation',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Validate schedule structure readiness' })
+  @ApiOkResponse({ type: ScheduleStructureValidationResponseDto })
+  validateScheduleStructure(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+  ): Promise<ScheduleStructureValidationResponseDto> {
+    return this.scheduleStructures.validate(
+      actor,
+      institutionId,
+      academicPeriodId,
+    );
+  }
 
   @Get(
     'teaching-loads/institutions/:institutionId/academic-periods/:academicPeriodId',

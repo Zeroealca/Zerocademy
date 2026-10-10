@@ -13,20 +13,20 @@ Package manager: **npm workspaces** (root `package.json`).
 
 Canonical domains (from root `agent.md`):
 
-| Domain                            | Backend module           | Frontend feature                       |
-| --------------------------------- | ------------------------ | -------------------------------------- |
-| Auth                              | `auth`                   | `auth`                                 |
-| Users                             | `users`                  | `users`                                |
-| Academic periods                  | `academic-periods`       | `academic-periods`                     |
-| Subjects                          | `subjects`               | `subjects`                             |
-| Teacher assignments               | `teacher-assignments`    | `teacher-assignments`                  |
-| Timetables                        | `timetables` | `timetables` _(planned)_               |
-| Academic execution                | `academic-execution`     | `academic-execution`                   |
-| Institutions                      | `institutions`           | `institutions`, `institution-settings` |
-| Academic evaluation               | `academic-evaluation`    | `academic-evaluation`                  |
-| Grades                            | `grades`                 | `grades`                               |
-| Academic performance              | `academic-performance`   | `academic-performance`                 |
-| Students, Teachers, Attendance, … | Partial / planned        | Partial / planned                      |
+| Domain                            | Backend module         | Frontend feature                       |
+| --------------------------------- | ---------------------- | -------------------------------------- |
+| Auth                              | `auth`                 | `auth`                                 |
+| Users                             | `users`                | `users`                                |
+| Academic periods                  | `academic-periods`     | `academic-periods`                     |
+| Subjects                          | `subjects`             | `subjects`                             |
+| Teacher assignments               | `teacher-assignments`  | `teacher-assignments`                  |
+| Timetables                        | `timetables`           | `timetables` _(planned)_               |
+| Academic execution                | `academic-execution`   | `academic-execution`                   |
+| Institutions                      | `institutions`         | `institutions`, `institution-settings` |
+| Academic evaluation               | `academic-evaluation`  | `academic-evaluation`                  |
+| Grades                            | `grades`               | `grades`                               |
+| Academic performance              | `academic-performance` | `academic-performance`                 |
+| Students, Teachers, Attendance, … | Partial / planned      | Partial / planned                      |
 
 **Implemented:** Auth, Users, RBAC, Institutions, Academic periods, Academic structure (levels, grades, courses), Subjects, Teacher assignments, Academic Planning backend (AcademicPlan, AcademicUnit, and LessonPlan), the AcademicPlan/AcademicUnit/LessonPlan frontend workspace, the Academic Execution ClassSession backend/API contract and execution workspace, and Dashboard shell.
 
@@ -42,6 +42,8 @@ Execution:  TeacherAssignment → ClassSession → optional LessonPlan reference
 ```
 
 `TimetableSlot` is planned recurring scheduling; `ClassSession` is an actual teaching occurrence. They must not be collapsed. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it. Design spike: [timetables-scheduling.md](./timetables-scheduling.md).
+
+DEMY-135 implements the backend-only schedule-structure slice within `modules/timetables`: an ADMIN-membership-scoped, period-aware API for enabled weekdays and ordered local-time blocks. It exposes readiness and per-course weekly capacity derived from teaching blocks only. Conflict detection, slot generation, timetable administration, and frontend management remain separate timetable slices.
 
 ## Authorization and permissions architecture
 
