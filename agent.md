@@ -152,6 +152,7 @@ App-specific naming → child `agent.md` files.
 - **Only commit when the user explicitly asks.**
 - Never commit `.env`, secrets, or `node_modules`.
 - **Never** add `Co-authored-by`, AI attribution, or tool footers to commit messages.
+- **Mandatory commit identity check:** before every agent-created commit, run `git config --get user.name` and `git config --get user.email`. The effective email must be exactly `emilioandresalcivarcarrera@gmail.com`; if missing or different, set it repository-locally with `git config --local user.email "emilioandresalcivarcarrera@gmail.com"`, then verify it again. Never modify global Git configuration or use another email. If the name is missing, stop and request it rather than inventing one. After committing, run `git log -1 --format="%an <%ae>"`; report an incorrect email without rewriting history.
 - Format and examples → skill [`commit-message-skill`](.cursor/skills/commit-message-skill/SKILL.md) and [Git commits in user rules].
 
 **Scopes:** `feat[Backend]:`, `feat[Frontend]:`, or root `type:` for repo-only changes.
