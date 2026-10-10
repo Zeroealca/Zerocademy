@@ -33,6 +33,7 @@ import { RepresentativesModule } from './modules/representatives/representatives
 import { PlanningModule } from './modules/planning/planning.module';
 import { AcademicExecutionModule } from './modules/academic-execution/academic-execution.module';
 import { StudyPlansModule } from './modules/study-plans/study-plans.module';
+import { TimetablesModule } from './modules/timetables/timetables.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { StudyPlansModule } from './modules/study-plans/study-plans.module';
     PlanningModule,
     AcademicExecutionModule,
     StudyPlansModule,
+    TimetablesModule,
   ],
   controllers: [AppController],
   providers: [

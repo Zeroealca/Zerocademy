@@ -175,9 +175,21 @@ MINEDUC rule. [MINEDUC study-plan catalog design](./mineduc-study-plans.md)
 defines the separate, versioned official-reference layer that supplies source
 defaults/minimums and validates configuration before a load is finalized.
 [DEMY-147](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-147)
-blocks DEMY-136; the generator must continue to consume final loads only.
+supplies the adopted reference catalog consumed by DEMY-136; the generator must
+continue to consume final loads only.
 
-Generation includes only assignments that have a `TeachingLoad` and belong to the timetable’s institution/period. Assignments without load are ignored (not errors) unless product later requires “all assignments must have load.”
+Generation will consume only assignments that have a `TeachingLoad` and belong to the timetable’s institution/period. DEMY-136 now reports an unconfigured assignment as a configuration error and reports a missing `TeacherAssignment` for a verified adopted official entry as a staffing error. This readiness result is independent of schedule-block capacity and conflicts, which remain DEMY-135/137/138 concerns.
+
+### Teaching-load configuration API (DEMY-136)
+
+`TeachingLoad.weeklyPeriods` is the final operational placement demand. The
+backend resolves, but does not copy, the adopted MINEDUC reference at read and
+write time. It supports period-scoped list/read/upsert/readiness endpoints
+under `/v1/teaching-loads` and `/v1/teacher-assignments/:id/teaching-load`.
+An ADMIN may write only in an accessible PLANNED or ACTIVE institution period;
+CLOSED and ARCHIVED periods are read-only. Teachers can read their own loads;
+they cannot configure them. Custom and catalog-uncovered subjects remain
+schedulable and are reported as informational no-reference cases.
 
 ## Lifecycle
 

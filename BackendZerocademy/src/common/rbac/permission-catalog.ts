@@ -113,6 +113,10 @@ export const PERMISSIONS = {
     READ: 'study_plans.read',
     ADOPT: 'study_plans.adopt',
   },
+  TEACHING_LOADS: {
+    READ: 'teaching_loads.read',
+    CONFIGURE: 'teaching_loads.configure',
+  },
   CLASS_SESSIONS: {
     READ: 'class_sessions.read',
     CREATE: 'class_sessions.create',
@@ -169,6 +173,7 @@ export const ALL_PERMISSIONS = Object.freeze([
   ...Object.values(PERMISSIONS.ACADEMIC_EVALUATION),
   ...Object.values(PERMISSIONS.ACADEMIC_PLANNING),
   ...Object.values(PERMISSIONS.STUDY_PLANS),
+  ...Object.values(PERMISSIONS.TEACHING_LOADS),
   ...Object.values(PERMISSIONS.CLASS_SESSIONS),
   ...Object.values(PERMISSIONS.ASSESSMENTS),
   ...Object.values(PERMISSIONS.GRADES),

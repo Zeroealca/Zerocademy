@@ -1,7 +1,7 @@
 # MINEDUC study-plan catalog — architecture design
 
-Status: **implemented foundation (DEMY-147); no TeachingLoad workflow or UI is included.**
-Tracking: [DEMY-147](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-147), which blocks [DEMY-136](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-136).
+Status: **implemented foundation (DEMY-147) and backend TeachingLoad configuration (DEMY-136); no timetable UI is included.**
+Tracking: [DEMY-147](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-147) and [DEMY-136](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-136).
 
 ## Implemented catalog
 
@@ -94,13 +94,41 @@ The plan-local allocation group represents only numeric constraints. It does not
 
 `TeacherAssignment` remains staffing: teacher + subject + course + period. A resolved official entry may suggest a load but never creates staffing. `TeachingLoad.weeklyPeriods` stores only the **final operational weekly demand for timetable placement**; it stores no source, minimum, plan code, or regulatory snapshot.
 
-## DEMY-136 ADMIN workflow
+## DEMY-136 TeachingLoad configuration
+
+The `timetables` backend module resolves the **explicitly adopted** plan for an
+institution and academic period; it never selects the latest national version
+implicitly. It exposes paginated assignment loads, one assignment load, a
+strict ADMIN upsert, and a period readiness report:
+
+- `GET /v1/teaching-loads/institutions/:institutionId/academic-periods/:academicPeriodId`
+- `GET /v1/teacher-assignments/:teacherAssignmentId/teaching-load`
+- `PUT /v1/teacher-assignments/:teacherAssignmentId/teaching-load`
+- `GET /v1/teaching-loads/institutions/:institutionId/academic-periods/:academicPeriodId/validation`
+
+`ADMIN` requires active institutional access and `teaching_loads.read` or
+`teaching_loads.configure`; `TEACHER` can read only their own assignment loads.
+`SUPER_ADMIN`, `STUDENT`, and `REPRESENTATIVE` are not institutional timetable
+operators. CLOSED and ARCHIVED periods are read-only.
+
+The write route accepts only the final positive `weeklyPeriods` value. It
+resolves policy server-side, rejecting values below a verified `MINIMUM` or
+different from a verified `FIXED` value. A read never creates a TeachingLoad.
+`DEFAULT_EDITABLE` and `REFERENCE_ONLY` do not invent constraints, and the
+current reference-only complementary groups never create scheduling demand.
+
+Validation distinguishes `VALID`, `UNCONFIGURED`,
+`BELOW_OFFICIAL_MINIMUM`, `FIXED_VALUE_MISMATCH`,
+`NO_TEACHER_ASSIGNMENT`, `CUSTOM_SUBJECT`, and `NO_OFFICIAL_REFERENCE` with
+ERROR, WARNING, or INFO severity. `configurationReady` means staffing and
+load configuration are complete; it is deliberately not a claim that a
+timetable is feasible.
 
 1. ADMIN selects institution and academic period.
 2. The service resolves adopted official plan entries by course grade.
 3. Each teacher assignment shows subject, source/version, official default or minimum, configured value, and validation state.
-4. ADMIN accepts a default or makes an allowed override with a reason.
-5. Before generation, the system reports missing official subjects, unstaffed assignments, and incomplete flexible pools. The generator receives final loads only.
+4. ADMIN supplies the final positive weekly value; verified `MINIMUM` and `FIXED` policy is enforced server-side.
+5. Before generation, the system reports missing official subjects, unstaffed assignments, and unconfigured loads. The generator receives final loads only.
 
 ### Missing assignments and custom subjects
 
@@ -115,12 +143,10 @@ Institution electives remain schedulable. Their assignment can receive a Teachin
 | `VALID`                      | success  | Final load satisfies its applicable rule.                           |
 | `BELOW_OFFICIAL_MINIMUM`     | error    | Reject when a source-backed minimum applies.                        |
 | `FIXED_VALUE_MISMATCH`       | error    | Reject only where source expressly fixes a value.                   |
-| `FLEXIBLE_POOL_UNSATISFIED`  | error    | Shared allocation is incomplete before generation.                  |
-| `MISSING_REQUIRED_SUBJECT`   | error    | No compatible catalog/assignment path for official subject.         |
 | `NO_TEACHER_ASSIGNMENT`      | error    | Required subject is unstaffed; block generation.                    |
-| `CUSTOM_SUBJECT`             | info     | Institution subject has no national entry.                          |
-| `NO_OFFICIAL_REFERENCE`      | info     | Authorized operational value is needed without numeric source rule. |
-| `DEFAULT_OVERRIDDEN`         | warning  | Editable default changed; retain reason/audit metadata.             |
+| `UNCONFIGURED`               | error    | No final operational demand exists for a staffed assignment.        |
+| `CUSTOM_SUBJECT`             | info     | Institution subject remains schedulable without national reference. |
+| `NO_OFFICIAL_REFERENCE`      | info     | Grade/subject is outside verified adopted catalog coverage.         |
 | `INCOMPATIBLE_GRADE_SUBJECT` | error    | Assignment cannot resolve for selected plan.                        |
 
 ## Reference-data strategy
@@ -133,7 +159,7 @@ A new MINEDUC version is a reviewed, idempotent reference-data release. It does 
 
 ## Handoff
 
-DEMY-147 delivers catalog, resolution, and validation. [DEMY-136](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-136) then configures operational TeachingLoads; DEMY-138 consumes final loads. DEMY-135 remains independent because schedule blocks are institution-period configuration, not curriculum reference data.
+DEMY-147 delivers catalog and adoption; [DEMY-136](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-136) configures and validates operational TeachingLoads; DEMY-138 consumes final loads. DEMY-135 remains independent because schedule blocks are institution-period configuration, not curriculum reference data.
 
 Non-goals: TeachingLoad configuration/UI, curriculum areas/destrezas, Técnico
 figures, and external MINEDUC synchronization.

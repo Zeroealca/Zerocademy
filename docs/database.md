@@ -211,6 +211,11 @@ source-backed `official_study_plans` catalog; its entries and plan-local
 allocation groups; and explicit `institution_study_plan_adoptions`. It is
 additive and uses `RESTRICT` FKs to preserve reference/adoption history.
 `SubjectGradeLevel` and `TeachingLoad` remain separate operational concepts.
+`TeachingLoad` remains the one-to-one operational child of `TeacherAssignment`:
+its unique `teacherAssignmentId` guarantees one final `weeklyPeriods` demand
+per staffing assignment. DEMY-136 reuses this table without a schema change;
+official MINEDUC values remain in the versioned study-plan catalog and are
+resolved at request time rather than duplicated into operational rows.
 
 ```bash
 # Development (from repo root)

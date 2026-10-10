@@ -155,6 +155,15 @@ The direct-Neon production verification on 2026-10-06 ran this isolated path
 twice and retained one plan, 21 entries, three allocation groups, and zero
 institution adoptions.
 
+### Production permission catalog
+
+`npm run prisma:seed:permissions -w backend-zerocademy` synchronizes only the
+code-defined permission catalog, role ceilings, and system ADMIN/TEACHER
+permission profiles. It does not invoke `seed.ts`, create demo/QA data, create
+institutions, or modify academic/timetable records. Run this isolated command
+when a release introduces a new enforced permission, including DEMY-136's
+`teaching_loads.read` and `teaching_loads.configure` capabilities.
+
 1. `seed.ts` loads environment and connects Prisma.
 2. `seedAdminUser()` — skip if email exists.
 3. `seedHealthCheck()` — upsert probe row.
