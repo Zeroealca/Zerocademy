@@ -1,6 +1,6 @@
 # Timetables / Scheduling MVP — architecture and product spike
 
-Status: **DEMY-134 domain/schema foundation, DEMY-135 schedule-structure API, DEMY-136 teaching-load configuration, DEMY-137 conflict engine, and DEMY-138 pure deterministic generation are implemented**. Timetable administration, persistence, UI, publication, and ClassSession integration remain future work.
+Status: **DEMY-134 through DEMY-139 backend foundations are implemented locally**. DEMY-139 adds authenticated draft administration, trusted context loading, proposal generation, transactional persistence, validation, and atomic draft-slot replacement. UI, publication, and ClassSession integration remain future work.
 Tracking: [DEMY-133 — Horarios académicos — Timetables / Scheduling MVP](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-133).  
 Related: [academic-planning.md](./academic-planning.md) (ClassSession execution), [teacher-assignments.md](./teacher-assignments.md), [authorization-permissions.md](./authorization-permissions.md), [ownership-strategy.md](./ownership-strategy.md).  
 Deferred: [DEMY-126](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-126) (global `User.role` → membership Role). Timetables does **not** depend on DEMY-126.
@@ -425,14 +425,12 @@ Frontend may pre-check for UX; backend remains source of truth.
 
 Use current transitional model: **legacy role/scope AND membership-aware permission enforcement** where institutional ADMIN/TEACHER apply. DEMY-126 remains deferred; global `User.role` stays authoritative for role ceilings.
 
-### Proposed catalog keys (naming aligned with `module.action`)
+### Implemented catalog keys (naming aligned with `module.action`)
 
 ```text
 timetables.read
-timetables.configure   // structure + teaching loads
 timetables.update      // slot mutations while DRAFT
 timetables.generate
-timetables.publish     // publish + unpublish
 ```
 
 ### Role ceilings (intended)
@@ -447,7 +445,40 @@ timetables.publish     // publish + unpublish
 
 Do not grant SUPER_ADMIN `timetables.configure|update|generate|publish` merely for platform role. Implementation ticket must seed catalog + baselines; this spike does not modify code.
 
-## API direction (indicative)
+## DEMY-139 administrative API
+
+All routes are protected by strict `ADMIN` role checks, institutional membership scope, and the relevant membership-aware permission. `SUPER_ADMIN`, teachers, students, and representatives do not gain institutional draft administration rights.
+
+| Method | Route | Capability | Behavior |
+| --- | --- | --- | --- |
+| GET | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables` | `timetables.read` | Lists the scoped aggregate (the current schema permits at most one). |
+| POST | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate` | `timetables.generate` | Loads authoritative structure, assignments, and loads, then returns a non-persistent CSP proposal. |
+| POST | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables` | `timetables.update` | Creates a fully validated DRAFT and its slots in one transaction. |
+| GET | `/v1/timetables/:timetableId` | `timetables.read` | Retrieves aggregate metadata and stable ordered slots. |
+| GET | `/v1/timetables/:timetableId/validation` | `timetables.read` | Runs the conflict engine in `COMPLETE` mode without writes. |
+| PUT | `/v1/timetables/:timetableId/slots` | `timetables.update` | Atomically replaces a DRAFT slot set after `PARTIAL` validation; body requires `expectedVersion`. |
+| DELETE | `/v1/timetables/:timetableId` | `timetables.update` | Discards a DRAFT only. |
+
+Generation does not open a database transaction or write timetable records. Draft creation reloads trusted configuration inside its transaction and requires `COMPLETE` conflict validation. Replacement reloads it transactionally and uses `PARTIAL` validation so an in-progress draft may be incomplete; the explicit validation endpoint remains the COMPLETE-readiness gate.
+
+The existing schema has a single `Timetable` per `(institutionId, academicPeriodId)` and a numeric optimistic-concurrency `version`; it has no historical-version relation. DEMY-139 therefore increments the existing version during replacement and returns `409` for stale edits, rather than inventing version-history persistence. Publication and any transition back to DRAFT remain owned by DEMY-141.
+
+### Stabilization and E2E validation status
+
+The backend production build was retried after an earlier Windows `ENOTEMPTY` failure while Nest was cleaning `dist/modules/attendance`. There were no active Node/Nest processes, and a clean alternate TypeScript output plus a subsequent ordinary `nest build` both completed successfully; the failure was transient filesystem cleanup behavior, not an attendance or timetable source defect.
+
+Database-backed HTTP E2E remains pending in the current workstation environment. Docker Compose cannot reach Docker Desktop's `dockerDesktopLinuxEngine` pipe, and no PostgreSQL listener was available on local ports 5432 or 5433. The configured `.env` database is a non-local endpoint and is explicitly not used for QA. When Docker Desktop is available, use the repository local PostgreSQL Compose service and credential-free QA configuration, then run the authenticated HTTP journey against a disposable database. Do not use Neon, staging, or production credentials.
+
+Reproducible non-destructive verification performed locally:
+
+```text
+node node_modules/typescript/bin/tsc --project tsconfig.build.json --outDir dist-e2e-build --incremental false
+node node_modules/@nestjs/cli/bin/nest.js build
+node ../node_modules/prisma/build/index.js validate --schema prisma/schema.prisma
+node node_modules/jest/bin/jest.js modules/timetables/timetable-admin.service.spec.ts modules/timetables/timetable-conflict-engine.service.spec.ts modules/timetables/timetable-generation.service.spec.ts --runInBand --watchman=false
+```
+
+## API direction (superseded where DEMY-139 routes differ)
 
 Base: `/v1/timetables` and related resources (final paths locked in implementation tickets).
 
@@ -529,6 +560,98 @@ MVP strategy: **optimistic concurrency via `Timetable.version`**.
 
 Use local Docker QA (`qa/qa-users.local.json`, `npm run qa:setup`). Deterministic generator seeds fixed assignment/load/block fixtures.
 
+For isolated HTTP checks, run the backend with `POSTGRES_DB=zerocademy_e2e` and
+execute the QA setup from the backend workspace. The institutional list route is
+`GET /v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables`;
+omitting the final `/timetables` segment correctly returns `404` and must not be
+interpreted as an authorization or fixture-context failure. The authorization
+smoke matrix verified `200` for the matching institutional ADMIN and `401`/`403`
+for unauthenticated, SUPER_ADMIN, TEACHER, STUDENT, and REPRESENTATIVE callers.
+
+Concurrent QA logins are supported: refresh-token persistence uses a unique
+temporary hash marker before replacing it with the signed-token hash, avoiding a
+unique-index collision during simultaneous authentication.
+
+Run the persistent suite from the isolated backend container after `qa:setup`:
+`npx jest --config ./test/jest-e2e.json --runInBand test/timetables.e2e-spec.ts`.
+It is intentionally serial because it configures and cleans the shared QA
+institution-period timetable aggregate. It covers real HTTP authorization,
+concurrent authentication, generation-to-creation payload compatibility, draft
+versioning, stale-version rejection, and cleanup.
+
+### Institutional isolation E2E evidence (DEMY-139)
+
+The persistent suite creates a test-owned Institution B, its active period, a
+real ADMIN membership, and an ADMIN membership in Institution A with an empty
+capability profile. It verifies the following cross-institution HTTP matrix
+against a real Institution A draft:
+
+| Endpoint | Institution A ADMIN | Institution B ADMIN |
+| --- | --- | --- |
+| `GET` timetable list | Allowed (`200`) | Hidden (`404`) |
+| `POST` generate | Allowed (`201`) | Hidden (`404`) |
+| `POST` create | Allowed (`201`) | Hidden (`404`) |
+| `GET /:timetableId` | Allowed (`200`) | Hidden (`404`) |
+| `GET /:timetableId/validation` | Allowed (`200`) | Hidden (`404`) |
+| `PUT /:timetableId/slots` | Allowed (`200`) | Hidden (`404`) |
+| `DELETE /:timetableId` | Allowed (`204`) | Hidden (`404`) |
+
+For denied slot replacement and deletion, the test captures the actual
+PostgreSQL aggregate before each request and compares it afterward: timetable
+ID, Institution A ownership, academic period, version, status, aggregate count,
+and the complete ordered slot set. This proves no partial write, version bump,
+status transition, deletion, or slot mutation occurs. The same test uses valid
+Institution A positive controls for detail, validation, replacement, and
+deletion, so a `404` cannot be explained by a malformed route or invalid
+fixture.
+
+Fixture cleanup is restricted to test-owned Institution B records and the QA
+Institution A timetable aggregate. Before any cleanup, the suite checks both
+the connection URL and `SELECT current_database()` for `zerocademy_e2e`.
+
+Repeatability verification on 2026-10-11, with no manual reset between runs:
+
+1. Run 1: 1 suite passed, 8 tests passed.
+2. Run 2: 1 suite passed, 8 tests passed.
+3. Run 3: 1 suite passed, 8 tests passed.
+
+### Structured conflict HTTP E2E evidence (DEMY-137)
+
+The timetable administration API preserves conflict-engine diagnostics in the
+standard `400` response as `conflicts`, rather than reducing an invalid write to
+an unstructured message. The persistent HTTP suite creates test-owned courses,
+subjects, assignments, teaching loads, and schedule blocks; it removes them after
+every conflict test.
+
+| Conflict code | Coverage | Public operation | Result |
+| --- | --- | --- | --- |
+| `TEACHER_CONFLICT` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, teacher assignments and cell identified |
+| `COURSE_CONFLICT` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, course and cell identified |
+| `INVALID_BLOCK` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400` for real BREAK and NON_TEACHING blocks |
+| `INVALID_DAY` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, disabled weekday identified |
+| `CONTEXT_MISMATCH` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400` for an actual Institution B assignment |
+| `LOAD_UNSATISFIED` | HTTP E2E | `GET /v1/timetables/:id/validation` | `200`, COMPLETE diagnostics identify unmet loads |
+| `LOAD_OVERSATISFIED` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, expected/actual periods asserted |
+| `MISSING_TEACHING_LOAD` | Integration + HTTP boundary | engine / `PUT` | engine reports the code; HTTP returns readiness `400` before invoking it |
+| `DUPLICATE_CANDIDATE` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`; repeated response has identical ordered diagnostics |
+
+`PUT` deliberately uses PARTIAL validation: a valid incomplete draft persists and
+increments its version, while genuine collisions remain invalid. The persisted
+validation endpoint uses COMPLETE mode and reports `LOAD_UNSATISFIED` for the same
+incomplete draft. For every rejected replacement, the suite queries PostgreSQL
+before and after and compares aggregate count, ID, ownership, version, status, and
+the complete ordered slots; no partial write occurs.
+
+The missing-load behavior is intentionally a boundary, not a lost diagnostic:
+`TimetableAdminService.assertReady` rejects incomplete configuration before the
+engine receives candidates. The existing pure DEMY-137 integration test verifies
+`MISSING_TEACHING_LOAD` deterministically; HTTP E2E verifies that the unsafe write
+is rejected and leaves the persisted draft unchanged.
+
+After adding this coverage, three consecutive isolated runs of
+`npx jest --config ./test/jest-e2e.json --runInBand test/timetables.e2e-spec.ts`
+passed on 2026-10-11 with 1 suite and 12 tests each, without manual fixture reset.
+
 Scenarios for later tickets/tests:
 
 - Successful generation satisfying all loads
@@ -541,7 +664,6 @@ Scenarios for later tickets/tests:
 - Unauthorized teacher / A vs B isolation
 - Student course isolation
 - Representative linked-student isolation
-- Cross-institution IDOR
 - Period mismatch
 - Stale version concurrent edit
 

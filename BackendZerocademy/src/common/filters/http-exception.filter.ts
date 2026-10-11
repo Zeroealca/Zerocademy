@@ -11,6 +11,7 @@ import { AppLoggerService } from '../logger/app-logger.service';
 interface ValidationErrorResponse {
   message: string | string[];
   error?: string;
+  conflicts?: unknown[];
 }
 
 @Catch()
@@ -38,7 +39,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const err =
         exception instanceof Error
           ? exception
-          : new Error(typeof exception === 'string' ? exception : 'Unknown error');
+          : new Error(
+              typeof exception === 'string' ? exception : 'Unknown error',
+            );
 
       this.logger.error({
         context: 'HttpExceptionFilter',
@@ -58,7 +61,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 : typeof exception,
         },
       });
-    } else if (status === HttpStatus.UNAUTHORIZED) {
+    } else if (status === 401) {
       this.logger.warn({
         context: 'HttpExceptionFilter',
         event: 'UNAUTHORIZED',
@@ -82,6 +85,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     message: string;
     error: string;
     details?: { field: string; message: string | string[] }[];
+    conflicts?: unknown[];
   } {
     if (typeof exceptionResponse === 'string') {
       return {
@@ -94,6 +98,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const payload = exceptionResponse as ValidationErrorResponse & {
       statusCode?: number;
       details?: { field: string; message: string | string[] }[];
+      conflicts?: unknown[];
     };
 
     const message = Array.isArray(payload.message)
@@ -109,12 +114,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
           };
         })
       : payload.details;
+    const conflicts = Array.isArray(payload.conflicts)
+      ? payload.conflicts
+      : undefined;
 
     return {
       statusCode,
       message,
       error: payload.error ?? HttpStatus[statusCode] ?? 'Error',
       ...(details ? { details } : {}),
+      ...(conflicts ? { conflicts } : {}),
     };
   }
 }

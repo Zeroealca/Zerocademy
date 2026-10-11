@@ -34,6 +34,16 @@ import {
   TeachingLoadValidationResponseDto,
 } from './dto/teaching-load-response.dto';
 import { TimetablesService } from './timetables.service';
+import { TimetableAdminService } from './timetable-admin.service';
+import {
+  CreateTimetableDto,
+  GenerateTimetableDto,
+  ReplaceTimetableSlotsDto,
+  TimetableGenerationResponseDto,
+  TimetableListResponseDto,
+  TimetableResponseDto,
+  TimetableValidationResponseDto,
+} from './dto/timetable-admin.dto';
 import { ScheduleStructuresService } from './schedule-structures.service';
 import { UpdateScheduleStructureDto } from './dto/update-schedule-structure.dto';
 import {
@@ -55,7 +65,114 @@ export class TimetablesController {
   constructor(
     private readonly timetables: TimetablesService,
     private readonly scheduleStructures: ScheduleStructuresService,
+    private readonly timetableAdmin: TimetableAdminService,
   ) {}
+
+  @Get(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/timetables',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'List institution academic-period timetables' })
+  @ApiOkResponse({ type: TimetableListResponseDto })
+  listTimetables(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+  ): Promise<TimetableListResponseDto> {
+    return this.timetableAdmin.list(actor, institutionId, academicPeriodId);
+  }
+
+  @Post(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Generate a non-persistent deterministic timetable proposal',
+  })
+  @ApiOkResponse({ type: TimetableGenerationResponseDto })
+  generateTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+    @Body() dto: GenerateTimetableDto,
+  ) {
+    return this.timetableAdmin.generate(
+      actor,
+      institutionId,
+      academicPeriodId,
+      dto,
+    );
+  }
+
+  @Post(
+    'institutions/:institutionId/academic-periods/:academicPeriodId/timetables',
+  )
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Create a validated draft timetable atomically' })
+  @ApiCreatedResponse({ type: TimetableResponseDto })
+  createTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('institutionId', ParseUUIDPipe) institutionId: string,
+    @Param('academicPeriodId', ParseUUIDPipe) academicPeriodId: string,
+    @Body() dto: CreateTimetableDto,
+  ): Promise<TimetableResponseDto> {
+    return this.timetableAdmin.create(
+      actor,
+      institutionId,
+      academicPeriodId,
+      dto,
+    );
+  }
+
+  @Get('timetables/:timetableId')
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Retrieve a timetable with ordered slots' })
+  @ApiOkResponse({ type: TimetableResponseDto })
+  getTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('timetableId', ParseUUIDPipe) timetableId: string,
+  ): Promise<TimetableResponseDto> {
+    return this.timetableAdmin.findOne(actor, timetableId);
+  }
+
+  @Get('timetables/:timetableId/validation')
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Validate persisted timetable slots in COMPLETE mode',
+  })
+  @ApiOkResponse({ type: TimetableValidationResponseDto })
+  validateTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('timetableId', ParseUUIDPipe) timetableId: string,
+  ): Promise<TimetableValidationResponseDto> {
+    return this.timetableAdmin.validation(actor, timetableId);
+  }
+
+  @Put('timetables/:timetableId/slots')
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Atomically replace draft slots using optimistic version control',
+  })
+  @ApiOkResponse({ type: TimetableResponseDto })
+  replaceTimetableSlots(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('timetableId', ParseUUIDPipe) timetableId: string,
+    @Body() dto: ReplaceTimetableSlotsDto,
+  ): Promise<TimetableResponseDto> {
+    return this.timetableAdmin.replaceSlots(actor, timetableId, dto);
+  }
+
+  @Delete('timetables/:timetableId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({ summary: 'Discard a draft timetable' })
+  @ApiNoContentResponse()
+  discardTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('timetableId', ParseUUIDPipe) timetableId: string,
+  ): Promise<void> {
+    return this.timetableAdmin.discard(actor, timetableId);
+  }
 
   @Get(
     'institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure',

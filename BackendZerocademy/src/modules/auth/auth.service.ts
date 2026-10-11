@@ -1,9 +1,7 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'node:crypto';
 import { AppConfig } from '../../config/configuration';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -31,10 +29,7 @@ export class AuthService {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async login(
-    dto: LoginDto,
-    ip?: string,
-  ): Promise<AuthTokensResponseDto> {
+  async login(dto: LoginDto, ip?: string): Promise<AuthTokensResponseDto> {
     this.logger.log({
       context: AUTH_CONTEXT,
       event: 'LOGIN_ATTEMPT',
@@ -65,10 +60,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const passwordValid = await bcrypt.compare(
-      dto.password,
-      user.passwordHash,
-    );
+    const passwordValid = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!passwordValid) {
       this.logger.warn({
@@ -149,7 +141,11 @@ export class AuthService {
       },
     });
 
-    if (!storedToken || storedToken.user.deletedAt || !storedToken.user.isActive) {
+    if (
+      !storedToken ||
+      storedToken.user.deletedAt ||
+      !storedToken.user.isActive
+    ) {
       this.logger.warn({
         context: AUTH_CONTEXT,
         event: 'REFRESH_FAILED',
@@ -219,7 +215,9 @@ export class AuthService {
   }
 
   private async issueTokensForUser(
-    user: Parameters<typeof toAuthUserResponseDto>[0] & { passwordHash?: string },
+    user: Parameters<typeof toAuthUserResponseDto>[0] & {
+      passwordHash?: string;
+    },
   ): Promise<Omit<AuthTokensResponseDto, 'user'>> {
     const authUser = toAuthUserResponseDto(user);
 
@@ -235,7 +233,9 @@ export class AuthService {
     const refreshTokenRecord = await this.prisma.refreshToken.create({
       data: {
         userId: user.id,
-        tokenHash: 'pending',
+        // tokenHash is unique. A per-record placeholder avoids concurrent
+        // successful logins colliding before the signed refresh token is hashed.
+        tokenHash: `pending:${randomUUID()}`,
         expiresAt: this.getRefreshExpiryDate(),
       },
     });

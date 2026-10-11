@@ -121,6 +121,11 @@ export const PERMISSIONS = {
     READ: 'schedule_structures.read',
     CONFIGURE: 'schedule_structures.configure',
   },
+  TIMETABLES: {
+    READ: 'timetables.read',
+    UPDATE: 'timetables.update',
+    GENERATE: 'timetables.generate',
+  },
   CLASS_SESSIONS: {
     READ: 'class_sessions.read',
     CREATE: 'class_sessions.create',
@@ -179,6 +184,7 @@ export const ALL_PERMISSIONS = Object.freeze([
   ...Object.values(PERMISSIONS.STUDY_PLANS),
   ...Object.values(PERMISSIONS.TEACHING_LOADS),
   ...Object.values(PERMISSIONS.SCHEDULE_STRUCTURES),
+  ...Object.values(PERMISSIONS.TIMETABLES),
   ...Object.values(PERMISSIONS.CLASS_SESSIONS),
   ...Object.values(PERMISSIONS.ASSESSMENTS),
   ...Object.values(PERMISSIONS.GRADES),
