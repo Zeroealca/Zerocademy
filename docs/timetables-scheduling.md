@@ -1,6 +1,6 @@
 # Timetables / Scheduling MVP — architecture and product spike
 
-Status: **DEMY-134 domain/schema foundation and DEMY-135 schedule-structure API are implemented**. Timetable generation, administration UI, and ClassSession integration remain future work.
+Status: **DEMY-134 domain/schema foundation, DEMY-135 schedule-structure API, DEMY-136 teaching-load configuration, and DEMY-137 conflict engine are implemented**. Timetable generation, administration UI, and ClassSession integration remain future work.
 Tracking: [DEMY-133 — Horarios académicos — Timetables / Scheduling MVP](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-133).  
 Related: [academic-planning.md](./academic-planning.md) (ClassSession execution), [teacher-assignments.md](./teacher-assignments.md), [authorization-permissions.md](./authorization-permissions.md), [ownership-strategy.md](./ownership-strategy.md).  
 Deferred: [DEMY-126](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-126) (global `User.role` → membership Role). Timetables does **not** depend on DEMY-126.
@@ -314,7 +314,69 @@ No temporary proposal table in MVP.
 
 ## Conflict model
 
-Reusable server service (e.g. `TimetableConflictEngine`) used by generate, create, move, and validate endpoints.
+`TimetableConflictEngine` is a pure, reusable server service used by future
+generate, create, move, and validate boundaries. It has no Prisma or HTTP
+dependency and never writes a `Timetable`, `TimetableSlot`, `TeachingLoad`, or
+schedule structure. A future caller must authorize its actor, load all data in
+bounded queries, derive teacher/course/context from trusted records, normalize
+it into the contract below, and then call the engine. This keeps no Prisma work
+inside the conflict loop and prevents client-provided teacher/course identifiers
+from becoming authoritative.
+
+```ts
+type TimetableConflictValidationInput = {
+  mode: "PARTIAL" | "COMPLETE";
+  context: {
+    institutionId: string;
+    academicPeriodId: string;
+    periodScheduleStructureId: string;
+    enabledWeekdays: Weekday[];
+    timetable?: { id: string; institutionId: string; academicPeriodId: string };
+  };
+  assignments: Array<{
+    id: string;
+    institutionId: string | null;
+    academicPeriodId: string;
+    teacherId: string;
+    courseId: string;
+  }>;
+  scheduleBlocks: Array<{
+    id: string;
+    periodScheduleStructureId: string;
+    kind: ScheduleBlockKind;
+  }>;
+  teachingLoads: Array<{ teacherAssignmentId: string; weeklyPeriods: number }>;
+  candidates: Array<{
+    id: string;
+    teacherAssignmentId: string;
+    weekday: Weekday;
+    scheduleBlockId: string;
+  }>;
+};
+```
+
+The result is `{ valid, mode, conflicts }`. Every conflict is an `ERROR` and
+contains stable code, message, affected candidate IDs, assignment IDs, course
+IDs, weekday, block ID, and expected/actual periods where applicable. Conflict
+and identifier ordering is deterministic, independent of input-array order.
+
+`PARTIAL` reports context, day, block, duplicate, teacher/course collision,
+missing-load, and over-load errors; it deliberately suppresses
+`LOAD_UNSATISFIED`. `COMPLETE` additionally reports every configured load below
+its `weeklyPeriods`. The engine consumes the operational `TeachingLoad` value
+only; it does not recalculate MINEDUC requirements.
+
+Only `TEACHING` blocks belonging to the selected structure are valid. A
+repeated `(TeacherAssignment, weekday, block)` candidate emits the documented
+`DUPLICATE_CANDIDATE` error and is excluded from collision and load counts, so
+duplicates cannot manufacture load satisfaction. A candidate assignment lacking
+a `TeachingLoad` emits `MISSING_TEACHING_LOAD`, matching DEMY-136's
+configuration-readiness requirement instead of assuming zero demand.
+
+The public hard-constraint codes are `TEACHER_CONFLICT`, `COURSE_CONFLICT`,
+`INVALID_BLOCK`, `INVALID_DAY`, `CONTEXT_MISMATCH`, `LOAD_UNSATISFIED`, and
+`LOAD_OVERSATISFIED`. `DUPLICATE_CANDIDATE` and `MISSING_TEACHING_LOAD` are
+additional explicit configuration diagnostics.
 
 Suggested response fragment:
 

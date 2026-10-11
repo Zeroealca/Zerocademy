@@ -270,6 +270,8 @@ Never edit applied migration SQL retroactively.
 
 The DEMY-135 Schedule Structure API uses the existing `PeriodScheduleStructure.enabledWeekdays` array and `ScheduleBlock` tables from the timetable-domain foundation. No Prisma schema change or migration is required: the existing unique institution/period structure constraint, unique block position constraint, and restrictive `TimetableSlot.scheduleBlock` foreign key preserve its integrity.
 
+DEMY-137 adds no schema change. Its pure conflict validator preflights the existing `TimetableSlot` protections: unique teacher/day/block, course/day/block, and assignment/day/block identities remain the final persistence integrity layer. `TeachingLoad.weeklyPeriods` remains the operational expected placement count.
+
 ### Migration checksum / EOL note (Phase 8)
 
 Prisma stores SHA-256 checksums of `migration.sql` bytes. Neon applied historical migrations with LF line endings. On Windows with `core.autocrlf=true`, a CRLF working tree produces false “modified migration” checksum drift even when SQL content is identical. `.gitattributes` forces `eol=lf` for `BackendZerocademy/prisma/migrations/**/migration.sql`. Use `DATABASE_URL_UNPOOLED` (direct Neon URL) for `prisma migrate deploy`.

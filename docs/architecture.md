@@ -43,7 +43,7 @@ Execution:  TeacherAssignment → ClassSession → optional LessonPlan reference
 
 `TimetableSlot` is planned recurring scheduling; `ClassSession` is an actual teaching occurrence. They must not be collapsed. Attendance remains enrollment/date-owned until a future session/subject attendance design explicitly integrates it. Design spike: [timetables-scheduling.md](./timetables-scheduling.md).
 
-DEMY-135 implements the backend-only schedule-structure slice within `modules/timetables`: an ADMIN-membership-scoped, period-aware API for enabled weekdays and ordered local-time blocks. It exposes readiness and per-course weekly capacity derived from teaching blocks only. Conflict detection, slot generation, timetable administration, and frontend management remain separate timetable slices.
+DEMY-135 implements the backend-only schedule-structure slice within `modules/timetables`: an ADMIN-membership-scoped, period-aware API for enabled weekdays and ordered local-time blocks. It exposes readiness and per-course weekly capacity derived from teaching blocks only. DEMY-137 adds the provider-only `TimetableConflictEngine`: a pure normalized-input validator with no controller, Prisma dependency, authorization decision, or writes. Future timetable generation/administration boundaries must authorize and normalize institutional data before using it. Slot generation, timetable administration, and frontend management remain separate timetable slices.
 
 ## Authorization and permissions architecture
 
