@@ -1,6 +1,6 @@
 # Timetables / Scheduling MVP — architecture and product spike
 
-Status: **DEMY-134 domain/schema foundation, DEMY-135 schedule-structure API, DEMY-136 teaching-load configuration, and DEMY-137 conflict engine are implemented**. Timetable generation, administration UI, and ClassSession integration remain future work.
+Status: **DEMY-134 domain/schema foundation, DEMY-135 schedule-structure API, DEMY-136 teaching-load configuration, DEMY-137 conflict engine, and DEMY-138 pure deterministic generation are implemented**. Timetable administration, persistence, UI, publication, and ClassSession integration remain future work.
 Tracking: [DEMY-133 — Horarios académicos — Timetables / Scheduling MVP](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-133).  
 Related: [academic-planning.md](./academic-planning.md) (ClassSession execution), [teacher-assignments.md](./teacher-assignments.md), [authorization-permissions.md](./authorization-permissions.md), [ownership-strategy.md](./ownership-strategy.md).  
 Deferred: [DEMY-126](https://emilioandresalcivarcarrera.atlassian.net/browse/DEMY-126) (global `User.role` → membership Role). Timetables does **not** depend on DEMY-126.
@@ -282,35 +282,39 @@ Why:
 3. Failure can list remaining unplaced load units and blocking constraint codes.
 4. Soft constraints can later become scored heuristics without replacing the hard CSP core.
 
-### Failure behavior
+### Delivered pure-generation contract (DEMY-138)
 
-If hard constraints cannot all be satisfied, **do not persist a partial replacement**. Return `409`/`422` with structured payload, for example:
+`TimetableGenerationService` accepts a caller-normalized institution/period
+context, enabled weekdays, schedule blocks, assignments, and operational
+`TeachingLoad` values. It has no Prisma dependency, no HTTP route, no
+authorization decision, and no persistence side effect. The future DEMY-139
+application boundary owns actor authorization, bounded context loading, draft
+lifecycle, optimistic versioning, and any transactional replacement of slots.
 
-```json
-{
-  "code": "TIMETABLE_GENERATION_FAILED",
-  "unsatisfiedLoads": [
-    { "teacherAssignmentId": "...", "required": 5, "placed": 3 }
-  ],
-  "blockingConflicts": [
-    {
-      "code": "TEACHER_CONFLICT",
-      "teacherId": "...",
-      "dayOfWeek": "MON",
-      "scheduleBlockId": "..."
-    }
-  ]
-}
-```
+The service returns one of `SUCCESS`, `INVALID_CONFIGURATION`,
+`UNSATISFIABLE`, or `SEARCH_LIMIT_REACHED`, with stable structured diagnostics,
+optional authoritative conflict validation, and search statistics. A success
+contains a complete in-memory proposal only; failures never expose a partial
+proposal as successful.
 
-### Generation transaction
+Before search it rejects missing/foreign structures, empty or duplicate enabled
+weekdays, invalid blocks, overlaps where block times are available, foreign or
+duplicate assignments, missing/invalid teaching loads, and invalid search
+budgets. It also preflights course and teacher demand against the weekly number
+of usable teaching positions. Capacity failure is `UNSATISFIABLE`, because the
+configuration can be structurally valid while no schedule can exist.
 
-1. Load structure, teaching loads, and draft timetable under optimistic `version`.
-2. Solve entirely in memory.
-3. On success, in one DB transaction: delete existing draft slots for that timetable, insert new slots, increment `version`.
-4. On failure or stale `version`: no slot writes; return structured error / `409`.
+Search uses a fixed weekday order (`MON` through `FRI`), blocks ordered by
+position then id, assignments by id, and candidate positions by weekday/block.
+It selects the minimum-remaining-values requirement with stable ties, maintains
+teacher/course/assignment occupancy indexes, forward-checks every remaining
+requirement, and enforces a deterministic node budget (default `100,000`).
+Candidate construction uses the conflict engine in `PARTIAL` mode; the final
+proposal must pass the same engine in `COMPLETE` mode. The occupancy indexes are
+performance pruning only, while the conflict engine remains authoritative.
 
-No temporary proposal table in MVP.
+No soft preferences, rooms, availability, shifts, persistence, or publication
+rules are invented by this slice.
 
 ## Conflict model
 
