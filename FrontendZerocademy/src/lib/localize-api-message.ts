@@ -37,7 +37,8 @@ const EXACT_MESSAGES: Record<string, string> = {
   "Academic period not found": "Período académico no encontrado",
   "Academic period not found for this institution":
     "Período académico no encontrado para esta institución",
-  "Academic period is not accessible": "El período académico no está disponible",
+  "Academic period is not accessible":
+    "El período académico no está disponible",
   "Academic period does not belong to your institution":
     "El período académico no pertenece a tu institución",
   "Your role cannot select an academic period context":
@@ -57,7 +58,8 @@ const EXACT_MESSAGES: Record<string, string> = {
   "Student is already enrolled in this course for the period":
     "El estudiante ya está matriculado en este curso para el período",
   "Institution not found": "Institución no encontrada",
-  "Institution code must be unique": "El código de la institución debe ser único",
+  "Institution code must be unique":
+    "El código de la institución debe ser único",
   "An institution with this code already exists":
     "Ya existe una institución con este código",
   "Institution code must be 3–50 lowercase alphanumeric characters (hyphens allowed, not at edges)":
@@ -132,7 +134,8 @@ const EXACT_MESSAGES: Record<string, string> = {
   "Invalid email format": "Formato de correo electrónico inválido",
   "Password is required and must be at least 8 characters":
     "La contraseña es obligatoria y debe tener al menos 8 caracteres",
-  "firstName and lastName are required": "El nombre y el apellido son obligatorios",
+  "firstName and lastName are required":
+    "El nombre y el apellido son obligatorios",
   "nationalId is required": "La cédula es obligatoria",
   "birthDate must use YYYY-MM-DD format when provided":
     "La fecha de nacimiento debe usar el formato AAAA-MM-DD",
@@ -142,7 +145,7 @@ const EXACT_MESSAGES: Record<string, string> = {
   "startDate must be before endDate":
     "La fecha de inicio debe ser anterior a la fecha de fin",
   "Term order values must be unique within a period":
-    "El orden de los trimestres debe ser único dentro del período",
+    "El orden de los términos debe ser único dentro del período",
   "Cannot activate: date range overlaps another active period for this regime":
     "No se puede activar: el rango de fechas se superpone con otro período activo de este régimen",
   "Archived periods cannot be activated":
@@ -157,10 +160,10 @@ const EXACT_MESSAGES: Record<string, string> = {
     "Solo se pueden desactivar los períodos activos",
   "Invalid date value": "La fecha no es válida",
   "Cannot modify terms on an archived period":
-    "No se pueden modificar trimestres de un período archivado",
-  "Academic term not found": "Trimestre no encontrado",
+    "No se pueden modificar términos de un período archivado",
+  "Academic term not found": "Término no encontrado",
   "A term with this order already exists for the period":
-    "Ya existe un trimestre con este orden en el período",
+    "Ya existe un término con este orden en el período",
   "User account must be active": "La cuenta de usuario debe estar activa",
   "Super admins are not assigned via institution memberships":
     "Los superadministradores no se asignan mediante membresías institucionales",
@@ -170,8 +173,7 @@ const EXACT_MESSAGES: Record<string, string> = {
     "El usuario ya es miembro de esta institución",
   "Institution membership not found": "Membresía institucional no encontrada",
   "Students only": "Solo disponible para estudiantes",
-  "Teachers must specify a course scope":
-    "Los docentes deben indicar un curso",
+  "Teachers must specify a course scope": "Los docentes deben indicar un curso",
   "Admin access required": "Se requiere acceso de administrador",
   "Assessment not found": "Evaluación no encontrada",
   "Assessment access denied": "Acceso denegado a la evaluación",
@@ -179,8 +181,10 @@ const EXACT_MESSAGES: Record<string, string> = {
   "Grade access denied": "Acceso denegado a la nota",
   "Students cannot access grade entry sheets":
     "Los estudiantes no pueden acceder al registro de notas",
-  "Only teachers can update grades": "Solo los docentes pueden actualizar notas",
-  "Only teachers can register grades": "Solo los docentes pueden registrar notas",
+  "Only teachers can update grades":
+    "Solo los docentes pueden actualizar notas",
+  "Only teachers can register grades":
+    "Solo los docentes pueden registrar notas",
   "Only teachers can update assessments":
     "Solo los docentes pueden actualizar evaluaciones",
   "Only teachers can delete assessments":
@@ -258,7 +262,8 @@ const EXACT_MESSAGES: Record<string, string> = {
     "El régimen del período no coincide con el de esta institución",
   "copyTeacherAssignments requires copyCourses to be enabled":
     "Para copiar asignaciones docentes debes copiar también los cursos",
-  "Source academic period not found": "Período académico de origen no encontrado",
+  "Source academic period not found":
+    "Período académico de origen no encontrado",
   "Source period does not belong to this institution":
     "El período de origen no pertenece a esta institución",
   "Source period regime does not match this institution":
@@ -339,16 +344,14 @@ const PATTERN_MESSAGES: Array<{
   },
   {
     pattern: /^Score must have at most (\d+) decimal places$/,
-    replace: (match) =>
-      `La nota debe tener como máximo ${match[1]} decimales`,
+    replace: (match) => `La nota debe tener como máximo ${match[1]} decimales`,
   },
   {
     pattern: /^Grade scale "(.+)" has an invalid range$/,
     replace: (match) => `La escala "${match[1]}" tiene un rango inválido`,
   },
   {
-    pattern:
-      /^Grade scale "(.+)" must fit within the grading scheme range$/,
+    pattern: /^Grade scale "(.+)" must fit within the grading scheme range$/,
     replace: (match) =>
       `La escala "${match[1]}" debe estar dentro del rango del esquema`,
   },
@@ -358,14 +361,12 @@ const PATTERN_MESSAGES: Array<{
       `Las escalas "${match[1]}" y "${match[2]}" se superponen`,
   },
   {
-    pattern:
-      /^(.+) weights must sum to 100 \(current sum: (.+)\)$/,
+    pattern: /^(.+) weights must sum to 100 \(current sum: (.+)\)$/,
     replace: (match) =>
       `Los pesos de ${localizeLabel(match[1] ?? "")} deben sumar 100 (suma actual: ${match[2]})`,
   },
   {
-    pattern:
-      /^(.+) weights must not exceed 100 \(current sum: (.+)\)$/,
+    pattern: /^(.+) weights must not exceed 100 \(current sum: (.+)\)$/,
     replace: (match) =>
       `Los pesos de ${localizeLabel(match[1] ?? "")} no pueden superar 100 (suma actual: ${match[2]})`,
   },
@@ -424,13 +425,11 @@ const PATTERN_MESSAGES: Array<{
   },
   {
     pattern: /^must be longer than or equal to (\d+) characters$/,
-    replace: (match) =>
-      `debe tener al menos ${match[1]} caracteres`,
+    replace: (match) => `debe tener al menos ${match[1]} caracteres`,
   },
   {
     pattern: /^must be shorter than or equal to (\d+) characters$/,
-    replace: (match) =>
-      `debe tener como máximo ${match[1]} caracteres`,
+    replace: (match) => `debe tener como máximo ${match[1]} caracteres`,
   },
   {
     pattern: /^must not be less than (.+)$/,
@@ -445,16 +444,12 @@ const PATTERN_MESSAGES: Array<{
     replace: () => "Ya existe un registro con esos datos",
   },
   {
-    pattern:
-      /^Too small: expected string to have >=(\d+) characters$/,
-    replace: (match) =>
-      `Debe tener al menos ${match[1]} caracteres`,
+    pattern: /^Too small: expected string to have >=(\d+) characters$/,
+    replace: (match) => `Debe tener al menos ${match[1]} caracteres`,
   },
   {
-    pattern:
-      /^Too big: expected string to have <=(\d+) characters$/,
-    replace: (match) =>
-      `No puede superar ${match[1]} caracteres`,
+    pattern: /^Too big: expected string to have <=(\d+) characters$/,
+    replace: (match) => `No puede superar ${match[1]} caracteres`,
   },
   {
     pattern: /^Too small: expected number to be >=(.+)$/,

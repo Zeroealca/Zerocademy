@@ -77,6 +77,13 @@ export function canManageAcademicStructure(
   return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
 }
 
+/** Weekly schedule structure is a strict institutional ADMIN operation. */
+export function canManageScheduleStructures(
+  role: UserRole | undefined,
+): boolean {
+  return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
+}
+
 export function canViewInstitutions(role: UserRole | undefined): boolean {
   return hasRole(role, INSTITUTION_VIEW_ROLES);
 }

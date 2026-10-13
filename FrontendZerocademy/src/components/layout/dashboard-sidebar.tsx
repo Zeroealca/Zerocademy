@@ -41,6 +41,7 @@ import {
   canViewStudents,
   canViewRepresentativePortal,
   canViewAcademicPlanning,
+  canManageScheduleStructures,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -159,6 +160,7 @@ const academicEvaluationNavItem = {
   icon: Scale,
 };
 const academicPlanningNavItem = { href: "/academic-plans", label: "Planificación académica", icon: ClipboardList };
+const timetablesNavItem = { href: "/timetables", label: "Horario semanal", icon: CalendarDays };
 
 interface DashboardSidebarProps {
   isMobileMenuOpen: boolean;
@@ -204,6 +206,7 @@ export function DashboardSidebar({
     navItems.push(academicEvaluationNavItem);
   }
   if (canViewAcademicPlanning(currentUser?.role)) navItems.push(academicPlanningNavItem);
+  if (canManageScheduleStructures(currentUser?.role)) navItems.push(timetablesNavItem);
 
   if (canViewStudents(currentUser?.role)) {
     navItems.push(studentsNavItem);
