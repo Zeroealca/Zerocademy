@@ -449,15 +449,15 @@ Do not grant SUPER_ADMIN `timetables.configure|update|generate|publish` merely f
 
 All routes are protected by strict `ADMIN` role checks, institutional membership scope, and the relevant membership-aware permission. `SUPER_ADMIN`, teachers, students, and representatives do not gain institutional draft administration rights.
 
-| Method | Route | Capability | Behavior |
-| --- | --- | --- | --- |
-| GET | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables` | `timetables.read` | Lists the scoped aggregate (the current schema permits at most one). |
-| POST | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate` | `timetables.generate` | Loads authoritative structure, assignments, and loads, then returns a non-persistent CSP proposal. |
-| POST | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables` | `timetables.update` | Creates a fully validated DRAFT and its slots in one transaction. |
-| GET | `/v1/timetables/:timetableId` | `timetables.read` | Retrieves aggregate metadata and stable ordered slots. |
-| GET | `/v1/timetables/:timetableId/validation` | `timetables.read` | Runs the conflict engine in `COMPLETE` mode without writes. |
-| PUT | `/v1/timetables/:timetableId/slots` | `timetables.update` | Atomically replaces a DRAFT slot set after `PARTIAL` validation; body requires `expectedVersion`. |
-| DELETE | `/v1/timetables/:timetableId` | `timetables.update` | Discards a DRAFT only. |
+| Method | Route                                                                                    | Capability            | Behavior                                                                                           |
+| ------ | ---------------------------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------- |
+| GET    | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables`          | `timetables.read`     | Lists the scoped aggregate (the current schema permits at most one).                               |
+| POST   | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate` | `timetables.generate` | Loads authoritative structure, assignments, and loads, then returns a non-persistent CSP proposal. |
+| POST   | `/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables`          | `timetables.update`   | Creates a fully validated DRAFT and its slots in one transaction.                                  |
+| GET    | `/v1/timetables/:timetableId`                                                            | `timetables.read`     | Retrieves aggregate metadata and stable ordered slots.                                             |
+| GET    | `/v1/timetables/:timetableId/validation`                                                 | `timetables.read`     | Runs the conflict engine in `COMPLETE` mode without writes.                                        |
+| PUT    | `/v1/timetables/:timetableId/slots`                                                      | `timetables.update`   | Atomically replaces a DRAFT slot set after `PARTIAL` validation; body requires `expectedVersion`.  |
+| DELETE | `/v1/timetables/:timetableId`                                                            | `timetables.update`   | Discards a DRAFT only.                                                                             |
 
 Generation does not open a database transaction or write timetable records. Draft creation reloads trusted configuration inside its transaction and requires `COMPLETE` conflict validation. Replacement reloads it transactionally and uses `PARTIAL` validation so an in-progress draft may be incomplete; the explicit validation endpoint remains the COMPLETE-readiness gate.
 
@@ -467,7 +467,7 @@ The existing schema has a single `Timetable` per `(institutionId, academicPeriod
 
 The backend production build was retried after an earlier Windows `ENOTEMPTY` failure while Nest was cleaning `dist/modules/attendance`. There were no active Node/Nest processes, and a clean alternate TypeScript output plus a subsequent ordinary `nest build` both completed successfully; the failure was transient filesystem cleanup behavior, not an attendance or timetable source defect.
 
-Database-backed HTTP E2E remains pending in the current workstation environment. Docker Compose cannot reach Docker Desktop's `dockerDesktopLinuxEngine` pipe, and no PostgreSQL listener was available on local ports 5432 or 5433. The configured `.env` database is a non-local endpoint and is explicitly not used for QA. When Docker Desktop is available, use the repository local PostgreSQL Compose service and credential-free QA configuration, then run the authenticated HTTP journey against a disposable database. Do not use Neon, staging, or production credentials.
+Database-backed HTTP E2E was completed on 2026-10-11 after starting the existing local `postgres` Compose service. PostgreSQL reported `current_database() = zerocademy_e2e`; QA setup and every test process used the explicitly injected local isolated URL. No Neon, staging, or production database was used.
 
 Reproducible non-destructive verification performed locally:
 
@@ -497,6 +497,31 @@ Base: `/v1/timetables` and related resources (final paths locked in implementati
 All lists paginated where collections are unbounded; weekly grids may return a bounded slot array for one timetable.
 
 ## Frontend UX
+
+### DEMY-140 Phase 1 — schedule structure administration
+
+The ADMIN scheduling entry point is `/timetables`. It uses the authenticated
+academic-period context to resolve the authoritative institution and effective
+period, then calls only the DEMY-135 schedule-structure contract:
+
+- `GET/PUT /v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure`
+- `POST .../schedule-structure/blocks`
+- `PATCH/DELETE /v1/schedule-blocks/:scheduleBlockId`
+- `PUT .../schedule-structure/blocks/order`
+- `GET .../schedule-structure/validation`
+
+The feature is rendered only for strict institutional `ADMIN` users. It shows
+the period status and regime, enabled weekdays, capacity/readiness feedback,
+and chronologically ordered TEACHING, BREAK, and NON_TEACHING blocks. Weekdays
+are saved as the complete API array. Blocks can be created, edited, deleted
+after a Spanish confirmation, and reordered with accessible buttons; every
+successful mutation invalidates both structure and validation query keys.
+
+Closed and archived periods are deliberately read-only in the UI, while the
+backend remains the lifecycle and authorization authority. Loading, empty,
+validation-error, request-error, and context-missing states use the standard
+frontend patterns. Teaching-load administration, generation, and timetable-grid
+editing remain later DEMY-140 phases.
 
 ### ADMIN
 
@@ -586,15 +611,15 @@ real ADMIN membership, and an ADMIN membership in Institution A with an empty
 capability profile. It verifies the following cross-institution HTTP matrix
 against a real Institution A draft:
 
-| Endpoint | Institution A ADMIN | Institution B ADMIN |
-| --- | --- | --- |
-| `GET` timetable list | Allowed (`200`) | Hidden (`404`) |
-| `POST` generate | Allowed (`201`) | Hidden (`404`) |
-| `POST` create | Allowed (`201`) | Hidden (`404`) |
-| `GET /:timetableId` | Allowed (`200`) | Hidden (`404`) |
-| `GET /:timetableId/validation` | Allowed (`200`) | Hidden (`404`) |
-| `PUT /:timetableId/slots` | Allowed (`200`) | Hidden (`404`) |
-| `DELETE /:timetableId` | Allowed (`204`) | Hidden (`404`) |
+| Endpoint                       | Institution A ADMIN | Institution B ADMIN |
+| ------------------------------ | ------------------- | ------------------- |
+| `GET` timetable list           | Allowed (`200`)     | Hidden (`404`)      |
+| `POST` generate                | Allowed (`201`)     | Hidden (`404`)      |
+| `POST` create                  | Allowed (`201`)     | Hidden (`404`)      |
+| `GET /:timetableId`            | Allowed (`200`)     | Hidden (`404`)      |
+| `GET /:timetableId/validation` | Allowed (`200`)     | Hidden (`404`)      |
+| `PUT /:timetableId/slots`      | Allowed (`200`)     | Hidden (`404`)      |
+| `DELETE /:timetableId`         | Allowed (`204`)     | Hidden (`404`)      |
 
 For denied slot replacement and deletion, the test captures the actual
 PostgreSQL aggregate before each request and compares it afterward: timetable
@@ -623,17 +648,17 @@ an unstructured message. The persistent HTTP suite creates test-owned courses,
 subjects, assignments, teaching loads, and schedule blocks; it removes them after
 every conflict test.
 
-| Conflict code | Coverage | Public operation | Result |
-| --- | --- | --- | --- |
-| `TEACHER_CONFLICT` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, teacher assignments and cell identified |
-| `COURSE_CONFLICT` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, course and cell identified |
-| `INVALID_BLOCK` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400` for real BREAK and NON_TEACHING blocks |
-| `INVALID_DAY` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, disabled weekday identified |
-| `CONTEXT_MISMATCH` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400` for an actual Institution B assignment |
-| `LOAD_UNSATISFIED` | HTTP E2E | `GET /v1/timetables/:id/validation` | `200`, COMPLETE diagnostics identify unmet loads |
-| `LOAD_OVERSATISFIED` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`, expected/actual periods asserted |
-| `MISSING_TEACHING_LOAD` | Integration + HTTP boundary | engine / `PUT` | engine reports the code; HTTP returns readiness `400` before invoking it |
-| `DUPLICATE_CANDIDATE` | HTTP E2E | `PUT /v1/timetables/:id/slots` | `400`; repeated response has identical ordered diagnostics |
+| Conflict code           | Coverage                    | Public operation                    | Result                                                                   |
+| ----------------------- | --------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
+| `TEACHER_CONFLICT`      | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400`, teacher assignments and cell identified                           |
+| `COURSE_CONFLICT`       | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400`, course and cell identified                                        |
+| `INVALID_BLOCK`         | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400` for real BREAK and NON_TEACHING blocks                             |
+| `INVALID_DAY`           | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400`, disabled weekday identified                                       |
+| `CONTEXT_MISMATCH`      | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400` for an actual Institution B assignment                             |
+| `LOAD_UNSATISFIED`      | HTTP E2E                    | `GET /v1/timetables/:id/validation` | `200`, COMPLETE diagnostics identify unmet loads                         |
+| `LOAD_OVERSATISFIED`    | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400`, expected/actual periods asserted                                  |
+| `MISSING_TEACHING_LOAD` | Integration + HTTP boundary | engine / `PUT`                      | engine reports the code; HTTP returns readiness `400` before invoking it |
+| `DUPLICATE_CANDIDATE`   | HTTP E2E                    | `PUT /v1/timetables/:id/slots`      | `400`; repeated response has identical ordered diagnostics               |
 
 `PUT` deliberately uses PARTIAL validation: a valid incomplete draft persists and
 increments its version, while genuine collisions remain invalid. The persisted
@@ -651,6 +676,117 @@ is rejected and leaves the persisted draft unchanged.
 After adding this coverage, three consecutive isolated runs of
 `npx jest --config ./test/jest-e2e.json --runInBand test/timetables.e2e-spec.ts`
 passed on 2026-10-11 with 1 suite and 12 tests each, without manual fixture reset.
+
+### Deterministic generation HTTP E2E evidence (DEMY-138)
+
+The persistent suite now creates a separate, test-owned institution and active
+academic period for each generation scenario. It verifies the connection URL
+and PostgreSQL `current_database()` is `zerocademy_e2e` before any suite cleanup;
+the additional institution, user, membership, schedule structure, courses,
+subjects, assignments, loads, and timetable data are removed only through their
+test-owned institution/user identifiers.
+
+The realistic fixture contains three courses, four subjects, two teachers, and
+four teacher assignments. Each assignment has a weekly load of two periods, for
+eight required periods in total. One teacher teaches courses A and B; the other
+teaches courses B and C. Its structure enables MON/TUE/WED and has three
+TEACHING blocks per day (nine usable cells), plus one BREAK and one
+NON_TEACHING block. Consequently it requires real allocation choices rather
+than a one-candidate fixture.
+
+`POST /v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate`
+is called twice with the same persisted fixture. The suite asserts `SUCCESS`,
+eight public candidate slots, stable normalized slot ordering and assignments,
+and equal generated-slot counts. It checks exact load fulfillment per
+TeacherAssignment, uniqueness of teacher and course occupancy per cell, enabled
+weekdays, valid assignment references, and use of TEACHING blocks only. BREAK
+and NON_TEACHING IDs are deliberately present in the fixture and excluded from
+the accepted set.
+
+Before and after both generation calls, the suite snapshots all timetable IDs,
+versions, statuses, and ordered persisted slots for the fixture period. The
+snapshots are identical, proving proposal generation performs no timetable
+write. It then submits the public proposal unchanged to the draft-creation
+endpoint, reads the persisted slots back, compares them to the proposal, and
+obtains `valid: true, mode: COMPLETE` from the persisted validation endpoint.
+Internal candidate IDs are absent from the public proposal and remain
+server-controlled.
+
+The generation response exposes and the E2E assertion captures
+`searchNodesExplored`, `backtracks`, `requirements`, and `generatedSlots`.
+The realistic fixture verifies eight requirements/generated slots; node and
+backtrack values are asserted as returned numeric metrics and are not treated as
+timing measurements.
+
+Failure coverage is intentionally distinguished by layer:
+
+| Outcome                 | Coverage                           | Evidence                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INVALID_CONFIGURATION` | HTTP E2E (documented HTTP mapping) | A persisted structure with enabled weekdays but only a BREAK returns `400 Schedule structure is not ready for timetable operations`; the pre-generator readiness guard maps this condition before the pure service runs, with no timetable writes.                                                                                                                                                            |
+| `UNSATISFIABLE`         | Generator integration              | The real service test covers the capacity diagnostic. Under the current hard constraints (teacher/course/assignment occupancy only), any configuration that passes maximum teacher and course capacity checks is edge-colorable into the available cells; therefore a non-capacity collision-only UNSAT instance does not exist. No artificial production constraint or test-only solver hook was introduced. |
+| `SEARCH_LIMIT_REACHED`  | HTTP E2E                           | The supported `maxSearchNodes: 1` request exercises the real endpoint result `SEARCH_LIMIT_REACHED` and `SEARCH_NODE_LIMIT_REACHED`, with an empty proposal and unchanged timetable snapshot.                                                                                                                                                                                                                 |
+
+Commands used for this coverage:
+
+```text
+nvm use 22.12.0; npm exec jest -- --config ./test/jest-e2e.json --runInBand --watchman=false test/timetables.e2e-spec.ts
+nvm use 22.12.0; npm exec jest -- --runInBand --watchman=false src/modules/timetables/timetable-generation.service.spec.ts src/modules/timetables/timetable-conflict-engine.service.spec.ts src/modules/timetables/timetable-admin.service.spec.ts
+nvm use 22.12.0; npm exec prisma -- validate --schema prisma/schema.prisma
+nvm use 22.12.0; npm run build
+nvm use 22.12.0; npm exec eslint -- test/timetables.e2e-spec.ts
+nvm use 22.12.0; npm exec prettier -- --check test/timetables.e2e-spec.ts
+git diff --check
+```
+
+Actual DEMY-138 repeatability evidence, with no manual database reset between
+runs:
+
+1. Run 1: 1 suite passed, 15 tests passed (6.549 s).
+2. Run 2: 1 suite passed, 15 tests passed (6.595 s).
+3. Run 3: 1 suite passed, 15 tests passed (6.339 s).
+
+During the first isolated execution, the new realistic fixture exposed two test
+defects that were fixed without changing production scheduling behavior: the
+temporary administrator email's local part exceeded the RFC 64-character limit,
+and proposal output order differs by contract from persisted timetable response
+order. The fixture now generates a compliant test email, asserts exact public
+proposal order across repeated generations, and compares generated/persisted slot
+sets in a canonical order.
+
+### Academic-period and publication lifecycle HTTP E2E evidence (DEMY-139)
+
+The same isolated persistent suite verifies lifecycle behavior through real
+authenticated HTTP calls against `zerocademy_e2e`. Each scenario creates a
+test-owned institution, active period, administrator, structural configuration,
+assignments, loads, and complete DRAFT timetable. The fixture period is then
+transitioned through the supported platform lifecycle endpoints:
+`POST /v1/academic-periods/:id/deactivate` for `CLOSED`, followed by
+`POST /v1/academic-periods/:id/archive` for `ARCHIVED`. Both routes currently
+return `201` and are invoked with the seeded platform SUPER_ADMIN. The fixture
+is removed by test-owned identifiers after every case.
+
+| Timetable state                           | List/detail/validation | Generate/create/replace/delete | HTTP contract                                                                                  |
+| ----------------------------------------- | ---------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Period `CLOSED`                           | Allowed (`200`)        | Rejected                       | `400 Timetables cannot change a closed or archived academic period`                            |
+| Period `ARCHIVED`                         | Allowed (`200`)        | Rejected                       | `400 Timetables cannot change a closed or archived academic period`                            |
+| Timetable `PUBLISHED` in an active period | Allowed (`200`)        | Replace/delete rejected        | `409 Published timetables cannot be modified` / `409 Published timetables cannot be discarded` |
+
+No timetable publication endpoint exists yet, so the PUBLISHED fixture state is
+established directly in the isolated test database; this does not bypass any
+operation under test. The test supplies a valid but stale `expectedVersion: 999`
+to the published slot-replacement route and receives the published-state `409`,
+proving the service checks immutability before stale-version evaluation. For
+every rejected mutation, the suite reads PostgreSQL before and after and compares
+the whole period aggregate: timetable identifiers, institution and period
+ownership, status, version, and complete ordered slots. This proves that no
+partial slot write, version bump, status change, aggregate creation, or deletion
+occurs.
+
+The full `test/timetables.e2e-spec.ts` suite passed three consecutive times on
+2026-10-13 without manual database reset: 18 tests in 9.895 s, 9.511 s, and
+9.565 s. Each run used the explicitly injected local
+`postgresql://.../zerocademy_e2e` URL and the test guard confirmed
+`current_database() = zerocademy_e2e` before cleanup.
 
 Scenarios for later tickets/tests:
 
@@ -722,3 +858,66 @@ Do not run the full campaign in this spike.
 12. QA / security hardening
 
 See DEMY epic children for acceptance criteria.
+
+## DEMY-140 Phase 1 frontend verification
+
+The frontend workspace uses Vitest, React Testing Library, and jsdom for focused component coverage. Run `npm run test:run -w frontend-zerocademy` for the deterministic suite; it covers ADMIN gating, academic-period context, loading/error/empty states, weekday saving, block create/edit/delete/reorder behavior, client time validation, backend validation presentation, and CLOSED/ARCHIVED read-only controls.
+
+Playwright is configured in `FrontendZerocademy/playwright.config.ts`; `npm run test:e2e -w frontend-zerocademy` uses the real local frontend, backend, and QA credentials from the ignored `qa/qa-users.local.json`. It must run only with `DATABASE_URL` targeting the isolated local `zerocademy_e2e` database. The existing `BackendZerocademy/.env` targets Neon and must never be used for mutable E2E work.
+
+The local QA setup (`npm run qa:setup -w backend-zerocademy` with an explicit local E2E URL) supplies the institutional ADMIN fixture. Browser scenarios should be repeated without database resets and must verify persistence through the actual API or database before being considered E2E verified.
+
+Windows verification found that ordinary Node subprocesses inherit the active Node 22.12.0 runtime successfully, including through `cmd.exe`. The native Windows `next build` Turbopack worker still exits with NVM's “No active Node.js version is configured” message, even when `NVM_HOME` and `NVM_SYMLINK` are set for the session. This is a Turbopack/NVM worker-environment limitation rather than a general Node resolution or application-code failure. The Docker frontend uses Linux Node and was used for real browser verification: the ADMIN login and `/timetables` workspace passed three consecutive Playwright desktop runs (2.2 s, 2.0 s, and 1.9 s) against `zerocademy_e2e`, without a database reset.
+
+### Fixture reuse and Watchman-free execution
+
+`BackendZerocademy/test/helpers/schedule-structure-e2e-fixture.ts` is the
+reusable, test-only entry point for a browser scenario that needs its own
+institutional ADMIN and period schedule structure. It refuses to run unless
+both `DATABASE_URL` and PostgreSQL `current_database()` identify
+`zerocademy_e2e`. Its cleanup deletes only its generated institution and user,
+and is safe to call after a partial browser failure.
+
+The fixture verification test creates, reads, and cleans up that fixture twice
+in one serial execution. On 2026-10-13 it passed twice (2 tests) and the
+combined backend execution passed 20 tests across the existing timetable HTTP
+E2E suite and this fixture test in 10.601 s:
+
+```text
+npm exec --workspace backend-zerocademy jest -- --config ./test/jest-e2e.json --runInBand --watchman=false timetables.e2e-spec.ts schedule-structure-e2e-fixture.e2e-spec.ts
+```
+
+`--runInBand --watchman=false` is required on this Windows workstation because
+Jest's Watchman discovery fails before the suite begins; it does not change the
+application test behavior. The four currently implemented desktop Playwright
+schedule-structure scenarios also passed against the Docker frontend/backend
+and `zerocademy_e2e` on the same date (18.5 s): workspace availability,
+weekday/block persistence, edit/reorder/delete confirmation, and client-side
+time-range validation. Lifecycle, authorization, and institutional-isolation
+browser scenarios remain intentionally outside this fixture-unblocking scope.
+
+### Lifecycle and authorization browser evidence (2026-10-13)
+
+The desktop Playwright suite now includes eight real-browser scenarios against
+the Docker frontend/backend and the guarded local `zerocademy_e2e` database.
+The test-only browser fixture creates a second institution, an ADMIN, a
+TEACHER, an adopted active global period, and separate CLOSED/ARCHIVED periods
+with structures. It refuses to run unless both the URL and
+`current_database()` identify `zerocademy_e2e`, and removes only its generated
+institution and users after every run.
+
+| Scenario | Status | Browser evidence |
+| --- | --- | --- |
+| ACTIVE ADMIN positive control | PASS | Institution B ADMIN created a block through `/timetables`, observed `201`, reloaded, read the persisted structure, and deleted the owned block. |
+| Unauthorized non-ADMIN | PASS | Institution B TEACHER had no sidebar item; direct `/timetables` rendered `Acceso denegado`, with no controls or schedule mutation requests. |
+| Institution A/B isolation | PASS | Institution B ADMIN rendered its own context and received `404` when its authenticated browser requested Institution A's schedule structure. |
+| CLOSED read-only UI | PENDING | The closed structure is readable through the authenticated browser (`200`), but the supported period-context endpoint only returns ACTIVE periods. The route has no period selector, so its read-only UI cannot be rendered through an application flow. |
+| ARCHIVED read-only UI | PENDING | Same product-contract limitation as CLOSED; the archived structure is browser-readable (`200`) but unreachable by the `/timetables` context flow. |
+| Restricted ADMIN | NOT APPLICABLE | Permission-profile assignment is persistence foundation only for this contract; no supported restricted-ADMIN scheduling capability combination exists to authenticate. |
+
+Three consecutive desktop runs, without resetting PostgreSQL, passed all 8
+tests: 14.0 s, 14.3 s, and 14.5 s. This covers the original four schedule
+structure scenarios plus ACTIVE lifecycle, CLOSED/ARCHIVED reachability
+evidence, non-ADMIN authorization, and institution isolation. It does not
+claim CLOSED/ARCHIVED visual read-only coverage until the product supplies a
+supported non-ACTIVE context-selection flow.
