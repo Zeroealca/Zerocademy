@@ -41,7 +41,9 @@ import { AcademicPeriodResponseDto } from './dto/academic-period-response.dto';
 @ApiTags('academic-periods')
 @Controller('academic-periods')
 export class AcademicPeriodsController {
-  constructor(private readonly academicPeriodsService: AcademicPeriodsService) {}
+  constructor(
+    private readonly academicPeriodsService: AcademicPeriodsService,
+  ) {}
 
   @Get('context')
   @ApiRequireRoles(...PLATFORM_READ_ROLES)
@@ -73,9 +75,10 @@ export class AcademicPeriodsController {
   @ApiOperation({ summary: 'List academic periods (paginated)' })
   @ApiOkResponse({ type: AcademicPeriodListResponseDto })
   findAll(
+    @CurrentUser() actor: AuthenticatedUser,
     @Query() query: ListAcademicPeriodsQueryDto,
   ): Promise<AcademicPeriodListResponseDto> {
-    return this.academicPeriodsService.findAll(query);
+    return this.academicPeriodsService.findAll(actor, query);
   }
 
   @Get('active')
@@ -107,7 +110,9 @@ export class AcademicPeriodsController {
   @ApiRequireRoles(...PLATFORM_CALENDAR_WRITE_ROLES)
   @ApiOperation({ summary: 'Create academic period' })
   @ApiCreatedResponse({ type: AcademicPeriodResponseDto })
-  create(@Body() dto: CreateAcademicPeriodDto): Promise<AcademicPeriodResponseDto> {
+  create(
+    @Body() dto: CreateAcademicPeriodDto,
+  ): Promise<AcademicPeriodResponseDto> {
     return this.academicPeriodsService.create(dto);
   }
 

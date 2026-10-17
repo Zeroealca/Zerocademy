@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/only-throw-error -- Supertest response bodies are intentionally untyped at the HTTP boundary. */
 import { INestApplication } from '@nestjs/common';
 import {
   AcademicPeriodStatus,
@@ -5,6 +6,7 @@ import {
   PrismaClient,
   Role,
   ScheduleBlockKind,
+  TimetableStatus,
   Weekday,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -54,13 +56,17 @@ describe('Timetables HTTP E2E', () => {
   let restrictedAdmin: QaAccount;
   let fixtureUserIds: string[] = [];
   let fixtureProfileId: string;
+  let persistentFixtureCreated = false;
   const basePath = `/v1/institutions/${institutionId}/academic-periods/${academicPeriodId}/timetables`;
 
   const login = async (item: QaAccount): Promise<string> => {
     const response = await request(app.getHttpServer())
       .post('/v1/auth/login')
-      .send({ email: item.email, password: item.password })
-      .expect(201);
+      .send({ email: item.email, password: item.password });
+    if (response.status !== 201)
+      throw new Error(
+        `Login failed for ${item.key}: ${JSON.stringify(response.body)}`,
+      );
     return response.body.accessToken as string;
   };
 
@@ -122,6 +128,254 @@ describe('Timetables HTTP E2E', () => {
     });
   };
 
+  const schedulingSnapshot = async (
+    targetInstitutionId: string,
+    targetAcademicPeriodId: string,
+  ) => {
+    const timetables = await prisma.timetable.findMany({
+      where: {
+        institutionId: targetInstitutionId,
+        academicPeriodId: targetAcademicPeriodId,
+      },
+      include: {
+        slots: {
+          orderBy: [
+            { dayOfWeek: 'asc' },
+            { scheduleBlockId: 'asc' },
+            { teacherAssignmentId: 'asc' },
+          ],
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+    return timetables.map((timetable) => ({
+      id: timetable.id,
+      institutionId: timetable.institutionId,
+      academicPeriodId: timetable.academicPeriodId,
+      version: timetable.version,
+      status: timetable.status,
+      slots: timetable.slots.map((slot) => ({
+        id: slot.id,
+        teacherAssignmentId: slot.teacherAssignmentId,
+        scheduleBlockId: slot.scheduleBlockId,
+        dayOfWeek: slot.dayOfWeek,
+        teacherId: slot.teacherId,
+        courseId: slot.courseId,
+      })),
+    }));
+  };
+
+  const normalizedProposalSlots = (
+    slots: Array<{
+      teacherAssignmentId: string;
+      weekday: string;
+      scheduleBlockId: string;
+    }>,
+  ) =>
+    slots
+      .map((slot) => ({
+        teacherAssignmentId: slot.teacherAssignmentId,
+        weekday: slot.weekday,
+        scheduleBlockId: slot.scheduleBlockId,
+      }))
+      .sort(
+        (left, right) =>
+          left.teacherAssignmentId.localeCompare(right.teacherAssignmentId) ||
+          left.weekday.localeCompare(right.weekday) ||
+          left.scheduleBlockId.localeCompare(right.scheduleBlockId),
+      );
+
+  const createGenerationFixture = async (kind: 'realistic' | 'no-teaching') => {
+    const suffix = `generation-e2e-${kind}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const sourceAssignments = await prisma.teacherAssignment.findMany({
+      where: { institutionId, academicPeriodId },
+      include: { course: true },
+      orderBy: { id: 'asc' },
+    });
+    const sourceAssignment = sourceAssignments[0];
+    const secondSourceAssignment = sourceAssignments.find(
+      (assignment) => assignment.teacherId !== sourceAssignment?.teacherId,
+    );
+    if (!sourceAssignment || !secondSourceAssignment) {
+      throw new Error('Timetable E2E requires two QA teacher assignments.');
+    }
+    const password = 'TimetableGenerationE2e!123';
+    const passwordHash = await bcrypt.hash(password, 10);
+    const adminProfile = await prisma.permissionProfile.findUniqueOrThrow({
+      where: { key: 'ADMIN_BASELINE' },
+    });
+    const fixture = await prisma.$transaction(async (tx) => {
+      const targetInstitution = await tx.institution.create({
+        data: {
+          name: `Timetable generation ${kind} ${suffix}`,
+          code: `TIMETABLE-GEN-${suffix}`,
+          regime: AcademicRegime.COSTA_GALAPAGOS,
+        },
+      });
+      const targetPeriod = await tx.academicPeriod.create({
+        data: {
+          name: `Timetable generation ${kind} ${suffix}`,
+          institutionId: targetInstitution.id,
+          regime: AcademicRegime.COSTA_GALAPAGOS,
+          startDate: new Date('2026-04-01'),
+          endDate: new Date('2027-03-31'),
+          isActive: true,
+          status: AcademicPeriodStatus.ACTIVE,
+        },
+      });
+      await tx.institution.update({
+        where: { id: targetInstitution.id },
+        data: { activeAcademicPeriodId: targetPeriod.id },
+      });
+      const user = await tx.user.create({
+        data: {
+          email: `tg-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`,
+          passwordHash,
+          firstName: 'Generation',
+          lastName: 'Administrator',
+          role: Role.ADMIN,
+        },
+      });
+      await tx.institutionMembership.create({
+        data: {
+          institutionId: targetInstitution.id,
+          userId: user.id,
+          role: 'ADMIN',
+          permissionProfileId: adminProfile.id,
+        },
+      });
+      const structure = await tx.periodScheduleStructure.create({
+        data: {
+          institutionId: targetInstitution.id,
+          academicPeriodId: targetPeriod.id,
+          enabledWeekdays: [Weekday.MON, Weekday.TUE, Weekday.WED],
+        },
+      });
+      const blocks = await tx.scheduleBlock.createManyAndReturn({
+        data:
+          kind === 'realistic'
+            ? [
+                {
+                  periodScheduleStructureId: structure.id,
+                  position: 1,
+                  name: 'P1',
+                  startTime: new Date('1970-01-01T08:00:00.000Z'),
+                  endTime: new Date('1970-01-01T08:40:00.000Z'),
+                  kind: ScheduleBlockKind.TEACHING,
+                },
+                {
+                  periodScheduleStructureId: structure.id,
+                  position: 2,
+                  name: 'Break',
+                  startTime: new Date('1970-01-01T08:40:00.000Z'),
+                  endTime: new Date('1970-01-01T09:00:00.000Z'),
+                  kind: ScheduleBlockKind.BREAK,
+                },
+                {
+                  periodScheduleStructureId: structure.id,
+                  position: 3,
+                  name: 'P2',
+                  startTime: new Date('1970-01-01T09:00:00.000Z'),
+                  endTime: new Date('1970-01-01T09:40:00.000Z'),
+                  kind: ScheduleBlockKind.TEACHING,
+                },
+                {
+                  periodScheduleStructureId: structure.id,
+                  position: 4,
+                  name: 'Admin',
+                  startTime: new Date('1970-01-01T09:40:00.000Z'),
+                  endTime: new Date('1970-01-01T10:00:00.000Z'),
+                  kind: ScheduleBlockKind.NON_TEACHING,
+                },
+                {
+                  periodScheduleStructureId: structure.id,
+                  position: 5,
+                  name: 'P3',
+                  startTime: new Date('1970-01-01T10:00:00.000Z'),
+                  endTime: new Date('1970-01-01T10:40:00.000Z'),
+                  kind: ScheduleBlockKind.TEACHING,
+                },
+              ]
+            : [
+                {
+                  periodScheduleStructureId: structure.id,
+                  position: 1,
+                  name: 'Break only',
+                  startTime: new Date('1970-01-01T08:00:00.000Z'),
+                  endTime: new Date('1970-01-01T08:20:00.000Z'),
+                  kind: ScheduleBlockKind.BREAK,
+                },
+              ],
+      });
+      if (kind !== 'realistic')
+        return {
+          targetInstitution,
+          targetPeriod,
+          user,
+          blocks,
+          assignments: [],
+        };
+      const courses = await Promise.all(
+        ['A', 'B', 'C'].map((section) =>
+          tx.course.create({
+            data: {
+              name: `Generation course ${section} ${suffix}`,
+              section: `GEN-${section}-${suffix}`,
+              institutionId: targetInstitution.id,
+              academicPeriodId: targetPeriod.id,
+              gradeLevelId: sourceAssignment.course.gradeLevelId,
+              subLevelId: sourceAssignment.course.subLevelId,
+            },
+          }),
+        ),
+      );
+      const subjects = await Promise.all(
+        ['Mathematics', 'Language', 'Science', 'History'].map((name, index) =>
+          tx.subject.create({
+            data: {
+              name: `${name} ${suffix}`,
+              code: `GEN-${index}-${suffix}`,
+              institutionId: targetInstitution.id,
+            },
+          }),
+        ),
+      );
+      const assignments = await Promise.all(
+        [
+          [sourceAssignment.teacherId, courses[0].id, subjects[0].id, 2],
+          [sourceAssignment.teacherId, courses[1].id, subjects[1].id, 2],
+          [secondSourceAssignment.teacherId, courses[1].id, subjects[2].id, 2],
+          [secondSourceAssignment.teacherId, courses[2].id, subjects[3].id, 2],
+        ].map(([teacherId, courseId, subjectId, weeklyPeriods]) =>
+          tx.teacherAssignment.create({
+            data: {
+              institutionId: targetInstitution.id,
+              academicPeriodId: targetPeriod.id,
+              teacherId: teacherId as string,
+              courseId: courseId as string,
+              subjectId: subjectId as string,
+              teachingLoad: {
+                create: { weeklyPeriods: weeklyPeriods as number },
+              },
+            },
+            include: { teachingLoad: true },
+          }),
+        ),
+      );
+      return { targetInstitution, targetPeriod, user, blocks, assignments };
+    });
+    return {
+      ...fixture,
+      password,
+      cleanup: async () => {
+        await prisma.institution.delete({
+          where: { id: fixture.targetInstitution.id },
+        });
+        await prisma.user.delete({ where: { id: fixture.user.id } });
+      },
+    };
+  };
+
   beforeAll(async () => {
     const url = process.env.DATABASE_URL ?? '';
     if (!/zerocademy_e2e/.test(url)) {
@@ -151,6 +405,7 @@ describe('Timetables HTTP E2E', () => {
       },
     });
     institutionBId = institutionB.id;
+    persistentFixtureCreated = true;
     const periodB = await prisma.academicPeriod.create({
       data: {
         name: `Timetable E2E Period B ${suffix}`,
@@ -275,6 +530,11 @@ describe('Timetables HTTP E2E', () => {
   }, 30_000);
 
   afterAll(async () => {
+    if (!persistentFixtureCreated) {
+      await app?.close();
+      await prisma.$disconnect();
+      return;
+    }
     await clearTimetables();
     await prisma.institution.deleteMany({ where: { id: institutionBId } });
     await prisma.user.deleteMany({ where: { id: { in: fixtureUserIds } } });
@@ -568,6 +828,443 @@ describe('Timetables HTTP E2E', () => {
         })
       ).version,
     ).toBe(2);
+  });
+
+  describe('realistic deterministic generation', () => {
+    it('generates a stable, read-only multi-course proposal that creates a COMPLETE draft', async () => {
+      const fixture = await createGenerationFixture('realistic');
+      try {
+        const token = await login({
+          key: 'generationAdmin',
+          email: fixture.user.email,
+          password: fixture.password,
+          institution: { id: fixture.targetInstitution.id },
+          academicContext: { academicPeriodId: fixture.targetPeriod.id },
+        });
+        const fixturePath = `/v1/institutions/${fixture.targetInstitution.id}/academic-periods/${fixture.targetPeriod.id}/timetables`;
+        const before = await schedulingSnapshot(
+          fixture.targetInstitution.id,
+          fixture.targetPeriod.id,
+        );
+
+        const first = await request(app.getHttpServer())
+          .post(`${fixturePath}/generate`)
+          .set(auth(token))
+          .send({ maxSearchNodes: 10_000 })
+          .expect(201);
+        const second = await request(app.getHttpServer())
+          .post(`${fixturePath}/generate`)
+          .set(auth(token))
+          .send({ maxSearchNodes: 10_000 })
+          .expect(201);
+
+        expect(first.body.status).toBe('SUCCESS');
+        expect(second.body.status).toBe('SUCCESS');
+        expect(second.body.slots).toEqual(first.body.slots);
+        expect(normalizedProposalSlots(second.body.slots)).toEqual(
+          normalizedProposalSlots(first.body.slots),
+        );
+        expect(second.body.statistics.generatedSlots).toBe(8);
+        expect(first.body.slots).toHaveLength(8);
+        expect(first.body.statistics).toMatchObject({
+          requirements: 8,
+          generatedSlots: 8,
+          searchNodesExplored: expect.any(Number),
+          backtracks: expect.any(Number),
+        });
+
+        const assignments = new Map(
+          fixture.assignments.map((assignment) => [assignment.id, assignment]),
+        );
+        const teachingBlockIds = new Set(
+          fixture.blocks
+            .filter((block) => block.kind === ScheduleBlockKind.TEACHING)
+            .map((block) => block.id),
+        );
+        const expectedLoads = new Map(
+          fixture.assignments.map((assignment) => [
+            assignment.id,
+            assignment.teachingLoad?.weeklyPeriods,
+          ]),
+        );
+        const loadCounts = new Map<string, number>();
+        const teacherCells = new Set<string>();
+        const courseCells = new Set<string>();
+        for (const slot of first.body.slots) {
+          const assignment = assignments.get(slot.teacherAssignmentId);
+          if (!assignment) {
+            throw new Error(
+              `Generated slot references unknown assignment ${slot.teacherAssignmentId}`,
+            );
+          }
+          expect([Weekday.MON, Weekday.TUE, Weekday.WED]).toContain(
+            slot.weekday,
+          );
+          expect(teachingBlockIds.has(slot.scheduleBlockId)).toBe(true);
+          const cell = `${slot.weekday}|${slot.scheduleBlockId}`;
+          expect(teacherCells.has(`${assignment.teacherId}|${cell}`)).toBe(
+            false,
+          );
+          expect(courseCells.has(`${assignment.courseId}|${cell}`)).toBe(false);
+          teacherCells.add(`${assignment.teacherId}|${cell}`);
+          courseCells.add(`${assignment.courseId}|${cell}`);
+          loadCounts.set(
+            slot.teacherAssignmentId,
+            (loadCounts.get(slot.teacherAssignmentId) ?? 0) + 1,
+          );
+        }
+        expect([...loadCounts.entries()].sort()).toEqual(
+          [...expectedLoads.entries()].sort(),
+        );
+        expect(
+          await schedulingSnapshot(
+            fixture.targetInstitution.id,
+            fixture.targetPeriod.id,
+          ),
+        ).toEqual(before);
+
+        const created = await request(app.getHttpServer())
+          .post(fixturePath)
+          .set(auth(token))
+          .send({ slots: first.body.slots })
+          .expect(201);
+        const persisted = await request(app.getHttpServer())
+          .get(`/v1/timetables/${created.body.id}`)
+          .set(auth(token))
+          .expect(200);
+        expect(normalizedProposalSlots(persisted.body.slots)).toEqual(
+          normalizedProposalSlots(first.body.slots),
+        );
+        const validation = await request(app.getHttpServer())
+          .get(`/v1/timetables/${created.body.id}/validation`)
+          .set(auth(token))
+          .expect(200);
+        expect(validation.body).toMatchObject({
+          valid: true,
+          mode: 'COMPLETE',
+        });
+      } finally {
+        await fixture.cleanup();
+      }
+    });
+
+    it('maps an unusable persisted structure to HTTP 400 without timetable writes', async () => {
+      const fixture = await createGenerationFixture('no-teaching');
+      try {
+        const token = await login({
+          key: 'invalidGenerationAdmin',
+          email: fixture.user.email,
+          password: fixture.password,
+          institution: { id: fixture.targetInstitution.id },
+          academicContext: { academicPeriodId: fixture.targetPeriod.id },
+        });
+        const before = await schedulingSnapshot(
+          fixture.targetInstitution.id,
+          fixture.targetPeriod.id,
+        );
+        const response = await request(app.getHttpServer())
+          .post(
+            `/v1/institutions/${fixture.targetInstitution.id}/academic-periods/${fixture.targetPeriod.id}/timetables/generate`,
+          )
+          .set(auth(token))
+          .send({})
+          .expect(400);
+        expect(response.body.message).toBe(
+          'Schedule structure is not ready for timetable operations',
+        );
+        expect(
+          await schedulingSnapshot(
+            fixture.targetInstitution.id,
+            fixture.targetPeriod.id,
+          ),
+        ).toEqual(before);
+      } finally {
+        await fixture.cleanup();
+      }
+    });
+
+    it('returns SEARCH_LIMIT_REACHED through HTTP without persisting a partial proposal', async () => {
+      const fixture = await createGenerationFixture('realistic');
+      try {
+        const token = await login({
+          key: 'searchLimitGenerationAdmin',
+          email: fixture.user.email,
+          password: fixture.password,
+          institution: { id: fixture.targetInstitution.id },
+          academicContext: { academicPeriodId: fixture.targetPeriod.id },
+        });
+        const before = await schedulingSnapshot(
+          fixture.targetInstitution.id,
+          fixture.targetPeriod.id,
+        );
+        const response = await request(app.getHttpServer())
+          .post(
+            `/v1/institutions/${fixture.targetInstitution.id}/academic-periods/${fixture.targetPeriod.id}/timetables/generate`,
+          )
+          .set(auth(token))
+          .send({ maxSearchNodes: 1 })
+          .expect(201);
+        expect(response.body).toMatchObject({
+          status: 'SEARCH_LIMIT_REACHED',
+          slots: [],
+          diagnostics: [
+            expect.objectContaining({ code: 'SEARCH_NODE_LIMIT_REACHED' }),
+          ],
+        });
+        expect(
+          await schedulingSnapshot(
+            fixture.targetInstitution.id,
+            fixture.targetPeriod.id,
+          ),
+        ).toEqual(before);
+      } finally {
+        await fixture.cleanup();
+      }
+    });
+  });
+
+  describe('academic-period and publication lifecycle', () => {
+    const periodWriteBlockedMessage =
+      'Timetables cannot change a closed or archived academic period';
+
+    const fixtureAccount = (
+      fixture: Awaited<ReturnType<typeof createGenerationFixture>>,
+    ) => ({
+      key: 'lifecycleFixtureAdmin',
+      email: fixture.user.email,
+      password: fixture.password,
+      institution: { id: fixture.targetInstitution.id },
+      academicContext: { academicPeriodId: fixture.targetPeriod.id },
+    });
+
+    const createDraft = async (
+      fixture: Awaited<ReturnType<typeof createGenerationFixture>>,
+      token: string,
+    ) => {
+      const fixturePath = `/v1/institutions/${fixture.targetInstitution.id}/academic-periods/${fixture.targetPeriod.id}/timetables`;
+      const proposal = await request(app.getHttpServer())
+        .post(`${fixturePath}/generate`)
+        .set(auth(token))
+        .send({ maxSearchNodes: 10_000 })
+        .expect(201);
+      const created = await request(app.getHttpServer())
+        .post(fixturePath)
+        .set(auth(token))
+        .send({ slots: proposal.body.slots })
+        .expect(201);
+      return {
+        fixturePath,
+        proposalSlots: proposal.body.slots,
+        timetableId: created.body.id as string,
+      };
+    };
+
+    const expectReadable = async (
+      fixturePath: string,
+      timetableId: string,
+      token: string,
+    ) => {
+      const list = await request(app.getHttpServer())
+        .get(fixturePath)
+        .set(auth(token))
+        .expect(200);
+      expect(list.body.data).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: timetableId })]),
+      );
+      await request(app.getHttpServer())
+        .get(`/v1/timetables/${timetableId}`)
+        .set(auth(token))
+        .expect(200);
+      await request(app.getHttpServer())
+        .get(`/v1/timetables/${timetableId}/validation`)
+        .set(auth(token))
+        .expect(200);
+    };
+
+    const expectPeriodWriteBlocked = async (
+      fixture: Awaited<ReturnType<typeof createGenerationFixture>>,
+      token: string,
+      fixturePath: string,
+      timetableId: string,
+      proposalSlots: unknown,
+    ) => {
+      const reject = async (call: () => request.Test) => {
+        const before = await schedulingSnapshot(
+          fixture.targetInstitution.id,
+          fixture.targetPeriod.id,
+        );
+        const response = await call();
+        expect(response.status).toBe(400);
+        expect(response.body).toMatchObject({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: periodWriteBlockedMessage,
+        });
+        expect(response.body.stack).toBeUndefined();
+        expect(
+          await schedulingSnapshot(
+            fixture.targetInstitution.id,
+            fixture.targetPeriod.id,
+          ),
+        ).toEqual(before);
+      };
+
+      await reject(() =>
+        request(app.getHttpServer())
+          .post(`${fixturePath}/generate`)
+          .set(auth(token))
+          .send({}),
+      );
+      await reject(() =>
+        request(app.getHttpServer())
+          .post(fixturePath)
+          .set(auth(token))
+          .send({ slots: proposalSlots }),
+      );
+      await reject(() =>
+        request(app.getHttpServer())
+          .put(`/v1/timetables/${timetableId}/slots`)
+          .set(auth(token))
+          .send({ expectedVersion: 1, slots: proposalSlots }),
+      );
+      await reject(() =>
+        request(app.getHttpServer())
+          .delete(`/v1/timetables/${timetableId}`)
+          .set(auth(token)),
+      );
+    };
+
+    it('keeps CLOSED-period timetables readable and rejects every write without a partial change', async () => {
+      const fixture = await createGenerationFixture('realistic');
+      try {
+        const [token, superAdminToken] = await Promise.all([
+          login(fixtureAccount(fixture)),
+          login(superAdmin),
+        ]);
+        const { fixturePath, proposalSlots, timetableId } = await createDraft(
+          fixture,
+          token,
+        );
+        const closed = await request(app.getHttpServer())
+          .post(`/v1/academic-periods/${fixture.targetPeriod.id}/deactivate`)
+          .set(auth(superAdminToken))
+          .expect(201);
+        expect(closed.body).toMatchObject({
+          id: fixture.targetPeriod.id,
+          status: AcademicPeriodStatus.CLOSED,
+          isActive: false,
+        });
+        await expectReadable(fixturePath, timetableId, token);
+        await expectPeriodWriteBlocked(
+          fixture,
+          token,
+          fixturePath,
+          timetableId,
+          proposalSlots,
+        );
+      } finally {
+        await fixture.cleanup();
+      }
+    });
+
+    it('keeps ARCHIVED-period timetables readable and rejects every write without a partial change', async () => {
+      const fixture = await createGenerationFixture('realistic');
+      try {
+        const [token, superAdminToken] = await Promise.all([
+          login(fixtureAccount(fixture)),
+          login(superAdmin),
+        ]);
+        const { fixturePath, proposalSlots, timetableId } = await createDraft(
+          fixture,
+          token,
+        );
+        await request(app.getHttpServer())
+          .post(`/v1/academic-periods/${fixture.targetPeriod.id}/deactivate`)
+          .set(auth(superAdminToken))
+          .expect(201);
+        const archived = await request(app.getHttpServer())
+          .post(`/v1/academic-periods/${fixture.targetPeriod.id}/archive`)
+          .set(auth(superAdminToken))
+          .expect(201);
+        expect(archived.body).toMatchObject({
+          id: fixture.targetPeriod.id,
+          status: AcademicPeriodStatus.ARCHIVED,
+          isActive: false,
+        });
+        await expectReadable(fixturePath, timetableId, token);
+        await expectPeriodWriteBlocked(
+          fixture,
+          token,
+          fixturePath,
+          timetableId,
+          proposalSlots,
+        );
+      } finally {
+        await fixture.cleanup();
+      }
+    });
+
+    it('keeps a PUBLISHED timetable readable and immutable before stale-version evaluation', async () => {
+      const fixture = await createGenerationFixture('realistic');
+      try {
+        const token = await login(fixtureAccount(fixture));
+        const { fixturePath, proposalSlots, timetableId } = await createDraft(
+          fixture,
+          token,
+        );
+        await prisma.timetable.update({
+          where: { id: timetableId },
+          data: {
+            status: TimetableStatus.PUBLISHED,
+            publishedAt: new Date(),
+            publishedByUserId: fixture.user.id,
+          },
+        });
+        await expectReadable(fixturePath, timetableId, token);
+
+        const rejectPublished = async (
+          call: () => request.Test,
+          message: string,
+        ) => {
+          const before = await schedulingSnapshot(
+            fixture.targetInstitution.id,
+            fixture.targetPeriod.id,
+          );
+          const response = await call();
+          expect(response.status).toBe(409);
+          expect(response.body).toMatchObject({
+            statusCode: 409,
+            error: 'Conflict',
+            message,
+          });
+          expect(response.body.stack).toBeUndefined();
+          expect(
+            await schedulingSnapshot(
+              fixture.targetInstitution.id,
+              fixture.targetPeriod.id,
+            ),
+          ).toEqual(before);
+        };
+
+        await rejectPublished(
+          () =>
+            request(app.getHttpServer())
+              .put(`/v1/timetables/${timetableId}/slots`)
+              .set(auth(token))
+              .send({ expectedVersion: 999, slots: proposalSlots }),
+          'Published timetables cannot be modified',
+        );
+        await rejectPublished(
+          () =>
+            request(app.getHttpServer())
+              .delete(`/v1/timetables/${timetableId}`)
+              .set(auth(token)),
+          'Published timetables cannot be discarded',
+        );
+      } finally {
+        await fixture.cleanup();
+      }
+    });
   });
 
   describe('structured conflict diagnostics', () => {

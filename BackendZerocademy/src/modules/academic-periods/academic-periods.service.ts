@@ -8,6 +8,7 @@ import {
   AcademicPeriodStatus,
   AcademicRegime,
   Prisma,
+  Role,
 } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import {
@@ -29,6 +30,7 @@ import {
 import {
   assertActorCanAccessPeriod,
   resolveActorInstitutionId,
+  resolveActorInstitutionIds,
 } from '../../common/rbac/academic-scope.util';
 import { RoleUtils } from '../../common/rbac/role.utils';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -53,9 +55,10 @@ export class AcademicPeriodsService {
   ) {}
 
   async findAll(
+    actor: AuthenticatedUser,
     query: ListAcademicPeriodsQueryDto,
   ): Promise<AcademicPeriodListResponseDto> {
-    const where = await this.buildListWhere(query);
+    const where = await this.buildListWhere(actor, query);
     const skip = getPaginationSkip(query.page, query.limit);
 
     const [total, periods] = await this.prisma.$transaction([
@@ -94,7 +97,9 @@ export class AcademicPeriodsService {
     return period ? toAcademicPeriodResponseDto(period, true) : null;
   }
 
-  async create(dto: CreateAcademicPeriodDto): Promise<AcademicPeriodResponseDto> {
+  async create(
+    dto: CreateAcademicPeriodDto,
+  ): Promise<AcademicPeriodResponseDto> {
     const startDate = parseDateOnly(dto.startDate);
     const endDate = parseDateOnly(dto.endDate);
     assertValidPeriodDates({ startDate, endDate });
@@ -311,12 +316,15 @@ export class AcademicPeriodsService {
     });
 
     const activeByRegime = await Promise.all(
-      ([AcademicRegime.COSTA_GALAPAGOS, AcademicRegime.SIERRA_AMAZONIA] as const).map(
-        async (regime) => {
-          const period = await this.findActiveByRegime(regime);
-          return { regime, period };
-        },
-      ),
+      (
+        [
+          AcademicRegime.COSTA_GALAPAGOS,
+          AcademicRegime.SIERRA_AMAZONIA,
+        ] as const
+      ).map(async (regime) => {
+        const period = await this.findActiveByRegime(regime);
+        return { regime, period };
+      }),
     );
 
     let selectedPeriod: AcademicPeriodResponseDto | null = null;
@@ -327,7 +335,11 @@ export class AcademicPeriodsService {
         include: academicPeriodWithTermsInclude,
       });
 
-      if (period && period.status === AcademicPeriodStatus.ACTIVE && period.isActive) {
+      if (
+        period &&
+        period.status === AcademicPeriodStatus.ACTIVE &&
+        period.isActive
+      ) {
         try {
           await assertActorCanAccessPeriod(this.prisma, actor, period);
           selectedPeriod = toAcademicPeriodResponseDto(period, true);
@@ -349,7 +361,11 @@ export class AcademicPeriodsService {
       selectedPeriod = null;
     }
 
-    const effectivePeriod = await this.resolveDefaultPeriod(actor, institutionId, activeByRegime);
+    const effectivePeriod = await this.resolveDefaultPeriod(
+      actor,
+      institutionId,
+      activeByRegime,
+    );
 
     return {
       selectedPeriod: null,
@@ -414,7 +430,11 @@ export class AcademicPeriodsService {
           where: { id: institution.activeAcademicPeriodId },
           include: academicPeriodWithTermsInclude,
         });
-        if (period && period.status === AcademicPeriodStatus.ACTIVE && period.isActive) {
+        if (
+          period &&
+          period.status === AcademicPeriodStatus.ACTIVE &&
+          period.isActive
+        ) {
           return toAcademicPeriodResponseDto(period, true);
         }
       }
@@ -436,13 +456,40 @@ export class AcademicPeriodsService {
   }
 
   private async buildListWhere(
+    actor: AuthenticatedUser,
     query: ListAcademicPeriodsQueryDto,
   ): Promise<Prisma.AcademicPeriodWhereInput> {
     const where: Prisma.AcademicPeriodWhereInput = {};
 
     let regimeFilter = query.regime;
 
-    if (query.institutionId) {
+    if (actor.role === Role.ADMIN) {
+      const institutionIds = await resolveActorInstitutionIds(
+        this.prisma,
+        actor,
+      );
+
+      if (
+        query.institutionId &&
+        !institutionIds.includes(query.institutionId)
+      ) {
+        where.id = { in: [] };
+        return where;
+      }
+
+      const institutionId = query.institutionId ?? institutionIds[0];
+      if (!institutionId) {
+        where.id = { in: [] };
+        return where;
+      }
+
+      const institutionRegime = await resolveInstitutionAcademicRegime(
+        this.prisma,
+        institutionId,
+      );
+      where.OR = [{ institutionId: null }, { institutionId }];
+      regimeFilter = institutionRegime ?? regimeFilter;
+    } else if (query.institutionId) {
       const institutionRegime = await resolveInstitutionAcademicRegime(
         this.prisma,
         query.institutionId,
