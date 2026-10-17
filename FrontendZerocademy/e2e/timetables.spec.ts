@@ -36,6 +36,23 @@ async function currentStructurePath(page: import("@playwright/test").Page): Prom
   return `/v1/institutions/${adminAccount.institution!.id}/academic-periods/${periodId}/schedule-structure`;
 }
 
+function toMinutes(value: string): number {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function toTime(value: number): string {
+  return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+}
+
+function findFreeHour(blocks: Array<{ startTime: string; endTime: string }>): number {
+  for (let start = 7 * 60; start <= 18 * 60; start += 5) {
+    const end = start + 60;
+    if (blocks.every((block) => end <= toMinutes(block.startTime) || start >= toMinutes(block.endTime))) return start;
+  }
+  throw new Error("The QA schedule structure has no free 60-minute interval for the test-owned blocks.");
+}
+
 test.describe("DEMY-140 schedule structure", () => {
   test("an institutional admin can open the schedule structure workspace", async ({ page }) => {
     await login(page);
@@ -57,6 +74,7 @@ test.describe("DEMY-140 schedule structure", () => {
     const structurePath = await currentStructurePath(page);
 
     const initial = await page.evaluate(async (path) => { const stored = JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}"); return (await fetch(path, { headers: { Authorization: `Bearer ${stored.state?.accessToken}` } })).json(); }, structurePath);
+    const freeStart = findFreeHour(initial.blocks);
     const monday = page.getByLabel("Lunes");
     if (await monday.isChecked()) await monday.uncheck(); else await monday.check();
     const weekdaysResponse = page.waitForResponse((response) => response.url().includes(structurePath) && response.request().method() === "PUT" && response.status() === 200);
@@ -75,9 +93,9 @@ test.describe("DEMY-140 schedule structure", () => {
       await expect(page.getByText(name)).toBeVisible();
     };
 
-    await create(teaching, "TEACHING", "12:00", "12:30");
-    await create(breakBlock, "BREAK", "12:30", "12:45");
-    await create(nonTeaching, "NON_TEACHING", "12:45", "13:00");
+    await create(teaching, "TEACHING", toTime(freeStart), toTime(freeStart + 30));
+    await create(breakBlock, "BREAK", toTime(freeStart + 30), toTime(freeStart + 45));
+    await create(nonTeaching, "NON_TEACHING", toTime(freeStart + 45), toTime(freeStart + 60));
 
     const structure = await page.evaluate(async (path) => { const stored = JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}"); return (await fetch(path, { headers: { Authorization: `Bearer ${stored.state?.accessToken}` } })).json(); }, structurePath);
     const created = structure.blocks.filter((block: { name: string | null }) => block.name?.startsWith(suffix));
@@ -95,25 +113,34 @@ test.describe("DEMY-140 schedule structure", () => {
     await page.evaluate(async ([path, enabledWeekdays]) => { const stored = JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}"); await fetch(path, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${stored.state?.accessToken}` }, body: JSON.stringify({ enabledWeekdays }) }); }, [structurePath, initial.enabledWeekdays]);
   });
 
-  test("edits, reorders, cancels, and confirms deletion of a test-owned block", async ({ page }) => {
+  test("edits, reorders, cancels, and confirms deletion of a test-owned block", async ({ page, request }) => {
     const suffix = `E2E CRUD ${Date.now()}`;
     const first = `${suffix} Uno`;
     const second = `${suffix} Dos`;
-    const createdNames = [first, second];
+    const createdBlockIds = new Set<string>();
+    let primaryFailure: unknown;
 
     await login(page);
     await page.goto("/timetables");
     await expect(page.getByRole("heading", { name: "Horario semanal" })).toBeVisible();
     const structurePath = await currentStructurePath(page);
+    const accessToken = await page.evaluate(() => JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}").state?.accessToken as string | undefined);
+    if (!accessToken) throw new Error("The authenticated admin session did not expose an access token for test-owned cleanup.");
+    const initial = await page.evaluate(async (path) => {
+      const stored = JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}");
+      return (await fetch(path, { headers: { Authorization: `Bearer ${stored.state?.accessToken}` } })).json();
+    }, structurePath);
+    const freeStart = findFreeHour(initial.blocks);
     try {
-      for (const [name, start, end] of [[first, "13:00", "13:20"], [second, "13:20", "13:40"]]) {
+      for (const [name, start, end] of [[first, toTime(freeStart), toTime(freeStart + 20)], [second, toTime(freeStart + 20), toTime(freeStart + 40)]]) {
         await page.getByRole("button", { name: "Añadir bloque" }).click();
         await page.getByLabel("Nombre").fill(name);
         await page.getByLabel("Inicio").fill(start);
         await page.getByLabel("Fin").fill(end);
         const response = page.waitForResponse((candidate) => candidate.url().includes(`${structurePath}/blocks`) && candidate.request().method() === "POST" && candidate.status() === 201);
         await page.getByRole("button", { name: "Guardar", exact: true }).click();
-        await response;
+        const created = await response;
+        createdBlockIds.add((await created.json() as { id: string }).id);
       }
 
       const firstRow = page.getByText(first).locator("xpath=ancestor::div[contains(@class, 'items-center')][1]");
@@ -139,10 +166,22 @@ test.describe("DEMY-140 schedule structure", () => {
       await expect(page.getByText(`${first} Editado`)).toHaveCount(0);
       await page.reload();
       await expect(page.getByText(`${first} Editado`)).toHaveCount(0);
+    } catch (error) {
+      primaryFailure = error;
+      throw error;
     } finally {
-      const structure = await page.evaluate(async (path) => { const stored = JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}"); return (await fetch(path, { headers: { Authorization: `Bearer ${stored.state?.accessToken}` } })).json(); }, structurePath);
-      for (const block of structure.blocks.filter((item: { name: string | null }) => createdNames.some((name) => item.name?.startsWith(name.split(" ").slice(0, 3).join(" "))))) {
-        await page.evaluate(async (id) => { const stored = JSON.parse(localStorage.getItem("zerocademy-auth") ?? "{}"); await fetch(`/v1/schedule-blocks/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${stored.state?.accessToken}` } }); }, block.id);
+      const cleanupFailures: string[] = [];
+      for (const id of createdBlockIds) {
+        try {
+          const response = await request.delete(`/v1/schedule-blocks/${id}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          if (![204, 404].includes(response.status())) cleanupFailures.push(`${id}: DELETE returned ${response.status()}`);
+        } catch (error) {
+          cleanupFailures.push(`${id}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      if (cleanupFailures.length) {
+        console.error("Test-owned schedule-block cleanup failed", cleanupFailures);
+        if (!primaryFailure) throw new Error(`Test-owned schedule-block cleanup failed: ${cleanupFailures.join("; ")}`);
       }
     }
   });

@@ -53,20 +53,114 @@ test.describe.serial("DEMY-140 lifecycle and authorization", () => {
     expect(removed.status).toBe(204);
   });
 
-  test("CLOSED and ARCHIVED fixture structures are readable but cannot be selected by the supported UI context", async ({ page }) => {
+  test("shows the real backend overlap error, preserves the form, and keeps persisted blocks unchanged", async ({ page }) => {
+    const rejectedName = `E2E overlap ${Date.now()}`;
     await login(page, fixture.admin);
     await page.goto("/timetables");
-    const [closed, archived, context] = await Promise.all([
+    await page.getByRole("button", { name: "Añadir bloque" }).click();
+    await page.getByLabel("Nombre").fill(rejectedName);
+    await page.getByLabel("Inicio").fill("08:20");
+    await page.getByLabel("Fin").fill("08:50");
+    const rejected = page.waitForResponse((response) => response.url().includes("/schedule-structure/blocks") && response.request().method() === "POST" && response.status() === 400);
+    await page.getByRole("button", { name: "Guardar", exact: true }).click();
+    const response = await rejected;
+    await expect(response.json()).resolves.toMatchObject({
+      statusCode: 400,
+      error: "Bad Request",
+      message: "Schedule block time range overlaps an existing block",
+    });
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText("El horario del bloque se superpone con un bloque existente");
+    await expect(page.getByLabel("Nombre")).toHaveValue(rejectedName);
+    await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeEnabled();
+    await page.reload();
+    await expect(page.getByText(rejectedName)).toHaveCount(0);
+    const structure = await api(page, `/v1/institutions/${fixture.institutionId}/academic-periods/${fixture.activeAcademicPeriodId}/schedule-structure`);
+    expect(structure.status).toBe(200);
+    expect((structure.body as { blocks: Array<{ name: string | null }> }).blocks.some((block) => block.name === rejectedName)).toBe(false);
+  });
+
+  test("recovers after a simulated network failure without reporting a false success", async ({ page }) => {
+    await login(page, fixture.admin);
+    await page.goto("/timetables");
+    const monday = page.getByLabel("Lunes");
+    if (await monday.isChecked()) await monday.uncheck(); else await monday.check();
+    await page.route("**/schedule-structure", (route) => route.abort("failed"));
+    await page.getByRole("button", { name: "Guardar días" }).click();
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText("No se pudo completar la solicitud. Inténtalo de nuevo.");
+    await expect(page.getByRole("button", { name: "Guardar días" })).toBeEnabled();
+    await page.unroute("**/schedule-structure");
+    const saved = page.waitForResponse((response) => response.url().includes("/schedule-structure") && response.request().method() === "PUT" && response.status() === 200);
+    await page.getByRole("button", { name: "Guardar días" }).click();
+    await saved;
+  });
+
+  test("shows a safe message and recovers after a simulated unexpected server failure", async ({ page }) => {
+    await login(page, fixture.admin);
+    await page.goto("/timetables");
+    const tuesday = page.getByLabel("Martes");
+    if (await tuesday.isChecked()) await tuesday.uncheck(); else await tuesday.check();
+    await page.route("**/schedule-structure", (route) => route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ statusCode: 500, message: "Internal server error", error: "Internal Server Error" }),
+    }));
+    await page.getByRole("button", { name: "Guardar días" }).click();
+    await expect(page.getByRole("main").getByRole("alert")).toHaveText("Error interno del servidor");
+    await expect(page.getByRole("button", { name: "Guardar días" })).toBeEnabled();
+    await page.unroute("**/schedule-structure");
+    const saved = page.waitForResponse((response) => response.url().includes("/schedule-structure") && response.request().method() === "PUT" && response.status() === 200);
+    await page.getByRole("button", { name: "Guardar días" }).click();
+    await saved;
+  });
+
+  test("PLANNED remains mutable while CLOSED and ARCHIVED are readable without mutations", async ({ page }) => {
+    await login(page, fixture.admin);
+    await page.goto("/timetables");
+    const [planned, closed, archived, context] = await Promise.all([
+      api(page, `/v1/institutions/${fixture.institutionId}/academic-periods/${fixture.plannedAcademicPeriodId}/schedule-structure`),
       api(page, `/v1/institutions/${fixture.institutionId}/academic-periods/${fixture.closedAcademicPeriodId}/schedule-structure`),
       api(page, `/v1/institutions/${fixture.institutionId}/academic-periods/${fixture.archivedAcademicPeriodId}/schedule-structure`),
       api(page, "/v1/academic-periods/context"),
     ]);
+    expect(planned.status).toBe(200);
     expect(closed.status).toBe(200);
     expect(archived.status).toBe(200);
     expect((context.body as { effectivePeriod: { id: string; status: string } }).effectivePeriod).toMatchObject({ id: fixture.activeAcademicPeriodId, status: "ACTIVE" });
     await expect(page.getByText("Activo", { exact: true })).toBeVisible();
-    await expect(page.getByText("Cerrado")).toHaveCount(0);
-    await expect(page.getByText("Archivado")).toHaveCount(0);
+    const mutations: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method()) && request.url().includes("schedule")) mutations.push(request.url());
+    });
+    const selector = page.getByLabel("Período académico", { exact: true });
+    const search = page.getByLabel("Buscar período académico", { exact: true });
+    await search.fill("Planned");
+    await expect(selector.locator(`option[value="${fixture.plannedAcademicPeriodId}"]`)).toHaveCount(1);
+    await selector.selectOption(fixture.plannedAcademicPeriodId);
+    await expect(page.getByText("Planificado", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Añadir bloque" })).toBeEnabled();
+    await expect(page.getByText((planned.body as { blocks: Array<{ name: string }> }).blocks[0]!.name)).toBeVisible();
+    await search.fill("Closed");
+    await expect(selector.locator(`option[value="${fixture.closedAcademicPeriodId}"]`)).toHaveCount(1);
+    await selector.selectOption(fixture.closedAcademicPeriodId);
+    await expect(page.getByText("Cerrado", { exact: true })).toBeVisible();
+    await expect(page.getByText(/modo de solo lectura/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Añadir bloque" })).toBeDisabled();
+    await expect(page.getByText((closed.body as { blocks: Array<{ name: string }> }).blocks[0]!.name)).toBeVisible();
+    await search.fill("Archived");
+    await expect(selector.locator(`option[value="${fixture.archivedAcademicPeriodId}"]`)).toHaveCount(1);
+    await selector.selectOption(fixture.archivedAcademicPeriodId);
+    await expect(page.getByText("Archivado", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Añadir bloque" })).toBeDisabled();
+    await expect(page.getByText((archived.body as { blocks: Array<{ name: string }> }).blocks[0]!.name)).toBeVisible();
+    expect(mutations).toEqual([]);
+    await search.fill("");
+    await expect(selector.locator(`option[value="${fixture.activeAcademicPeriodId}"]`)).toHaveCount(1);
+    await selector.selectOption(fixture.activeAcademicPeriodId);
+    await expect(page.getByText("Activo", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Añadir bloque" })).toBeEnabled();
+    const contextAfter = await api(page, "/v1/academic-periods/context");
+    expect((contextAfter.body as { effectivePeriod: { id: string }; selectedPeriod: unknown }).effectivePeriod.id).toBe(fixture.activeAcademicPeriodId);
+    expect((contextAfter.body as { selectedPeriod: unknown }).selectedPeriod).toBeNull();
   });
 
   test("a non-ADMIN user has no timetable navigation or administrative route controls", async ({ page }) => {
@@ -89,5 +183,8 @@ test.describe.serial("DEMY-140 lifecycle and authorization", () => {
     const other = await api(page, `/v1/institutions/${institutionAId}/academic-periods/${fixture.activeAcademicPeriodId}/schedule-structure`);
     expect(own.status).toBe(200);
     expect(other.status).toBe(404);
+    const periods = await api(page, `/v1/academic-periods?page=1&limit=100&institutionId=${institutionAId}`);
+    expect(periods.status).toBe(200);
+    expect((periods.body as { data: Array<{ institutionId: string | null }> }).data.every((period) => period.institutionId === null || period.institutionId === fixture.institutionId)).toBe(true);
   });
 });
