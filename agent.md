@@ -191,6 +191,45 @@ Use the **Atlassian** MCP and skills when available (`spec-to-backlog`, `search-
 
 ---
 
+## Mandatory End-to-End Module Validation
+
+Whenever an agent implements, completes, or significantly changes a frontend or backend module, it **must validate the functionality from an end user's perspective** before declaring the module complete or proceeding to another module. This is a project-wide completion gate for backend-only, frontend-only, full-stack, authorization, database-backed, and API-integration work. Unit tests, type checks, lint, and builds are necessary but never sufficient evidence of functional completion.
+
+### Backend and API validation
+
+- Start the application or use an appropriate isolated test environment, then exercise relevant endpoints through the real HTTP layer with realistic payloads.
+- Verify success and expected-failure flows, authentication, relevant roles, institution/resource isolation, lifecycle restrictions, meaningful errors, persistence, and read-after-write consistency.
+- When applicable, test complete sequences such as **Create → Read → Update → Validate → Delete**. Do not substitute mocked service tests for HTTP/integration validation.
+- Use isolated or disposable data whenever possible. Never use production Neon as a disposable test database, run destructive reset/cleanup/seeding operations against production, or create fake production academic data solely to test.
+
+### Frontend and full-stack validation
+
+- Run the frontend and use the actual UI with the available browser or computer-use automation. Verify navigation, forms, dialogs, validation, loading/empty/error/success states, persistence after navigation or refresh, role visibility, responsive behavior when relevant, browser console errors, and failed network requests.
+- For full-stack work, verify the complete journey: **frontend interaction → API request → authorization → business validation → persistence → API response → frontend state update**. Independent frontend and backend checks do not prove the integration.
+- Select realistic role scenarios from `SUPER_ADMIN`, `ADMIN`, `TEACHER`, `STUDENT`, and `REPRESENTATIVE` according to the module. Include realistic negative cases: invalid input, missing references, unauthorized roles, cross-institution access, lifecycle restrictions, conflicts, duplicates, empty states, and stale state where applicable.
+
+### Defects, limitations, and safety
+
+- If validation finds an in-scope defect, reproduce it, identify the cause, fix it, add or update regression coverage where practical, rerun the failing scenario and related checks, and do not proceed until it passes. Never weaken assertions, bypass authorization, or redefine expected behavior merely to hide a failure.
+- Document unrelated defects with evidence. If one blocks the real user journey, do not claim full E2E completion; otherwise keep its fix outside the ticket unless it is a small, safe, necessary correction.
+- Do not fabricate browser sessions, HTTP responses, database writes, or production verification. Production writes require explicit authorization and a safe cleanup strategy; safe production verification is read-only by default.
+
+### Completion gate and reporting
+
+A module is functionally complete only when implementation meets acceptance criteria; relevant automated checks and builds pass; realistic user scenarios, authorization/isolation, and applicable persistence have been verified; no known blocking in-scope defect remains; and required documentation is updated. Deployment status remains a separate fact: local E2E verification does not require production deployment.
+
+If E2E validation cannot be performed because of missing credentials, inaccessible API/database, unavailable automation, missing deployment, or another external dependency, execute all feasible checks, state the exact blocker, provide reproducible manual verification steps, and do not report full completion.
+
+Every module final report must include: module/ticket and scope; implementation; actual automated results; executed end-user scenarios; authorization; persistence; bugs and fixes; remaining limitations with exact reasons; environment; deployment status; and a next-module gate. Use exactly one classification:
+
+- **COMPLETE — E2E VERIFIED**: implementation and applicable end-user scenarios were exercised successfully.
+- **IMPLEMENTED — E2E PENDING**: implementation and automated checks are complete, but required end-user validation could not run.
+- **BLOCKED**: a functional defect, failed acceptance criterion, or required dependency prevents completion.
+
+This policy complements and does not replace the existing Git identity and commit rules, Prisma migration safeguards, deployment safety, authorization architecture, Jira/Confluence synchronization, and testing conventions.
+
+---
+
 ## Docker & Commands
 
 **Operational guide:** [`README.md`](README.md)
