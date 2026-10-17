@@ -14,7 +14,7 @@ Future modules (**Report cards**, **Promotions**, **Reports**, Ministry exports)
 
 The **Grade Calculation Engine** (`academic-performance` module) already consumes this configuration for weighted averages — see [grade-calculation-engine.md](./grade-calculation-engine.md).
 
-Ecuador is provided as an **optional default template** (seed + initialization endpoints), not as application logic.
+Ecuador is provided as an **optional reference template** (seed + initialization endpoints), not as application logic. Its applicability must be selected by institution, offer, and education level; it is not a universal rule for Educación Inicial or every EGB sublevel.
 
 ## Architecture
 
@@ -29,27 +29,27 @@ Institution
 
 ### Naming note: calendar vs evaluation terms
 
-| Model | Table | Purpose |
-|-------|-------|---------|
-| `AcademicTerm` | `academic_terms` | Calendar quimesters inside `AcademicPeriod` |
-| `EvaluationTerm` | `evaluation_terms` | Grading periods with **weights** for grade calculation |
+| Model            | Table              | Purpose                                                                                  |
+| ---------------- | ------------------ | ---------------------------------------------------------------------------------------- |
+| `AcademicTerm`   | `academic_terms`   | Configurable calendar term inside `AcademicPeriod` (for example, trimestre or quimestre) |
+| `EvaluationTerm` | `evaluation_terms` | Grading periods with **weights** for grade calculation                                   |
 
 Both can coexist; linking calendar terms to evaluation terms is a future enhancement.
 
 ## Ecuador default template
 
-| Setting | Value |
-|---------|-------|
-| Scale | 0 – 10 |
-| Passing score | 7 |
-| Decimal places | 2 |
+| Setting        | Value  |
+| -------------- | ------ |
+| Scale          | 0 – 10 |
+| Passing score  | 7      |
+| Decimal places | 2      |
 
-| Code | Range | Description |
-|------|-------|-------------|
-| DAR | 9.00 – 10.00 | Dominates the required learning outcomes |
-| AAR | 7.00 – 8.99 | Achieves the required learning outcomes |
-| PAAR | 4.01 – 6.99 | Close to achieving the required learning outcomes |
-| NAAR | 0.00 – 4.00 | Does not achieve the required learning outcomes |
+| Code | Range        | Description                                       |
+| ---- | ------------ | ------------------------------------------------- |
+| DAR  | 9.00 – 10.00 | Dominates the required learning outcomes          |
+| AAR  | 7.00 – 8.99  | Achieves the required learning outcomes           |
+| PAAR | 4.01 – 6.99  | Close to achieving the required learning outcomes |
+| NAAR | 0.00 – 4.00  | Does not achieve the required learning outcomes   |
 
 Initialized via:
 
@@ -68,35 +68,35 @@ Initialized via:
 
 ## RBAC
 
-| Role | Access |
-|------|--------|
+| Role          | Access                                       |
+| ------------- | -------------------------------------------- |
 | `SUPER_ADMIN` | Read all; initialize global Ecuador template |
-| `ADMIN` | Full institution CRUD (strict) |
-| `TEACHER` | Read-only |
-| `STUDENT` | No access |
+| `ADMIN`       | Full institution CRUD (strict)               |
+| `TEACHER`     | Read-only                                    |
+| `STUDENT`     | No access                                    |
 
 ## API overview
 
-| Tag | Base path |
-|-----|-----------|
-| `grading-schemes` | `/v1/grading-schemes` |
-| `grade-scales` | `/v1/grading-schemes/:schemeId/grade-scales` |
-| `evaluation-terms` | `/v1/evaluation-terms` |
-| `assessment-categories` | `/v1/assessment-categories` |
-| `institution-academic-configuration` | `/v1/institutions/:id/academic-evaluation/*` |
-| `academic-evaluation` | `/v1/academic-evaluation/initialize-ecuador-defaults` |
+| Tag                                  | Base path                                             |
+| ------------------------------------ | ----------------------------------------------------- |
+| `grading-schemes`                    | `/v1/grading-schemes`                                 |
+| `grade-scales`                       | `/v1/grading-schemes/:schemeId/grade-scales`          |
+| `evaluation-terms`                   | `/v1/evaluation-terms`                                |
+| `assessment-categories`              | `/v1/assessment-categories`                           |
+| `institution-academic-configuration` | `/v1/institutions/:id/academic-evaluation/*`          |
+| `academic-evaluation`                | `/v1/academic-evaluation/initialize-ecuador-defaults` |
 
 OpenAPI: `http://localhost:3001/api/docs`
 
 ## Frontend routes
 
-| Route | Description |
-|-------|-------------|
-| `/academic-evaluation` | Dashboard + preview |
-| `/academic-evaluation/grading-schemes` | Scheme management |
-| `/academic-evaluation/evaluation-terms` | Weighted terms, atomic percentage editing, and reorder |
-| `/academic-evaluation/assessment-categories` | Category weights |
-| `/academic-evaluation/configuration` | Institution active config |
+| Route                                        | Description                                            |
+| -------------------------------------------- | ------------------------------------------------------ |
+| `/academic-evaluation`                       | Dashboard + preview                                    |
+| `/academic-evaluation/grading-schemes`       | Scheme management                                      |
+| `/academic-evaluation/evaluation-terms`      | Weighted terms, atomic percentage editing, and reorder |
+| `/academic-evaluation/assessment-categories` | Category weights                                       |
+| `/academic-evaluation/configuration`         | Institution active config                              |
 
 UI copy is **Spanish**; API/docs remain **English**.
 

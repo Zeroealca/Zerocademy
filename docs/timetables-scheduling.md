@@ -501,8 +501,17 @@ All lists paginated where collections are unbounded; weekly grids may return a b
 ### DEMY-140 Phase 1 — schedule structure administration
 
 The ADMIN scheduling entry point is `/timetables`. It uses the authenticated
-academic-period context to resolve the authoritative institution and effective
-period, then calls only the DEMY-135 schedule-structure contract:
+academic-period context only to resolve the authoritative institution and the
+initial effective ACTIVE period. The workspace then obtains the accessible
+institution/regime period list through `GET /v1/academic-periods` and keeps its
+selection in component-local state; it never writes the global
+`/context/selection` preference or changes an institution's active period.
+For ADMIN callers the list API scopes results to the actor's active institution
+memberships plus globally available periods, so a supplied foreign
+`institutionId` returns no foreign periods. Other roles retain the existing
+platform-list behavior pending a separately specified collection-authorization
+policy. The workspace then calls only the
+DEMY-135 schedule-structure contract:
 
 - `GET/PUT /v1/institutions/:institutionId/academic-periods/:academicPeriodId/schedule-structure`
 - `POST .../schedule-structure/blocks`
@@ -517,11 +526,24 @@ are saved as the complete API array. Blocks can be created, edited, deleted
 after a Spanish confirmation, and reordered with accessible buttons; every
 successful mutation invalidates both structure and validation query keys.
 
-Closed and archived periods are deliberately read-only in the UI, while the
-backend remains the lifecycle and authorization authority. Loading, empty,
-validation-error, request-error, and context-missing states use the standard
-frontend patterns. Teaching-load administration, generation, and timetable-grid
-editing remain later DEMY-140 phases.
+CLOSED and ARCHIVED periods are deliberately read-only in the UI: their days,
+blocks, ordering, status, and regime remain visible, but all mutation controls
+are disabled and no client mutation is submitted. ACTIVE and PLANNED periods
+retain the existing mutation controls because the DEMY-135 backend treats only
+CLOSED and ARCHIVED periods as immutable. A missing structure can be created
+only for those mutable statuses through the existing PUT contract. When no
+effective ACTIVE period exists, the workspace selects the first period returned
+by the authenticated, deterministically ordered API list; it does not alter
+institutional state. Loading, empty, validation-error, request-error, and
+context-missing states use the standard frontend patterns.
+
+TanStack Query keys include both institution and academic-period IDs. A period
+switch receives a distinct query key, the rendered structure is checked against
+the selected period ID, and the workspace remounts per selected period so a
+weekday draft or editor cannot leak into a historical view. Mutations invalidate
+only that selected structure and its validation query. Teaching-load
+administration, generation, and timetable-grid editing remain later DEMY-140
+phases.
 
 ### ADMIN
 
@@ -898,6 +920,15 @@ browser scenarios remain intentionally outside this fixture-unblocking scope.
 
 ### Lifecycle and authorization browser evidence (2026-10-13)
 
+On 2026-10-13 the missing Docker Desktop Linux engine was recovered by starting
+the already-installed Docker Desktop application; `docker version` then
+reported Docker Desktop 4.32.0 / Engine 27.0.3. No project containers were
+running, however, and the repository's effective compose configuration names
+`zerocademy_db`, not the guarded `zerocademy_e2e` database required by every
+mutable schedule fixture. Browser and HTTP E2E recovery therefore remains
+pending an explicitly configured local `zerocademy_e2e` stack; no fixture was
+created and no database was reset.
+
 The desktop Playwright suite now includes eight real-browser scenarios against
 the Docker frontend/backend and the guarded local `zerocademy_e2e` database.
 The test-only browser fixture creates a second institution, an ADMIN, a
@@ -911,9 +942,41 @@ institution and users after every run.
 | ACTIVE ADMIN positive control | PASS | Institution B ADMIN created a block through `/timetables`, observed `201`, reloaded, read the persisted structure, and deleted the owned block. |
 | Unauthorized non-ADMIN | PASS | Institution B TEACHER had no sidebar item; direct `/timetables` rendered `Acceso denegado`, with no controls or schedule mutation requests. |
 | Institution A/B isolation | PASS | Institution B ADMIN rendered its own context and received `404` when its authenticated browser requested Institution A's schedule structure. |
-| CLOSED read-only UI | PENDING | The closed structure is readable through the authenticated browser (`200`), but the supported period-context endpoint only returns ACTIVE periods. The route has no period selector, so its read-only UI cannot be rendered through an application flow. |
-| ARCHIVED read-only UI | PENDING | Same product-contract limitation as CLOSED; the archived structure is browser-readable (`200`) but unreachable by the `/timetables` context flow. |
+| CLOSED read-only UI | IMPLEMENTED — E2E PENDING | The workspace-local selector now loads CLOSED structures, displays their status, preserves the historical weekdays/blocks, and disables mutations. The updated browser scenario is pending a running local Docker stack. |
+| ARCHIVED read-only UI | IMPLEMENTED — E2E PENDING | The workspace-local selector applies the same historical read-only behavior to ARCHIVED structures. The updated browser scenario is pending a running local Docker stack. |
 | Restricted ADMIN | NOT APPLICABLE | Permission-profile assignment is persistence foundation only for this contract; no supported restricted-ADMIN scheduling capability combination exists to authenticate. |
+
+### Isolated E2E verification (2026-10-13)
+
+The local Docker frontend and backend were started with `DATABASE_URL` pointed
+to `zerocademy_e2e`; PostgreSQL confirmed `current_database() =
+zerocademy_e2e` before any mutable fixture ran. `zerocademy_db` was not reset,
+migrated, or used by this verification. The reusable fixture test passed its
+two create/read/cleanup cases, and the focused academic-period authorization
+HTTP suite passed all four cases (own/global visibility, foreign filter,
+SUPER_ADMIN, and anonymous/invalid-input rejection).
+
+The desktop Playwright command below completed successfully three consecutive
+times without resetting PostgreSQL, executing all eight timetable and
+lifecycle/authorization scenarios on every run:
+
+```text
+npm exec -- playwright test e2e/timetables.spec.ts e2e/timetables-lifecycle-authorization.spec.ts --project=desktop --reporter=line
+```
+
+The lifecycle fixture creates only its own Institution B, ADMIN, TEACHER, and
+ACTIVE/PLANNED/CLOSED/ARCHIVED structures, and cleans them up after each run.
+Browser coverage confirms an ACTIVE ADMIN mutation and cleanup; PLANNED remains
+mutable; CLOSED and ARCHIVED render historical structures with mutation
+controls disabled and no mutation request; the workspace selector remains
+local and leaves `/v1/academic-periods/context` on the effective ACTIVE period;
+and non-ADMIN plus cross-institution requests are denied.
+
+The E2E catalog already contains 35 recorded migration rows for 34 migration
+directories because `20261004181000_backfill_academic_sublevels` is recorded
+twice. This verification deliberately did not reconcile, reset, or apply
+migrations while that inconsistency exists; the existing schema supported all
+tests above.
 
 Three consecutive desktop runs, without resetting PostgreSQL, passed all 8
 tests: 14.0 s, 14.3 s, and 14.5 s. This covers the original four schedule
@@ -921,3 +984,140 @@ structure scenarios plus ACTIVE lifecycle, CLOSED/ARCHIVED reachability
 evidence, non-ADMIN authorization, and institution isolation. It does not
 claim CLOSED/ARCHIVED visual read-only coverage until the product supplies a
 supported non-ACTIVE context-selection flow.
+
+### Error handling and responsive browser validation (2026-10-13)
+
+The schedule-structure UI consumes the shared API error contract
+`{ statusCode, message, error, details? }`. A browser-driven create attempt
+with `08:20`–`08:50` against the fixture's `08:00`–`08:40` block reached the
+real API and received `400 Bad Request` with
+`Schedule block time range overlaps an existing block`. The UI localizes this
+to `El horario del bloque se superpone con un bloque existente`, retains the
+entered form values, keeps the form open, restores the save control, and does
+not render the rejected block after reload. Client-only reversed time ranges
+remain prevented before a request. CLOSED and ARCHIVED mutations are rejected
+by the backend with `400` and the message `Schedule structure cannot change a
+closed or archived academic period`; their UI controls are proactively
+disabled.
+
+There is no schedule-structure version field or conditional-update contract,
+so stale/concurrent mutation handling is **not applicable** to this slice.
+The lifecycle fixture does not use a production transition API to change a
+period after load, so an in-flight lifecycle rejection is also not reproduced;
+the existing CLOSED/ARCHIVED real read-only coverage remains the supported
+contract. A separate Playwright route-abort scenario simulates a temporary
+network failure (it is not backend-contract evidence): the UI shows the safe
+generic Spanish message, reports no success, restores the save control, and
+can retry the real request.
+
+Responsive browser coverage runs on Chromium at 1440×900, 768×1024,
+390×844, and 320×700. Each viewport uses an isolated, process-unique fixture
+file to prevent cleanup races. It verifies navigation, labeled keyboard-focusable
+period selection, CLOSED read-only messaging, return to ACTIVE, opening and
+closing the inline block form, a real create/delete cycle, controls within the
+viewport, and no document-level horizontal overflow. The interface has no
+modal dialog in this slice; block editing is an inline form, whose controls
+remain in the viewport. Error alerts are semantic `role="alert"` content and
+now wrap long messages on narrow screens.
+
+The complete relevant Playwright selection executed 48 browser scenarios per
+run (desktop, tablet, mobile, and narrow-mobile) three consecutive times
+without resetting PostgreSQL. It includes the pre-existing timetable and
+lifecycle scenarios, real overlap rejection, simulated network recovery, and
+the four responsive scenarios, and the simulated unexpected-server-error
+recovery. TypeScript, focused ESLint, focused Prettier,
+and the timetable component suite also passed. No backend validation or schema
+rule was changed for this verification.
+
+### Production build and release-readiness verification (2026-10-13)
+
+The actual frontend production build was verified in the existing Linux Docker
+target, not through the known Windows/NVM Turbopack-worker limitation. The
+final clean build used Debian `node:22-slim`, Node `v22.23.3`, npm `10.9.9`,
+Next.js `16.3.5` (Turbopack), the workspace lockfile installation in the
+Dockerfile (`npm ci`), and:
+
+```text
+docker build --no-cache --target production --progress=plain --file FrontendZerocademy/Dockerfile --tag zerocademy-frontend-production-verify:DEMY-140 .
+```
+
+It completed successfully with exit code `0` (the build stages took about 88
+seconds: `npm ci` plus native Linux bindings about 65 seconds, and Next.js
+about 22 seconds) and produced the standalone frontend image. The compiler,
+TypeScript check, and static generation (53 pages) completed successfully;
+`/timetables` was included as a static route. No Prisma, seed, migration,
+deployment, or database command is part of this frontend build target, and no
+database URL or production secret was supplied to it. The only
+non-application installer output was Debian's non-interactive `debconf`
+frontend fallback while installing certificates. Dependency installation also
+reported the existing npm audit summary (35 vulnerabilities) and an
+`eslint@9.39.5` deprecation warning; neither affected the build exit status.
+
+The final image contains `/app/server.js` and the generated
+`(dashboard)/timetables/page.js` artifact. A temporary production-mode
+container was started on `127.0.0.1:3100` with an unreachable local internal
+API URL (`http://127.0.0.1:9`); Next
+started successfully and `GET /timetables` returned `200`. The route is
+client-auth gated, so this unauthenticated HTML response is expected and is not
+a deployment verification. The container was stopped immediately afterwards.
+
+This verifies build and local production startup only. No deployment was made,
+and production environment values, database access, and migration-history
+reconciliation remain outside this ticket.
+
+### DEMY-140 acceptance-review scope (2026-10-13)
+
+The evidence above verifies the delivered **Phase 1 schedule-structure
+administration** slice: an ADMIN can select a period, administer weekdays and
+blocks, and inspect immutable CLOSED/ARCHIVED structures. It does **not** close
+the original Jira `DEMY-140` story by itself. That story's unchanged acceptance
+criteria additionally require the course-oriented weekly timetable grid,
+generation entry point, accessible slot move/edit flow, conflict presentation
+for slot operations, and mobile-readable grid. Those capabilities are not in
+the current frontend feature (which consumes only schedule-structure APIs).
+
+Accordingly, functional E2E and production-build verification for Phase 1 are
+PASS, deployment remains unverified, and `DEMY-140` must remain open until the
+original story scope is completed or Jira formally re-scopes it. The separate
+migration-history discrepancy and npm audit findings are recorded risks, not
+evidence that the Phase 1 verification failed.
+
+### DEMY-140 Increment 1 — Scenario 6 TEACHER authentication correction (2026-10-16)
+
+The initial persistent acceptance campaign stopped at Pass 1, Scenario 6
+before its authorization assertions. Sanitized browser diagnostics showed that
+`POST /v1/auth/login` returned `400 Bad Request` with `Validation failed`; this
+was not a credential rejection, session failure, bootstrap failure, or failed
+redirect. The login request was rejected by DTO validation because the browser
+fixture built the TEACHER email local part from the long resource suffix plus a
+UUID and `-teacher`, exceeding the email validator's allowed local-part length.
+
+The fixture now uses a separate compact UUID suffix for both test-account email
+addresses (`teacher-<uuid>@example.test` and `admin-<uuid>@example.test`), while
+retaining the longer unique suffix for institution and timetable data. This is
+a fixture-only correction; production authentication, session handling, RBAC,
+and the `/dashboard` expectation are unchanged. The fixture retains its
+`DATABASE_URL` and `current_database()` guard; the focused run also confirmed
+the local host `postgres` and `zerocademy_e2e` before mutation.
+
+Sanitized evidence is stored under
+`qa/demy-140-increment-1/diagnostics/scenario-06/`: the corrected TEACHER login
+returned `201`, the browser then completed `GET /v1/auth/me` with `200`, and
+the authenticated response identified an active `TEACHER`. A direct fixture
+record check confirmed an active TEACHER user, active TEACHER institution
+membership, and TeacherProfile. The browser reached `/dashboard`, then direct
+`/timetables` rendered `Acceso denegado`, showed neither administrative
+controls nor the timetable navigation item, and issued no schedule mutation.
+
+Focused runs without a database reset passed twice for Scenario 6 (2.8 s each)
+and the ADMIN authorized timetable control passed (3.6 s). The original failed
+campaign logs remain historical evidence. A fresh campaign began at Pass 1,
+Scenario 1, passed Scenarios 1–7, and then stopped at Scenario 8 because the
+active Docker frontend did not expose the period-search control present in the
+current workspace source; the responsive test therefore cannot select the
+fixture's historical period against that stale runtime. This is separate from
+the TEACHER authentication correction. Rebuild or restart the local frontend
+from the current workspace, then restart the runner from Pass 1, Scenario 1
+with `qa/demy-140-increment-1/run-campaign.ps1`; no previous scenarios count
+toward that fresh sequence. The full campaign and the current TypeScript/lint
+checks remain pending at this checkpoint.
