@@ -8,6 +8,7 @@ import {
   Weekday,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'node:crypto';
 
 export type ScheduleStructureFixture = {
   institutionId: string;
@@ -22,8 +23,10 @@ export type ScheduleStructureFixture = {
 export type ScheduleStructureBrowserFixture = {
   institutionId: string;
   activeAcademicPeriodId: string;
+  plannedAcademicPeriodId: string;
   closedAcademicPeriodId: string;
   archivedAcademicPeriodId: string;
+  timetableId: string;
   admin: { email: string; password: string };
   teacher: { email: string; password: string };
   cleanup: () => Promise<void>;
@@ -62,7 +65,7 @@ export async function createScheduleStructureE2eFixture(
 ): Promise<ScheduleStructureFixture> {
   await assertIsolatedE2eDatabase(prisma);
 
-  const suffix = `schedule-e2e-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const suffix = `schedule-e2e-${randomUUID()}`;
   const password = 'ScheduleStructureE2e!123';
   const passwordHash = await bcrypt.hash(password, 10);
   const adminProfile = await prisma.permissionProfile.findUniqueOrThrow({
@@ -172,7 +175,11 @@ export async function createScheduleStructureBrowserFixture(
 ): Promise<ScheduleStructureBrowserFixture> {
   await assertIsolatedE2eDatabase(prisma);
 
-  const suffix = `schedule-browser-e2e-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  // `Course.section` participates in a uniqueness key that does not include
+  // the institution. A UUID makes the complete key collision-free across
+  // retries, stale fixtures, and parallel processes.
+  const suffix = `schedule-browser-e2e-${randomUUID()}`;
+  const accountSuffix = randomUUID();
   const password = 'ScheduleBrowserE2e!123';
   const passwordHash = await bcrypt.hash(password, 10);
   const adminProfile = await prisma.permissionProfile.findUniqueOrThrow({
@@ -185,33 +192,54 @@ export async function createScheduleStructureBrowserFixture(
   if (!globalActive) {
     throw new Error('Browser fixture requires an existing active global academic period.');
   }
+  const gradeLevel = await prisma.gradeLevel.findFirst({
+    where: { isActive: true },
+    orderBy: { order: 'asc' },
+  });
+  if (!gradeLevel) {
+    throw new Error('Browser fixture requires an existing active grade level.');
+  }
 
   const fixture = await prisma.$transaction(async (tx) => {
     const institution = await tx.institution.create({
       data: { name: `Browser fixture ${suffix}`, code: `BROWSER-FIXTURE-${suffix}`, regime: globalActive.regime, activeAcademicPeriodId: globalActive.id },
     });
-    const [closedPeriod, archivedPeriod] = await Promise.all([
-      tx.academicPeriod.create({ data: { name: `Closed ${suffix}`, institutionId: institution.id, regime: globalActive.regime, startDate: new Date('2024-04-01'), endDate: new Date('2025-03-31'), status: AcademicPeriodStatus.CLOSED } }),
-      tx.academicPeriod.create({ data: { name: `Archived ${suffix}`, institutionId: institution.id, regime: globalActive.regime, startDate: new Date('2023-04-01'), endDate: new Date('2024-03-31'), status: AcademicPeriodStatus.ARCHIVED } }),
+    const [plannedPeriod, closedPeriod, archivedPeriod] = await Promise.all([
+      // The workspace requests page 1 only. Keep every synthetic lifecycle
+      // period ahead of accumulated local fixture history in date ordering.
+      tx.academicPeriod.create({ data: { name: `Planned ${suffix}`, institutionId: institution.id, regime: globalActive.regime, startDate: new Date('2200-04-01'), endDate: new Date('2201-03-31'), status: AcademicPeriodStatus.PLANNED } }),
+      tx.academicPeriod.create({ data: { name: `Closed ${suffix}`, institutionId: institution.id, regime: globalActive.regime, startDate: new Date('2199-04-01'), endDate: new Date('2200-03-31'), status: AcademicPeriodStatus.CLOSED } }),
+      tx.academicPeriod.create({ data: { name: `Archived ${suffix}`, institutionId: institution.id, regime: globalActive.regime, startDate: new Date('2198-04-01'), endDate: new Date('2199-03-31'), status: AcademicPeriodStatus.ARCHIVED } }),
     ]);
-    const admin = await tx.user.create({ data: { email: `${suffix}-admin@example.test`, passwordHash, firstName: 'Browser', lastName: 'Admin', role: Role.ADMIN } });
-    const teacher = await tx.user.create({ data: { email: `${suffix}-teacher@example.test`, passwordHash, firstName: 'Browser', lastName: 'Teacher', role: Role.TEACHER } });
+    // RFC-compatible local parts are required because the login DTO validates
+    // fixture credentials through the production endpoint. `suffix` is too
+    // long once a UUID and role label are combined for the TEACHER account.
+    const admin = await tx.user.create({ data: { email: `admin-${accountSuffix}@example.test`, passwordHash, firstName: 'Browser', lastName: 'Admin', role: Role.ADMIN } });
+    const teacher = await tx.user.create({ data: { email: `teacher-${accountSuffix}@example.test`, passwordHash, firstName: 'Browser', lastName: 'Teacher', role: Role.TEACHER } });
     await tx.institutionMembership.createMany({ data: [
       { institutionId: institution.id, userId: admin.id, role: 'ADMIN', permissionProfileId: adminProfile.id },
       { institutionId: institution.id, userId: teacher.id, role: 'TEACHER' },
     ] });
     const createStructure = (academicPeriodId: string, label: string) => tx.periodScheduleStructure.create({
-      data: { institutionId: institution.id, academicPeriodId, enabledWeekdays: [Weekday.MON, Weekday.TUE], scheduleBlocks: { create: [{ position: 1, name: label, startTime: new Date('1970-01-01T08:00:00.000Z'), endTime: new Date('1970-01-01T08:40:00.000Z'), kind: ScheduleBlockKind.TEACHING }] } },
+      data: { institutionId: institution.id, academicPeriodId, enabledWeekdays: [Weekday.MON, Weekday.TUE], scheduleBlocks: { create: [{ position: 1, name: label, startTime: new Date('1970-01-01T08:00:00.000Z'), endTime: new Date('1970-01-01T08:40:00.000Z'), kind: ScheduleBlockKind.TEACHING }, { position: 2, name: `Recreo ${suffix}`, startTime: new Date('1970-01-01T08:40:00.000Z'), endTime: new Date('1970-01-01T09:00:00.000Z'), kind: ScheduleBlockKind.BREAK }, { position: 3, name: `No lectivo ${suffix}`, startTime: new Date('1970-01-01T09:00:00.000Z'), endTime: new Date('1970-01-01T09:20:00.000Z'), kind: ScheduleBlockKind.NON_TEACHING }] } },
+      include: { scheduleBlocks: true },
     });
-    await Promise.all([createStructure(globalActive.id, `Activo ${suffix}`), createStructure(closedPeriod.id, `Cerrado ${suffix}`), createStructure(archivedPeriod.id, `Archivado ${suffix}`)]);
-    return { institution, admin, teacher, closedPeriod, archivedPeriod };
+    const [activeStructure] = await Promise.all([createStructure(globalActive.id, `Activo ${suffix}`), createStructure(plannedPeriod.id, `Planificado ${suffix}`), createStructure(closedPeriod.id, `Cerrado ${suffix}`), createStructure(archivedPeriod.id, `Archivado ${suffix}`)]);
+    const teacherProfile = await tx.teacherProfile.create({ data: { userId: teacher.id, institutionId: institution.id } });
+    const subject = await tx.subject.create({ data: { name: `Matemática ${suffix}`, code: `MATH-${suffix}`, institutionId: institution.id } });
+    const course = await tx.course.create({ data: { name: `10.º E2E ${suffix}`, section: suffix, institutionId: institution.id, academicPeriodId: globalActive.id, gradeLevelId: gradeLevel.id } });
+    const assignment = await tx.teacherAssignment.create({ data: { institutionId: institution.id, teacherId: teacherProfile.id, subjectId: subject.id, courseId: course.id, academicPeriodId: globalActive.id } });
+    const timetable = await tx.timetable.create({ data: { institutionId: institution.id, academicPeriodId: globalActive.id, slots: { create: { teacherAssignmentId: assignment.id, scheduleBlockId: activeStructure.scheduleBlocks[0]!.id, dayOfWeek: Weekday.MON, teacherId: teacherProfile.id, courseId: course.id } } } });
+    return { institution, admin, teacher, plannedPeriod, closedPeriod, archivedPeriod, timetable };
   });
 
   return {
     institutionId: fixture.institution.id,
     activeAcademicPeriodId: globalActive.id,
+    plannedAcademicPeriodId: fixture.plannedPeriod.id,
     closedAcademicPeriodId: fixture.closedPeriod.id,
     archivedAcademicPeriodId: fixture.archivedPeriod.id,
+    timetableId: fixture.timetable.id,
     admin: { email: fixture.admin.email, password },
     teacher: { email: fixture.teacher.email, password },
     cleanup: async () => {
