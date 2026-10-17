@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { ScheduleBlock, ScheduleBlockInput, ScheduleStructure, ScheduleStructureDetail, ScheduleStructureValidation, Weekday } from "@/features/timetables/types";
+import type { ScheduleBlock, ScheduleBlockInput, ScheduleStructure, ScheduleStructureDetail, ScheduleStructureValidation, Timetable, TimetableListResponse, TimetableValidation, Weekday } from "@/features/timetables/types";
 
 const structurePath = (institutionId: string, academicPeriodId: string) =>
   `/v1/institutions/${institutionId}/academic-periods/${academicPeriodId}/schedule-structure`;
@@ -27,3 +27,15 @@ export const reorderScheduleBlocks = (institutionId: string, academicPeriodId: s
 
 export const fetchScheduleStructureValidation = (institutionId: string, academicPeriodId: string) =>
   apiClient<ScheduleStructureValidation>(`${structurePath(institutionId, academicPeriodId)}/validation`);
+
+const timetableListPath = (institutionId: string, academicPeriodId: string) =>
+  `/v1/institutions/${institutionId}/academic-periods/${academicPeriodId}/timetables`;
+
+export const fetchTimetables = (institutionId: string, academicPeriodId: string) =>
+  apiClient<TimetableListResponse>(timetableListPath(institutionId, academicPeriodId));
+
+export const fetchTimetable = (timetableId: string) =>
+  apiClient<Timetable>(`/v1/timetables/${timetableId}`);
+
+export const fetchTimetableValidation = (timetableId: string) =>
+  apiClient<TimetableValidation>(`/v1/timetables/${timetableId}/validation`);

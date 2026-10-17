@@ -19,6 +19,13 @@ const EXACT_MESSAGES: Record<string, string> = {
   "Unprocessable Entity": "No se pudo procesar la solicitud",
   UNPROCESSABLE_ENTITY: "No se pudo procesar la solicitud",
   "Validation failed": "La validación falló",
+  "Schedule block start time must be strictly before end time":
+    "La hora de inicio del bloque debe ser anterior a la hora de fin",
+  "Schedule block time range overlaps an existing block":
+    "El horario del bloque se superpone con un bloque existente",
+  "Schedule structure cannot change a closed or archived academic period":
+    "La estructura horaria no se puede modificar en un período cerrado o archivado",
+  "Schedule structure not found": "No se encontró la estructura horaria",
   "Access denied": "Acceso denegado",
   "Insufficient permissions": "Permisos insuficientes",
   "Insufficient role permissions": "Permisos insuficientes para este rol",

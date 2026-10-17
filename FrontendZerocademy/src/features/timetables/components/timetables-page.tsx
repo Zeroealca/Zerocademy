@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { useAcademicPeriodContext } from "@/features/academic-periods/hooks/use-academic-period-context";
+import { useInstitutionAcademicPeriods } from "@/features/academic-periods/hooks/use-institution-academic-periods";
+import { formatAcademicPeriodOptionLabel } from "@/features/academic-periods/lib/format-academic-period-label";
 import { REGIME_LABELS, STATUS_LABELS, STATUS_VARIANTS } from "@/features/academic-periods/constants";
 import { useScheduleStructure, useScheduleStructureMutations, useScheduleStructureValidation } from "@/features/timetables/hooks/use-schedule-structure";
+import { WeeklyTimetableWorkspace } from "@/features/timetables/components/weekly-timetable-workspace";
 import type { ScheduleBlock, ScheduleBlockInput, ScheduleBlockKind, Weekday } from "@/features/timetables/types";
 import { ApiError } from "@/lib/api-error";
 import { canManageScheduleStructures } from "@/lib/permissions";
@@ -25,23 +28,50 @@ const emptyBlock: ScheduleBlockInput = { name: "", startTime: "07:00", endTime: 
 export function TimetablesPage() {
   const role = useAuthStore((state) => state.user?.role);
   const { data: context, isLoading: contextLoading, isError: contextError } = useAcademicPeriodContext();
-  const period = context?.effectivePeriod;
   const institutionId = context?.institutionId;
   const canManage = canManageScheduleStructures(role);
-  const immutable = period?.status === "CLOSED" || period?.status === "ARCHIVED";
-  const { data: structure, isLoading, isError, error, refetch } = useScheduleStructure(institutionId, period?.id);
-  const { data: validation } = useScheduleStructureValidation(institutionId, period?.id);
+  const [periodSearch, setPeriodSearch] = useState("");
+  const periods = useInstitutionAcademicPeriods({ page: 1, limit: 100, search: periodSearch || undefined });
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>();
+  const [section, setSection] = useState<"structure" | "weekly">("structure");
+  const effectivePeriodId = context?.effectivePeriod?.id;
+  const listedPeriods = periods.data?.data ?? [];
+  // The selector is paginated, whereas the context's effective period is the
+  // workspace default. Preserve that default even when it falls beyond page 1.
+  const availablePeriods = context?.effectivePeriod
+    ? [context.effectivePeriod, ...listedPeriods.filter((period) => period.id !== context.effectivePeriod?.id)]
+    : listedPeriods;
+  const selectedPeriod = availablePeriods.find((period) => period.id === selectedPeriodId)
+    ?? availablePeriods.find((period) => period.id === effectivePeriodId)
+    ?? availablePeriods[0];
+  const immutable = selectedPeriod?.status === "CLOSED" || selectedPeriod?.status === "ARCHIVED";
+  const { data: structure, isLoading, isError, error, refetch } = useScheduleStructure(institutionId, selectedPeriod?.id);
+  const { data: validation } = useScheduleStructureValidation(institutionId, selectedPeriod?.id);
 
   if (!canManage) return <AccessDenied />;
   if (contextLoading) return <p className="text-sm text-muted-foreground">Cargando el contexto académico…</p>;
-  if (contextError || !period || !institutionId) return <ContextRequired />;
-  if (isLoading) return <p className="text-sm text-muted-foreground">Cargando la estructura horaria…</p>;
-  if (isError || !structure) return <LoadError message={messageFor(error)} onRetry={() => void refetch()} />;
+  if (contextError || !institutionId) return <ContextRequired />;
+  if (periods.contextLoading || periods.isLoading) return <p className="text-sm text-muted-foreground">Cargando los períodos académicos…</p>;
+  if (periods.isError) return <PeriodLoadError onRetry={() => void periods.refetch()} />;
+  if (!selectedPeriod) return <NoPeriods />;
+  const selector = <AcademicPeriodWorkspaceSelector periods={availablePeriods} selectedPeriodId={selectedPeriod.id} search={periodSearch} onChange={setSelectedPeriodId} onSearchChange={setPeriodSearch} />;
+  const navigation = <nav aria-label="Secciones de horarios" className="border-b"><div role="tablist" aria-label="Secciones del horario" className="flex gap-1"><Button role="tab" variant={section === "structure" ? "secondary" : "ghost"} aria-selected={section === "structure"} aria-controls="schedule-structure-panel" id="schedule-structure-tab" onClick={() => setSection("structure")}>Estructura del horario</Button><Button role="tab" variant={section === "weekly" ? "secondary" : "ghost"} aria-selected={section === "weekly"} aria-controls="weekly-timetable-panel" id="weekly-timetable-tab" onClick={() => setSection("weekly")}>Horario semanal</Button></div></nav>;
+  if (section === "weekly") return <div id="weekly-timetable-panel" role="tabpanel" aria-labelledby="weekly-timetable-tab" className="space-y-6">{navigation}<WeeklyTimetableWorkspace key={selectedPeriod.id} institutionId={institutionId} period={selectedPeriod} selector={selector} structure={structure} structureLoading={isLoading} structureError={isError ? error : undefined} /></div>;
+  if (isLoading) return <div className="space-y-6">{navigation}<p className="text-sm text-muted-foreground">Cargando la estructura horaria…</p></div>;
+  if (isError || !structure) {
+    if (error instanceof ApiError && error.statusCode === 404 && !immutable) return <div className="space-y-6">{navigation}<MissingStructure institutionId={institutionId} academicPeriodId={selectedPeriod.id} selector={selector} /></div>;
+    return <div className="space-y-6">{navigation}<LoadError message={messageFor(error)} onRetry={() => void refetch()} /></div>;
+  }
+  if (structure.academicPeriodId !== selectedPeriod.id) return <div className="space-y-6">{navigation}<p className="text-sm text-muted-foreground">Cargando la estructura horaria…</p></div>;
 
-  return <ScheduleStructureWorkspace structure={structure} period={period} immutable={immutable} validation={validation} />;
+  return <div id="schedule-structure-panel" role="tabpanel" aria-labelledby="schedule-structure-tab" className="space-y-6">{navigation}<ScheduleStructureWorkspace key={selectedPeriod.id} structure={structure} period={selectedPeriod} immutable={immutable} validation={validation} selector={selector} /></div>;
 }
 
-function ScheduleStructureWorkspace({ structure, period, immutable, validation }: { structure: NonNullable<ReturnType<typeof useScheduleStructure>["data"]>; period: NonNullable<ReturnType<typeof useAcademicPeriodContext>["data"]>["effectivePeriod"] & {}; immutable: boolean; validation: ReturnType<typeof useScheduleStructureValidation>["data"] }) {
+function AcademicPeriodWorkspaceSelector({ periods, selectedPeriodId, search, onChange, onSearchChange }: { periods: Array<{ id: string; name: string; regime: "COSTA_GALAPAGOS" | "SIERRA_AMAZONIA"; status: "PLANNED" | "ACTIVE" | "CLOSED" | "ARCHIVED" }>; selectedPeriodId: string; search: string; onChange: (id: string) => void; onSearchChange: (value: string) => void }) {
+  return <div className="w-full space-y-2 sm:w-80"><Label htmlFor="timetable-period-search">Buscar período académico</Label><Input id="timetable-period-search" value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="Nombre del período" /><Label htmlFor="timetable-academic-period">Período académico</Label><Select id="timetable-academic-period" aria-label="Período académico" value={selectedPeriodId} onChange={(event) => onChange(event.target.value)}>{periods.map((period) => <option key={period.id} value={period.id}>{formatAcademicPeriodOptionLabel(period)} · {STATUS_LABELS[period.status]}</option>)}</Select>{!periods.length ? <p className="text-sm text-muted-foreground">No se encontraron períodos académicos.</p> : null}</div>;
+}
+
+function ScheduleStructureWorkspace({ structure, period, immutable, validation, selector }: { structure: NonNullable<ReturnType<typeof useScheduleStructure>["data"]>; period: { id: string; name: string; regime: "COSTA_GALAPAGOS" | "SIERRA_AMAZONIA"; status: "PLANNED" | "ACTIVE" | "CLOSED" | "ARCHIVED" }; immutable: boolean; validation: ReturnType<typeof useScheduleStructureValidation>["data"]; selector: ReactNode }) {
   const mutations = useScheduleStructureMutations(structure.institutionId, structure.academicPeriodId);
   const [draftDays, setDraftDays] = useState<Weekday[]>(structure.enabledWeekdays);
   const [editor, setEditor] = useState<{ block?: ScheduleBlock; value: ScheduleBlockInput } | null>(null);
@@ -69,8 +99,9 @@ function ScheduleStructureWorkspace({ structure, period, immutable, validation }
       <div><h1 className="text-2xl font-semibold tracking-tight">Horario semanal</h1><p className="mt-1 text-sm text-muted-foreground">Define las celdas de tiempo que se usarán después para cargas docentes y horarios.</p></div>
       <div className="flex flex-wrap gap-2"><Badge variant={STATUS_VARIANTS[period.status]}>{STATUS_LABELS[period.status]}</Badge><Badge variant="secondary">{REGIME_LABELS[period.regime]}</Badge></div>
     </header>
+    {selector}
     {immutable ? <p className="rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">Este período está {STATUS_LABELS[period.status].toLowerCase()}. La estructura se muestra en modo de solo lectura.</p> : null}
-    {mutationError ? <p role="alert" className="rounded-md border border-destructive/40 p-3 text-sm text-destructive">{messageFor(mutationError)}</p> : null}
+    {mutationError ? <p role="alert" className="break-words rounded-md border border-destructive/40 p-3 text-sm text-destructive">{messageFor(mutationError)}</p> : null}
     <Card><CardHeader><CardTitle className="text-lg">Días lectivos</CardTitle><CardDescription>Selecciona todos los días que forman la jornada semanal.</CardDescription></CardHeader><CardContent className="space-y-4"><div className="flex flex-wrap gap-2">{weekdays.map((day) => <label key={day.value} className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"><input type="checkbox" checked={draftDays.includes(day.value)} disabled={immutable || busy} onChange={() => setDraftDays((current) => current.includes(day.value) ? current.filter((value) => value !== day.value) : [...current, day.value])} />{day.label}</label>)}</div><Button disabled={immutable || busy} onClick={() => void saveDays()}>{mutations.saveWeekdays.isPending ? "Guardando…" : "Guardar días"}</Button></CardContent></Card>
     <Card><CardHeader><div className="flex items-center justify-between gap-4"><div><CardTitle className="text-lg">Bloques horarios</CardTitle><CardDescription>{structure.blocks.length ? "Ordena los bloques y configura sus horarios." : "Aún no hay bloques configurados."}</CardDescription></div><Button disabled={immutable || busy} onClick={() => setEditor({ value: emptyBlock })}><Plus aria-hidden className="h-4 w-4" />Añadir bloque</Button></div></CardHeader><CardContent className="space-y-4">
       {editor ? <BlockForm value={editor.value} onChange={(value) => setEditor((current) => current ? { ...current, value } : current)} onCancel={() => setEditor(null)} onSave={() => void saveBlock()} saving={busy} /> : null}
@@ -78,6 +109,11 @@ function ScheduleStructureWorkspace({ structure, period, immutable, validation }
       {validation && !validation.structurallyReady ? <ul className="space-y-1 text-sm text-destructive">{validation.issues.map((issue) => <li key={`${issue.status}-${issue.scheduleBlockId ?? "general"}`}>{issue.message}</li>)}</ul> : <p className="text-sm text-muted-foreground">Capacidad semanal por curso: {structure.capacity.weeklyTeachingSlotsPerCourse} bloques lectivos.</p>}
     </CardContent></Card>
   </div>;
+}
+
+function MissingStructure({ institutionId, academicPeriodId, selector }: { institutionId: string; academicPeriodId: string; selector: ReactNode }) {
+  const mutations = useScheduleStructureMutations(institutionId, academicPeriodId);
+  return <div className="space-y-6"><header><h1 className="text-2xl font-semibold tracking-tight">Horario semanal</h1><p className="mt-1 text-sm text-muted-foreground">Este período no tiene una estructura horaria configurada.</p></header>{selector}<Card><CardContent className="space-y-4 p-6"><p className="text-sm text-muted-foreground">Puedes crear una estructura vacía y configurar después los días lectivos y bloques horarios.</p><Button disabled={mutations.saveWeekdays.isPending} onClick={() => void mutations.saveWeekdays.mutateAsync([])}>{mutations.saveWeekdays.isPending ? "Creando…" : "Crear estructura"}</Button></CardContent></Card></div>;
 }
 
 function BlockForm({ value, onChange, onCancel, onSave, saving }: { value: ScheduleBlockInput; onChange: (value: ScheduleBlockInput) => void; onCancel: () => void; onSave: () => void; saving: boolean }) {
@@ -88,4 +124,6 @@ function BlockForm({ value, onChange, onCancel, onSave, saving }: { value: Sched
 function messageFor(error: unknown) { return error instanceof ApiError ? error.message : "No se pudo completar la solicitud. Inténtalo de nuevo."; }
 function AccessDenied() { return <div className="mx-auto max-w-lg space-y-4 py-12 text-center"><h1 className="text-2xl font-semibold tracking-tight">Acceso denegado</h1><p className="text-sm text-muted-foreground">Solo las personas administradoras de la institución pueden gestionar la estructura horaria.</p></div>; }
 function ContextRequired() { return <div className="mx-auto max-w-lg space-y-3 py-12 text-center"><CalendarDays className="mx-auto h-8 w-8 text-muted-foreground" /><h1 className="text-2xl font-semibold tracking-tight">Selecciona un período académico</h1><p className="text-sm text-muted-foreground">No hay un período institucional disponible para configurar el horario.</p></div>; }
+function NoPeriods() { return <div className="mx-auto max-w-lg space-y-3 py-12 text-center"><CalendarDays className="mx-auto h-8 w-8 text-muted-foreground" /><h1 className="text-2xl font-semibold tracking-tight">No hay períodos académicos disponibles</h1><p className="text-sm text-muted-foreground">No hay períodos accesibles para consultar la estructura horaria de esta institución.</p></div>; }
+function PeriodLoadError({ onRetry }: { onRetry: () => void }) { return <div className="space-y-4"><p className="text-sm text-destructive">No se pudieron cargar los períodos académicos.</p><Button variant="outline" onClick={onRetry}>Reintentar</Button></div>; }
 function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) { return <div className="space-y-4"><p className="text-sm text-destructive">{message}</p><Button variant="outline" onClick={onRetry}>Reintentar</Button></div>; }
