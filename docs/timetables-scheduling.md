@@ -937,14 +937,14 @@ with structures. It refuses to run unless both the URL and
 `current_database()` identify `zerocademy_e2e`, and removes only its generated
 institution and users after every run.
 
-| Scenario | Status | Browser evidence |
-| --- | --- | --- |
-| ACTIVE ADMIN positive control | PASS | Institution B ADMIN created a block through `/timetables`, observed `201`, reloaded, read the persisted structure, and deleted the owned block. |
-| Unauthorized non-ADMIN | PASS | Institution B TEACHER had no sidebar item; direct `/timetables` rendered `Acceso denegado`, with no controls or schedule mutation requests. |
-| Institution A/B isolation | PASS | Institution B ADMIN rendered its own context and received `404` when its authenticated browser requested Institution A's schedule structure. |
-| CLOSED read-only UI | IMPLEMENTED — E2E PENDING | The workspace-local selector now loads CLOSED structures, displays their status, preserves the historical weekdays/blocks, and disables mutations. The updated browser scenario is pending a running local Docker stack. |
-| ARCHIVED read-only UI | IMPLEMENTED — E2E PENDING | The workspace-local selector applies the same historical read-only behavior to ARCHIVED structures. The updated browser scenario is pending a running local Docker stack. |
-| Restricted ADMIN | NOT APPLICABLE | Permission-profile assignment is persistence foundation only for this contract; no supported restricted-ADMIN scheduling capability combination exists to authenticate. |
+| Scenario                      | Status                    | Browser evidence                                                                                                                                                                                                         |
+| ----------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ACTIVE ADMIN positive control | PASS                      | Institution B ADMIN created a block through `/timetables`, observed `201`, reloaded, read the persisted structure, and deleted the owned block.                                                                          |
+| Unauthorized non-ADMIN        | PASS                      | Institution B TEACHER had no sidebar item; direct `/timetables` rendered `Acceso denegado`, with no controls or schedule mutation requests.                                                                              |
+| Institution A/B isolation     | PASS                      | Institution B ADMIN rendered its own context and received `404` when its authenticated browser requested Institution A's schedule structure.                                                                             |
+| CLOSED read-only UI           | IMPLEMENTED — E2E PENDING | The workspace-local selector now loads CLOSED structures, displays their status, preserves the historical weekdays/blocks, and disables mutations. The updated browser scenario is pending a running local Docker stack. |
+| ARCHIVED read-only UI         | IMPLEMENTED — E2E PENDING | The workspace-local selector applies the same historical read-only behavior to ARCHIVED structures. The updated browser scenario is pending a running local Docker stack.                                                |
+| Restricted ADMIN              | NOT APPLICABLE            | Permission-profile assignment is persistence foundation only for this contract; no supported restricted-ADMIN scheduling capability combination exists to authenticate.                                                  |
 
 ### Isolated E2E verification (2026-10-13)
 
@@ -1121,3 +1121,311 @@ from the current workspace, then restart the runner from Pass 1, Scenario 1
 with `qa/demy-140-increment-1/run-campaign.ps1`; no previous scenarios count
 toward that fresh sequence. The full campaign and the current TypeScript/lint
 checks remain pending at this checkpoint.
+
+### DEMY-140 Increment 1 final verification record (2026-10-20)
+
+The ignored `qa/demy-140-increment-1/` evidence directory contains a completed
+three-pass campaign. Its `run-campaign.ps1` manifest defines the same 13
+Playwright scenario targets for each pass. `results.ndjson`, the checkpoint,
+and the 39 current `runs/pass-*/scenario-*.log` files record 13/13 successful
+executions in each pass (39/39 total); every recorded exit code is `0`. The
+current campaign evidence is separate from the directories prefixed
+`historical-failed-*`. It has no campaign lock, no live PID from its recorded
+runner, no missing target, no skipped scenario, and no cleanup-failure or
+database-reset record. The campaign runner itself performs no database reset.
+
+This evidence establishes the historical campaign result, but it does not
+capture the source commit or image digest used for execution. The Git history
+contains application, fixture, and Playwright changes committed after the
+campaign timestamps (including the weekly workspace and period selector).
+Consequently, the historical 39/39 result cannot by itself certify the current
+`HEAD`; a new complete three-pass acceptance campaign against the current,
+guarded `zerocademy_e2e` runtime is required before reporting Increment 1 as
+E2E verified. It was not rerun here because the currently configured backend
+database is `zerocademy_db`, rather than the fixture-required isolated
+`zerocademy_e2e` database. No mutable E2E or database action was attempted.
+
+Current non-mutating verification completed with Node 22.12.0:
+
+| Check                                               | Result                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------ |
+| Timetables React component test                     | PASS — 14/14 tests, exit 0                                               |
+| Timetables backend unit tests                       | PASS — 5 suites, 34/34 tests, exit 0 (`--runInBand --watchman=false`)    |
+| Frontend TypeScript                                 | PASS — exit 0                                                            |
+| Focused frontend ESLint                             | PASS — exit 0                                                            |
+| Backend Prettier check                              | FAIL — `test/helpers/schedule-structure-e2e-fixture.ts` is not formatted |
+| `git diff --check` before this documentation update | PASS — exit 0                                                            |
+
+The initial backend Jest command exposed the workstation's pre-existing
+Watchman startup failure. The documented `--watchman=false` execution then
+completed successfully; no application test behavior was changed.
+
+The requested clean Linux production build was repeated successfully:
+
+```text
+docker build --no-cache --quiet --target production --file FrontendZerocademy/Dockerfile --tag zerocademy-frontend-build-verify:local .
+```
+
+It returned image digest
+`sha256:34eead7f29b2f82e33000b4d2640450e63b08a398eb30e1543491db76a18de5c`
+with exit code `0` on 2026-10-20. The production target completed dependency
+installation, Next.js compilation/static generation, and standalone-image
+creation. A temporary local container using that image returned HTTP `200` for
+`GET /timetables` on port 3002 and was stopped immediately. This was a local
+smoke test only: no deployment, database access, migration, seed, or reset was
+performed.
+
+Increment 1 therefore remains **IMPLEMENTED — VERIFICATION PENDING**, not
+`COMPLETE — E2E VERIFIED`: the current-HEAD acceptance campaign must be
+repeated against `zerocademy_e2e`, and the outstanding Prettier finding must be
+resolved or explicitly treated as pre-existing by its owner.
+
+#### Increment 2 contract-first implementation plan
+
+Reuse the existing ADMIN-only timetable administration API; no new backend
+endpoint is required for the planned UI slice:
+
+1. Add a generation entry point that calls `POST
+/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate`
+   with optional `maxSearchNodes`, then presents its non-persistent `slots`,
+   `diagnostics`, `validation`, and `statistics`.
+2. Render the returned slots in the existing course-oriented weekly grid as a
+   preview. Use the returned structured conflict codes and messages for
+   accessible diagnostics rather than generating client-side scheduling rules.
+3. Persist an accepted proposal through `POST
+/v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables`
+   with `{ slots }`, then load its draft through `GET /v1/timetables/:id`.
+4. Support accessible slot movement/editing by replacing the full draft set
+   through `PUT /v1/timetables/:id/slots` with `{ expectedVersion, slots }`.
+   Reload on the existing stale-version `409` response and preserve server
+   conflict-code presentation on `400` validation responses.
+5. List and reopen drafts with `GET /v1/institutions/:institutionId/academic-periods/:academicPeriodId/timetables`, validate a persisted preview with
+   `GET /v1/timetables/:id/validation`, and discard an unwanted DRAFT through
+   `DELETE /v1/timetables/:id`. Replacement is already atomic; explicit
+   discard/recreate is the supported draft replacement path.
+
+Publication and unpublication are intentionally excluded from this plan and
+remain reserved for DEMY-141.
+
+### DEMY-140 Increment 1 — current-HEAD final acceptance (2026-10-20)
+
+Increment 1 is verified at Git `8f5abc13cd8b3551df957c9666f7737d85ee14be`.
+The accepted campaign is
+`current-head-8f5abc13cd8b-20261020T112618-0500` under the ignored persistent
+evidence directory `qa/demy-140-increment-1/`. Its reproducible working-tree
+fingerprint was
+`72a4308007394c7dcb77a59acf51dc4f466ef0031d76c8fc0a143a19f80b4ab3` both
+before and after execution; the tree was intentionally dirty for the recorded
+fixture, QA Compose override, formatting, and documentation changes. The
+metadata records Node `v22.12.0`, npm `10.9.0`, the Playwright configuration
+hash, the exact 13-scenario inventory, and backend/frontend image IDs
+`sha256:4a925c2b44aa680ed8fa84403c8919787fcff9f1f09afadd6adc0e418c06f0bf`
+and
+`sha256:1368a85ee02819d008ad85466fd3309098f8910bcc4d84af0ca3f8220893529e`.
+
+The guarded runner used the local Compose E2E override and verified its
+effective backend connection plus `SELECT current_database()` before mutable
+fixture work. Both checks identified only `zerocademy_e2e` on the local
+`postgres` service; no reset, truncate, migration, seed, or access to
+`zerocademy_db` occurred. The final sequence recorded Pass 1 **13/13**,
+Pass 2 **13/13**, and Pass 3 **13/13** (39/39 total), with every scenario exit
+code `0`, no skips, no cleanup issue, and no fingerprint change. Earlier
+incomplete and failed campaigns remain preserved as diagnostic history and are
+not counted.
+
+The browser fixture cleanup was corrected to delete its three known lifecycle
+periods and previously orphaned records with the deterministic
+`*-schedule-browser-e2e-*` fixture names. This prevents fixture-owned global
+periods from filling the selector's first page; it does not target ordinary
+academic data. The reported Prettier-only change in
+`test/helpers/schedule-structure-e2e-fixture.ts` was also applied without
+changing fixture behavior.
+
+Final checks: timetable component test **14/14 PASS**; backend timetable unit
+tests **5 suites / 34 tests PASS**; frontend TypeScript **PASS**; configured
+frontend ESLint **PASS**; backend Prettier **PASS**; `git diff --check`
+**PASS**. The prior Linux production build and `/timetables` HTTP 200 smoke
+test remain applicable to this same Git HEAD; no application or production
+build-relevant source changed during this final fixture and verification work.
+
+Increment 1 is ready for DEMY-140 Increment 2. Generation UI, draft
+management, accessible slot editing, and conflict-code presentation remain
+outstanding; publishing functionality remains out of scope in DEMY-141.
+
+### DEMY-140 Increment 2 — generation preview and draft lifecycle (2026-10-20)
+
+The ADMIN weekly timetable workspace now consumes the existing timetable
+administration contract without adding endpoints. `Generar propuesta` sends an
+optional integer `maxSearchNodes` (1–1,000,000) to the non-persistent
+generation endpoint and presents the returned slots, validation result,
+statistics, and server diagnostics in Spanish. The generation controller now
+explicitly returns `200 OK`, matching its documented `ApiOkResponse` contract
+for a proposal that does not create data.
+
+The proposal remains visibly separate as **Propuesta sin guardar**. Its cells
+are resolved with the existing teaching-load read model for course, subject,
+and teacher labels; the grid is course-filterable and stays read-only. The UI
+maps known structured diagnostic codes to Spanish and preserves an unknown
+server code as a safe fallback. Invalid, incomplete, structurally unavailable,
+CLOSED, and ARCHIVED states cannot be saved or generated. No client-side
+scheduler, room allocation, silent replacement, drag-and-drop, or slot editor
+was added.
+
+Only a successful and valid proposal can be persisted through the existing
+create endpoint via **Guardar como borrador**. A period that already has a
+saved timetable keeps the candidate transient and requires the administrator
+to explicitly discard that DRAFT before saving another one. Persisted DRAFTs
+can be selected from the existing list, revalidated with the real validation
+endpoint, and discarded after a confirmation prompt. Publish/unpublish remains
+outside this increment and reserved for DEMY-141.
+
+Verification against the guarded local Compose E2E runtime checked the
+effective backend connection and `SELECT current_database()` before mutation;
+both identified only `postgres` / `zerocademy_e2e`. No migration, seed,
+truncate, reset, or production database access occurred. Results on the
+current working tree: frontend timetable component tests **18/18 PASS**;
+backend timetable unit tests **5 suites / 34 tests PASS**; authenticated
+timetable lifecycle E2E **8/8 PASS** (including generate, save, validate, and
+discard); and the responsive keyboard/focus scenario exercises the generation
+action in the weekly tab. The E2E fixture creates a teaching load for its
+owned assignment so the backend generator can make a valid proposal; it is
+removed with the fixture's owned data.
+
+### DEMY-140 Increment 2 — final source-bound acceptance (2026-10-20)
+
+Final acceptance used Git `8f5abc13cd8b3551df957c9666f7737d85ee14be`
+with the intentionally dirty working-tree fingerprint
+`33fdcab19eb641fb91de0df7f8d5b1b1948b0e5b2b6db9e10114a3e39616643b`.
+The source-bound evidence is in the ignored directory
+`qa/demy-140-increment-1/current-head-8f5abc13cd8b-20261020T151213-0500/`.
+Its metadata records Node `v22.12.0`, npm `10.9.0`, the guarded database
+identity (`postgres` / `zerocademy_e2e`), the frontend image
+`sha256:869d85a78424117fabb269f37485f94afc3daa7bba30e7d915355b29bd655fd6`,
+and backend image
+`sha256:4b9f4a37851179aae0c9ebc85ad33fbcf9b91435791134d0ee4b16d781e3fdd4`.
+The fingerprint was identical after the campaign.
+
+The updated 14-scenario inventory contains the ADMIN generation/DRAFT
+lifecycle, authorization and cross-institution checks, error recovery,
+historical-period restrictions, weekly-grid regression, structure regression,
+and the responsive keyboard scenario on the real `mobile` Playwright project.
+It completed three consecutive passes: Pass 1 **14/14**, Pass 2 **14/14**,
+and Pass 3 **14/14** — **42/42** total, all exit code 0. Fixture cleanup
+completed after every scenario. Earlier failed campaign directories are
+diagnostic history only and are not counted.
+
+The backend enforces one timetable aggregate per `(institutionId,
+academicPeriodId)` via the `Timetable` unique constraint, irrespective of
+DRAFT or PUBLISHED state; the create service checks that same composite key
+inside its transaction and returns a conflict if occupied. This is not scoped
+per course. The frontend's explicit discard-before-save behavior matches that
+rule and leaves the server-side conflict as the authority for concurrent
+requests.
+
+The final clean Linux production command was:
+
+```text
+docker build --no-cache --target production --file FrontendZerocademy/Dockerfile --tag zerocademy-frontend-build-verify:local .
+```
+
+It completed successfully with image
+`sha256:34eead7f29b2f82e33000b4d2640450e63b08a398eb30e1543491db76a18de5c`.
+A temporary container returned HTTP `200` for `/timetables` on port 3003 and
+was stopped immediately. No deployment, migration, seed, reset, volume reset,
+or production database access occurred.
+
+Increment 2 is accepted. Increment 3 remains limited to accessible slot
+editing/movement, optimistic-concurrency handling, conflict-code recovery UX,
+and related draft-editing behavior. Publishing and unpublishing remain solely
+in DEMY-141.
+
+### DEMY-140 Increment 3 — draft slot editing and conflict recovery (2026-10-20)
+
+The ADMIN weekly workspace now provides an accessible DRAFT-only edit mode.
+It retains the existing weekly grid and adds a local assignment editor rather
+than duplicating the grid: administrators can select an existing assignment,
+change its authoritative teaching load, day, or teaching block, add an
+assignment in a free teaching cell, remove an assignment, cancel local edits,
+and explicitly save the complete candidate collection. Teaching-load metadata
+supplies course, subject, and teacher labels; occupied destinations and local
+course/teacher clashes are disabled when apparent. Room fields are not shown
+because the timetable slot contract has no room property.
+
+Saving uses the pre-existing atomic `PUT /v1/timetables/:id/slots` contract
+with its required `expectedVersion`; it does not create a second timetable or
+publish anything. The API client now retains the structured `conflicts` array
+in Nest validation errors so the editor presents server conflict codes and
+messages. A `409` stale-version or lifecycle rejection preserves the local
+draft and instructs the administrator to reload and review the current
+version. DRAFT mutation remains backend-authorized for ADMIN only and CLOSED,
+ARCHIVED, and PUBLISHED timetable paths remain read-only. Publication and
+unpublishing remain exclusively DEMY-141.
+
+#### Final acceptance evidence
+
+Source-bound Increment 3 acceptance is recorded in
+`qa/demy-140-increment-1/current-head-8f5abc13cd8b-20261020T155237-0500`.
+It records 15 scenarios on each of three passes, every one with exit code 0
+(45/45), and identical before/after fingerprint
+`f0c6579e51d767fde1643c8bd05d69395482c97b9f3f7bbf7a4a2979bad614be`.
+The guarded runner verified `postgres` / `zerocademy_e2e` and
+`current_database() = zerocademy_e2e` before fixture mutations. The inventory
+includes ADMIN editing/movement and stale-version recovery, authorization and
+institution isolation, error recovery, mobile keyboard coverage, grid and
+structure regressions. Fixture cleanup is recorded for each isolated run.
+
+The final Linux production build completed with exit code 0 as image
+`sha256:e2d996edecbd1094ef1d15c17a911086a27dea20c318f79345fa55af520d0972`.
+A temporary container returned HTTP 200 for `/timetables` on port 3101 and
+was stopped immediately. This is local production-image verification only;
+there was no deployment, migration, reset, seed, or production database use.
+
+### DEMY-141 — timetable publication lifecycle
+
+An institution-scoped ADMIN can publish only a complete, current DRAFT through
+`POST /v1/timetables/:timetableId/publish` with
+`{ "expectedVersion": number }`. The service repeats the authoritative COMPLETE
+validation inside its transaction, claims the exact DRAFT version, increments
+the version, and records `publishedAt` and `publishedByUserId`. Validation
+errors are returned as the existing structured timetable conflict response;
+stale versions and invalid lifecycle transitions return `409`.
+
+`POST /v1/timetables/:timetableId/unpublish` uses the same versioned payload.
+It is supported only for a current PUBLISHED timetable in a PLANNED or ACTIVE
+period. It returns the aggregate to DRAFT, preserves its slots, increments the
+version, and clears publication metadata. It never deletes the timetable.
+CLOSED and ARCHIVED periods reject both transitions. Both operations use the
+same strict ADMIN route guard, membership permission check, and institution / academic-period scope checks as the existing timetable mutations.
+
+The weekly workspace shows the server status and exposes publication only for
+a valid DRAFT. It re-fetches validation before the accessible confirmation
+dialog opens; the server remains authoritative if data changes after review.
+On publication, DRAFT-only editing, discard, and revalidation controls are
+removed. The published timetable remains readable. Unpublishing has its own
+confirmation dialog and explicitly states that the slots are preserved and the
+result is an editable DRAFT. Both transitions invalidate the timetable list,
+detail, and validation query entries. Dialogs are keyboard-operable, announce
+their purpose with `alertdialog`, focus Cancel on open, and restore focus to
+the triggering control on close.
+
+#### Final acceptance evidence (2026-10-23)
+
+Source-bound acceptance is recorded in
+`qa/demy-140-increment-1/current-head-8f5abc13cd8b-20261023T214156-0500`.
+At HEAD `8f5abc13cd8b3551df957c9666f7737d85ee14be`, all 16 scenarios passed
+on each of three consecutive passes (48/48, zero failures). The runner
+recorded matching before/after source fingerprint
+`21f6546df883e39848a0bf56ee768f1531632b0c5581dba6fd7bca05bc8b9a37`, the
+scenario inventory, per-scenario results, and Docker image inventory. Before
+fixture mutations it verified configured host `postgres`, configured database
+`zerocademy_e2e`, and live `current_database() = zerocademy_e2e`.
+
+The rebuilt local production image
+`sha256:75d60692f6ebb58419eef9fe8a78dac14771f83127308b35fdce1aad45efcecf`
+returned HTTP 200 for `/timetables` in a temporary container, which was then
+stopped. Mobile Chromium exercised the publish/unpublish lifecycle and
+preserved `draft`, publish-confirmation, published-read-only,
+unpublish-confirmation, and draft-restored screenshots in
+`qa/demy-140-increment-1/demy-141-mobile-20261023T220000`; visual review
+confirmed a contained responsive dialog and visible actions. The lifecycle
+test also verifies initial Cancel focus and focus restoration to Publish.
