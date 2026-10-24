@@ -9,6 +9,7 @@ export type BrowserFixture = {
   plannedAcademicPeriodId: string;
   closedAcademicPeriodId: string;
   archivedAcademicPeriodId: string;
+  timetableId: string;
   admin: { email: string; password: string };
   teacher: { email: string; password: string };
 };

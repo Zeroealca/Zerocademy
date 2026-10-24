@@ -10,4 +10,6 @@ export const timetablesKeys = {
     [...timetablesKeys.all, "detail", timetableId] as const,
   timetableValidation: (timetableId: string) =>
     [...timetablesKeys.detail(timetableId), "validation"] as const,
+  teachingLoads: (institutionId: string, academicPeriodId: string) =>
+    [...timetablesKeys.all, "teaching-loads", institutionId, academicPeriodId] as const,
 };

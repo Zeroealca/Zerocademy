@@ -34,7 +34,10 @@ test.describe.serial("DEMY-140 weekly timetable grid", () => {
     await expect(grid.getByText(/Matemática schedule-browser-e2e/)).toBeVisible();
     await expect(grid.getByText(/Recreo/).first()).toBeVisible();
     await expect(grid.getByText(/No lectivo/).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /generar|publicar|guardar/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Generar propuesta" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Publicar horario" }),
+    ).toBeEnabled();
     expect(mutations).toEqual([]);
   });
 });

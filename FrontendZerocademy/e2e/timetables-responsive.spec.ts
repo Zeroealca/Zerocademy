@@ -18,7 +18,7 @@ test.describe.serial("DEMY-140 responsive timetable workspace", () => {
   test("keeps the selector, read-only history, form controls, and actions usable at this viewport", async ({ page }) => {
     const name = `E2E responsive ${Date.now()}`;
     await login(page);
-    await page.getByRole("link", { name: "Horario semanal" }).click();
+    await page.goto("/timetables");
     await expect(page.getByRole("heading", { name: "Horario semanal" })).toBeVisible();
     const selector = page.getByLabel("Período académico", { exact: true });
     const search = page.getByLabel("Buscar período académico", { exact: true });
@@ -31,6 +31,13 @@ test.describe.serial("DEMY-140 responsive timetable workspace", () => {
     await search.fill("");
     await expect(selector.locator(`option[value="${fixture.activeAcademicPeriodId}"]`)).toHaveCount(1);
     await selector.selectOption(fixture.activeAcademicPeriodId);
+    await page.getByRole("tab", { name: "Horario semanal" }).click();
+    const generateProposal = page.getByRole("button", { name: "Generar propuesta" });
+    await expect(generateProposal).toBeVisible();
+    await expect(generateProposal).toBeEnabled();
+    await generateProposal.focus();
+    await expect(generateProposal).toBeFocused();
+    await page.getByRole("tab", { name: "Estructura del horario" }).click();
     await expect(page.getByRole("button", { name: "Añadir bloque" })).toBeEnabled();
     await page.getByRole("button", { name: "Añadir bloque" }).click();
     await expect(page.getByLabel("Nombre")).toBeVisible();

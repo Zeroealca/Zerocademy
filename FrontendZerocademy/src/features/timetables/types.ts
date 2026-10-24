@@ -31,7 +31,12 @@ export interface ScheduleStructureDetail extends ScheduleStructure {
 
 export interface ScheduleStructureValidation {
   structurallyReady: boolean;
-  issues: Array<{ status: string; severity: "ERROR" | "INFO"; message: string; scheduleBlockId: string | null }>;
+  issues: Array<{
+    status: string;
+    severity: "ERROR" | "INFO";
+    message: string;
+    scheduleBlockId: string | null;
+  }>;
 }
 
 export type ScheduleBlockInput = {
@@ -66,6 +71,8 @@ export interface Timetable {
   version: number;
   createdAt: string;
   updatedAt: string;
+  publishedAt: string | null;
+  publishedByUserId: string | null;
   slots: TimetableSlot[];
 }
 
@@ -102,4 +109,66 @@ export interface TimetableValidation {
   valid: boolean;
   mode: "PARTIAL" | "COMPLETE";
   conflicts: TimetableConflict[];
+}
+
+export interface TimetableSlotInput {
+  teacherAssignmentId: string;
+  weekday: Weekday;
+  scheduleBlockId: string;
+}
+
+export type TimetableGenerationStatus =
+  | "SUCCESS"
+  | "INVALID_CONFIGURATION"
+  | "UNSATISFIABLE"
+  | "SEARCH_LIMIT_REACHED";
+export type TimetableGenerationDiagnosticCode =
+  | "MISSING_SCHEDULE_STRUCTURE"
+  | "NO_ENABLED_WEEKDAYS"
+  | "NO_TEACHING_BLOCKS"
+  | "INVALID_SCHEDULE_BLOCK"
+  | "OVERLAPPING_SCHEDULE_BLOCKS"
+  | "INVALID_ASSIGNMENT_CONTEXT"
+  | "DUPLICATE_ASSIGNMENT"
+  | "MISSING_TEACHING_LOAD"
+  | "INVALID_WEEKLY_PERIODS"
+  | "COURSE_CAPACITY_EXCEEDED"
+  | "TEACHER_CAPACITY_EXCEEDED"
+  | "NO_FEASIBLE_TIMETABLE"
+  | "SEARCH_NODE_LIMIT_REACHED"
+  | "AUTHORITATIVE_CONFLICT"
+  | string;
+
+export interface TimetableGeneration {
+  status: TimetableGenerationStatus;
+  slots: TimetableSlotInput[];
+  diagnostics: Array<{
+    code: TimetableGenerationDiagnosticCode;
+    message: string;
+    teacherAssignmentIds: string[];
+    teacherIds: string[];
+    courseIds: string[];
+  }>;
+  validation: TimetableValidation | null;
+  statistics: {
+    searchNodesExplored: number;
+    backtracks: number;
+    requirements: number;
+    generatedSlots: number;
+  };
+}
+
+export interface TeachingLoad {
+  teacherAssignmentId: string;
+  courseId: string;
+  courseName: string;
+  subjectName: string;
+  teacherId: string;
+  teacherName: string;
+  weeklyPeriods: number | null;
+}
+
+export interface TeachingLoadListResponse {
+  data: TeachingLoad[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
 }
