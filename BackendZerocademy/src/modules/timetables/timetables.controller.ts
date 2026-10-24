@@ -39,6 +39,7 @@ import {
   CreateTimetableDto,
   GenerateTimetableDto,
   ReplaceTimetableSlotsDto,
+  TransitionTimetableDto,
   TimetableGenerationResponseDto,
   TimetableListResponseDto,
   TimetableResponseDto,
@@ -85,6 +86,7 @@ export class TimetablesController {
   @Post(
     'institutions/:institutionId/academic-periods/:academicPeriodId/timetables/generate',
   )
+  @HttpCode(HttpStatus.OK)
   @ApiRequireRolesStrict(Role.ADMIN)
   @ApiOperation({
     summary: 'Generate a non-persistent deterministic timetable proposal',
@@ -160,6 +162,38 @@ export class TimetablesController {
     @Body() dto: ReplaceTimetableSlotsDto,
   ): Promise<TimetableResponseDto> {
     return this.timetableAdmin.replaceSlots(actor, timetableId, dto);
+  }
+
+  @Post('timetables/:timetableId/publish')
+  @HttpCode(HttpStatus.OK)
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary:
+      'Validate and publish a draft timetable using optimistic version control',
+  })
+  @ApiOkResponse({ type: TimetableResponseDto })
+  publishTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('timetableId', ParseUUIDPipe) timetableId: string,
+    @Body() dto: TransitionTimetableDto,
+  ): Promise<TimetableResponseDto> {
+    return this.timetableAdmin.publish(actor, timetableId, dto);
+  }
+
+  @Post('timetables/:timetableId/unpublish')
+  @HttpCode(HttpStatus.OK)
+  @ApiRequireRolesStrict(Role.ADMIN)
+  @ApiOperation({
+    summary:
+      'Return a published timetable to its editable draft state using optimistic version control',
+  })
+  @ApiOkResponse({ type: TimetableResponseDto })
+  unpublishTimetable(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('timetableId', ParseUUIDPipe) timetableId: string,
+    @Body() dto: TransitionTimetableDto,
+  ): Promise<TimetableResponseDto> {
+    return this.timetableAdmin.unpublish(actor, timetableId, dto);
   }
 
   @Delete('timetables/:timetableId')

@@ -5,6 +5,13 @@ const { randomUUID } = require("node:crypto");
 
 const outputPath = process.env.SCHEDULE_BROWSER_FIXTURE_PATH;
 
+async function cleanupOrphanedFixturePeriods(prisma) {
+  // Older cleanup runs removed their institutions but left these fixture-only
+  // lifecycle periods as global records. Remove only that recognizable,
+  // orphaned test data so it cannot crowd the selector's first page.
+  await prisma.academicPeriod.deleteMany({ where: { institutionId: null, OR: [{ name: { startsWith: "Planned schedule-browser-e2e-" } }, { name: { startsWith: "Closed schedule-browser-e2e-" } }, { name: { startsWith: "Archived schedule-browser-e2e-" } }] } });
+}
+
 async function main() {
   if (!outputPath) throw new Error("SCHEDULE_BROWSER_FIXTURE_PATH is required.");
   if (!/zerocademy_e2e/.test(process.env.DATABASE_URL || "")) throw new Error("Fixture requires DATABASE_URL for zerocademy_e2e.");
@@ -15,10 +22,13 @@ async function main() {
     if (process.argv[2] === "cleanup") {
       const fixture = JSON.parse(await readFile(outputPath, "utf8"));
       await prisma.institution.deleteMany({ where: { id: fixture.institutionId } });
+      await prisma.academicPeriod.deleteMany({ where: { id: { in: [fixture.plannedAcademicPeriodId, fixture.closedAcademicPeriodId, fixture.archivedAcademicPeriodId] } } });
       await prisma.user.deleteMany({ where: { email: { in: [fixture.admin.email, fixture.teacher.email] } } });
+      await cleanupOrphanedFixturePeriods(prisma);
       await rm(outputPath, { force: true });
       return;
     }
+    await cleanupOrphanedFixturePeriods(prisma);
     const active = await prisma.academicPeriod.findFirst({ where: { institutionId: null, status: AcademicPeriodStatus.ACTIVE, isActive: true }, orderBy: { createdAt: "asc" } });
     if (!active) throw new Error("Fixture requires an active global academic period.");
     const gradeLevel = await prisma.gradeLevel.findFirst({ where: { isActive: true }, orderBy: { order: "asc" } });
@@ -48,6 +58,7 @@ async function main() {
       const subject = await tx.subject.create({ data: { name: `Matemática ${suffix}`, code: `MATH-${suffix}`, institutionId: institution.id } });
       const course = await tx.course.create({ data: { name: `10.º E2E ${suffix}`, section: suffix, institutionId: institution.id, academicPeriodId: active.id, gradeLevelId: gradeLevel.id } });
       const assignment = await tx.teacherAssignment.create({ data: { institutionId: institution.id, teacherId: teacherProfile.id, subjectId: subject.id, courseId: course.id, academicPeriodId: active.id } });
+      await tx.teachingLoad.create({ data: { teacherAssignmentId: assignment.id, weeklyPeriods: 1 } });
       const timetable = await tx.timetable.create({ data: { institutionId: institution.id, academicPeriodId: active.id, slots: { create: { teacherAssignmentId: assignment.id, scheduleBlockId: activeStructure.scheduleBlocks[0].id, dayOfWeek: Weekday.MON, teacherId: teacherProfile.id, courseId: course.id } } } });
       return { institutionId: institution.id, activeAcademicPeriodId: active.id, plannedAcademicPeriodId: planned.id, closedAcademicPeriodId: closed.id, archivedAcademicPeriodId: archived.id, timetableId: timetable.id, admin: { email: admin.email, password }, teacher: { email: teacher.email, password } };
     });

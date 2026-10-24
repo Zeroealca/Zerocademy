@@ -31,6 +31,7 @@ import type {
   CreateTimetableDto,
   GenerateTimetableDto,
   ReplaceTimetableSlotsDto,
+  TransitionTimetableDto,
   TimetableListResponseDto,
   TimetableResponseDto,
   TimetableSlotInputDto,
@@ -370,6 +371,120 @@ export class TimetableAdminService {
     await this.prisma.timetable.delete({ where: { id: timetableId } });
   }
 
+  async publish(
+    actor: AuthenticatedUser,
+    timetableId: string,
+    dto: TransitionTimetableDto,
+  ): Promise<TimetableResponseDto> {
+    const existing = await this.find(timetableId);
+    await this.authorize(
+      actor,
+      existing.institutionId,
+      existing.academicPeriodId,
+      PERMISSIONS.TIMETABLES.UPDATE,
+    );
+    await this.assertMutablePeriod(
+      existing.institutionId,
+      existing.academicPeriodId,
+    );
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.timetable.findUnique({
+        where: { id: timetableId },
+        include: timetableInclude,
+      });
+      if (!current) throw new NotFoundException('Timetable not found');
+      if (current.status !== TimetableStatus.DRAFT)
+        throw new ConflictException('Only draft timetables can be published');
+      if (current.version !== dto.expectedVersion)
+        throw new ConflictException(
+          'Timetable version is stale; reload before publishing',
+        );
+      const context = await this.loadContext(
+        tx,
+        current.institutionId,
+        current.academicPeriodId,
+      );
+      this.assertReady(context);
+      this.assertValid(
+        this.validate(
+          context,
+          current.institutionId,
+          current.academicPeriodId,
+          current.slots.map((slot) => ({
+            teacherAssignmentId: slot.teacherAssignmentId,
+            weekday: slot.dayOfWeek,
+            scheduleBlockId: slot.scheduleBlockId,
+          })),
+          TimetableValidationMode.COMPLETE,
+          timetableId,
+        ),
+      );
+      const claimed = await tx.timetable.updateMany({
+        where: {
+          id: timetableId,
+          version: dto.expectedVersion,
+          status: TimetableStatus.DRAFT,
+        },
+        data: {
+          status: TimetableStatus.PUBLISHED,
+          version: { increment: 1 },
+          publishedAt: new Date(),
+          publishedByUserId: actor.id,
+        },
+      });
+      if (claimed.count !== 1)
+        throw new ConflictException(
+          'Timetable version is stale; reload before publishing',
+        );
+      const published = await tx.timetable.findUnique({
+        where: { id: timetableId },
+        include: timetableInclude,
+      });
+      if (!published) throw new NotFoundException('Timetable not found');
+      return this.toResponse(published);
+    });
+  }
+
+  async unpublish(
+    actor: AuthenticatedUser,
+    timetableId: string,
+    dto: TransitionTimetableDto,
+  ): Promise<TimetableResponseDto> {
+    const existing = await this.find(timetableId);
+    await this.authorize(
+      actor,
+      existing.institutionId,
+      existing.academicPeriodId,
+      PERMISSIONS.TIMETABLES.UPDATE,
+    );
+    await this.assertMutablePeriod(
+      existing.institutionId,
+      existing.academicPeriodId,
+    );
+    if (existing.status !== TimetableStatus.PUBLISHED)
+      throw new ConflictException(
+        'Only published timetables can be unpublished',
+      );
+    const claimed = await this.prisma.timetable.updateMany({
+      where: {
+        id: timetableId,
+        version: dto.expectedVersion,
+        status: TimetableStatus.PUBLISHED,
+      },
+      data: {
+        status: TimetableStatus.DRAFT,
+        version: { increment: 1 },
+        publishedAt: null,
+        publishedByUserId: null,
+      },
+    });
+    if (claimed.count !== 1)
+      throw new ConflictException(
+        'Timetable version is stale; reload before unpublishing',
+      );
+    return this.findOne(actor, timetableId);
+  }
+
   private async authorize(
     actor: AuthenticatedUser,
     institutionId: string,
@@ -570,6 +685,8 @@ export class TimetableAdminService {
       version: row.version,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      publishedAt: row.publishedAt,
+      publishedByUserId: row.publishedByUserId,
       slots: row.slots
         .sort(
           (a, b) =>

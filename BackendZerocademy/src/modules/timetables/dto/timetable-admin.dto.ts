@@ -38,6 +38,11 @@ export class ReplaceTimetableSlotsDto extends CreateTimetableDto {
   @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
 }
 
+/** The lifecycle transition is guarded by the same optimistic version used for slot edits. */
+export class TransitionTimetableDto {
+  @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
+}
+
 export class GenerateTimetableDto {
   @ApiPropertyOptional({ minimum: 1, maximum: 1000000 })
   @IsOptional()
@@ -70,6 +75,8 @@ export class TimetableResponseDto {
   @ApiProperty() version!: number;
   @ApiProperty() createdAt!: Date;
   @ApiProperty() updatedAt!: Date;
+  @ApiPropertyOptional({ format: 'date-time' }) publishedAt!: Date | null;
+  @ApiPropertyOptional({ format: 'uuid' }) publishedByUserId!: string | null;
   @ApiProperty({ type: [TimetableSlotResponseDto] })
   slots!: TimetableSlotResponseDto[];
 }

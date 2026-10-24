@@ -760,6 +760,67 @@ describe('Timetables HTTP E2E', () => {
       .expect(404);
   });
 
+  it('publishes only a current, complete draft and safely returns it to draft', async () => {
+    const generated = await request(app.getHttpServer())
+      .post(`${basePath}/generate`)
+      .set(auth(adminToken))
+      .send({ maxSearchNodes: 10_000 })
+      .expect(200);
+    const created = await request(app.getHttpServer())
+      .post(basePath)
+      .set(auth(adminToken))
+      .send({ slots: generated.body.slots })
+      .expect(201);
+    const timetableId = created.body.id as string;
+
+    const published = await request(app.getHttpServer())
+      .post(`/v1/timetables/${timetableId}/publish`)
+      .set(auth(adminToken))
+      .send({ expectedVersion: created.body.version })
+      .expect(200);
+    expect(published.body).toMatchObject({
+      status: TimetableStatus.PUBLISHED,
+      version: created.body.version + 1,
+      publishedByUserId: expect.any(String),
+      publishedAt: expect.any(String),
+    });
+
+    await request(app.getHttpServer())
+      .put(`/v1/timetables/${timetableId}/slots`)
+      .set(auth(adminToken))
+      .send({
+        expectedVersion: published.body.version,
+        slots: generated.body.slots,
+      })
+      .expect(409);
+    await request(app.getHttpServer())
+      .post(`/v1/timetables/${timetableId}/publish`)
+      .set(auth(adminToken))
+      .send({ expectedVersion: published.body.version })
+      .expect(409);
+    await request(app.getHttpServer())
+      .post(`/v1/timetables/${timetableId}/unpublish`)
+      .set(auth(adminToken))
+      .send({ expectedVersion: created.body.version })
+      .expect(409);
+
+    const unpublished = await request(app.getHttpServer())
+      .post(`/v1/timetables/${timetableId}/unpublish`)
+      .set(auth(adminToken))
+      .send({ expectedVersion: published.body.version })
+      .expect(200);
+    expect(unpublished.body).toMatchObject({
+      status: TimetableStatus.DRAFT,
+      version: published.body.version + 1,
+      publishedAt: null,
+      publishedByUserId: null,
+    });
+    await request(app.getHttpServer())
+      .delete(`/v1/timetables/${timetableId}`)
+      .set(auth(adminToken))
+      .expect(204);
+  });
+
   it('rolls back a create containing an unknown schedule block', async () => {
     const generated = await request(app.getHttpServer())
       .post(`${basePath}/generate`)
