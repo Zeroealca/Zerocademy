@@ -78,6 +78,7 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-in-production}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS:-12}
+      E2E_TEST_CLOCK_ENABLED: ${E2E_TEST_CLOCK_ENABLED:-false}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       LAN_HOST: ${LAN_HOST:-}
       RUN_PRISMA_SEED: ${RUN_PRISMA_SEED:-true}
