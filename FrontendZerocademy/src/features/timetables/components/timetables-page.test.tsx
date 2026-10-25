@@ -254,6 +254,43 @@ vi.mock("@/features/timetables/hooks/use-timetables", () => ({
     error: null,
   }),
   useTimetableMutations: () => timetableMutations,
+  useMyTimetable: () => ({
+    data: {
+      data: [
+        {
+          id: "teacher-timetable",
+          institutionId: ids.institution,
+          academicPeriodId: ids.period,
+          academicPeriodName: "2026-2027",
+          slots: [
+            {
+              id: "teacher-slot",
+              teacherAssignmentId: "assignment-id",
+              weekday: "MON",
+              scheduleBlockId: ids.first,
+              scheduleBlockPosition: 1,
+              scheduleBlockStartTime: "08:00",
+              scheduleBlockEndTime: "08:40",
+              courseId: "course-id",
+              courseName: "10.º A",
+              subjectName: "Matemática",
+            },
+          ],
+        },
+      ],
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+  useMyTodayTimetable: () => ({
+    data: { data: [] },
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
 }));
 
 function reset(): void {
@@ -397,12 +434,13 @@ describe("TimetablesPage", () => {
   beforeEach(reset);
   afterEach(cleanup);
 
-  it("denies non-admin users", () => {
+  it("routes teachers to their read-only timetable", () => {
     state.role = "TEACHER";
     render(<TimetablesPage />);
     expect(
-      screen.getByRole("heading", { name: "Acceso denegado" }),
+      screen.getByRole("heading", { name: "Mi horario" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Matemática")).toBeInTheDocument();
   });
 
   it("explains a missing academic context", () => {

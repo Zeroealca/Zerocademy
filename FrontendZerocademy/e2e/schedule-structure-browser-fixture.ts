@@ -12,18 +12,36 @@ export type BrowserFixture = {
   timetableId: string;
   admin: { email: string; password: string };
   teacher: { email: string; password: string };
+  secondTeacher?: { email: string; password: string };
+  foreignInstitutionId?: string;
+  foreignTeacher?: { email: string; password: string };
+  foreignTimetableId?: string;
+  secondaryAcademicPeriodId?: string;
+  secondaryTimetableId?: string;
 };
 
 const repositoryRoot = path.resolve(__dirname, "../..");
 const fixtureFileName = `schedule-structure-browser-fixture-${process.pid}-${randomUUID()}.local.json`;
 const containerPath = `/app/qa/${fixtureFileName}`;
 const hostPath = path.join(repositoryRoot, "qa", fixtureFileName);
-const fixtureFilePattern = /^schedule-structure-browser-fixture-(\d+)(?:-[0-9a-f-]+)?\.local\.json$/;
+const fixtureFilePattern =
+  /^schedule-structure-browser-fixture-(\d+)(?:-[0-9a-f-]+)?\.local\.json$/;
 
-function runFixture(pathInContainer: string, action?: "cleanup"): void {
+function runFixture(
+  pathInContainer: string,
+  action?: "cleanup",
+  teacherTimetableFixture = false,
+): void {
   const args = [
-    "compose", "exec", "-T", "-e", `SCHEDULE_BROWSER_FIXTURE_PATH=${pathInContainer}`,
-    "backend", "node", "BackendZerocademy/test/helpers/schedule-structure-browser-fixture-cli.js",
+    "compose",
+    "exec",
+    "-T",
+    "-e",
+    `SCHEDULE_BROWSER_FIXTURE_PATH=${pathInContainer}`,
+    ...(teacherTimetableFixture ? ["-e", "TEACHER_TIMETABLE_FIXTURE=1"] : []),
+    "backend",
+    "node",
+    "BackendZerocademy/test/helpers/schedule-structure-browser-fixture-cli.js",
   ];
   if (action) args.push(action);
   execFileSync("docker", args, { cwd: repositoryRoot, stdio: "inherit" });
@@ -55,6 +73,13 @@ export function prepareBrowserFixture(): BrowserFixture {
   if (existsSync(hostPath)) runFixture(containerPath, "cleanup");
   runFixture(containerPath);
   return JSON.parse(readFileSync(hostPath, "utf8")) as BrowserFixture;
+}
+
+export function prepareTeacherTimetableFixture(): Required<BrowserFixture> {
+  cleanupInterruptedFixtures();
+  if (existsSync(hostPath)) runFixture(containerPath, "cleanup", true);
+  runFixture(containerPath, undefined, true);
+  return JSON.parse(readFileSync(hostPath, "utf8")) as Required<BrowserFixture>;
 }
 
 export function cleanupBrowserFixture(): void {

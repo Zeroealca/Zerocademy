@@ -238,10 +238,18 @@ test.describe.serial("DEMY-140 lifecycle and authorization", () => {
     page,
   }, testInfo) => {
     await login(page, fixture.admin);
-    const removed = await api(page, `/v1/timetables/${fixture.timetableId}`, {
-      method: "DELETE",
-    });
-    expect(removed.status).toBe(204);
+    const listed = await api(
+      page,
+      `/v1/institutions/${fixture.institutionId}/academic-periods/${fixture.activeAcademicPeriodId}/timetables`,
+    );
+    expect(listed.status).toBe(200);
+    const existing = (listed.body as { data: Array<{ id: string }> }).data[0];
+    if (existing) {
+      const removed = await api(page, `/v1/timetables/${existing.id}`, {
+        method: "DELETE",
+      });
+      expect(removed.status).toBe(204);
+    }
     await page.goto("/timetables");
     await page.getByRole("tab", { name: "Horario semanal" }).click();
     const generated = page.waitForResponse(
@@ -605,7 +613,7 @@ test.describe.serial("DEMY-140 lifecycle and authorization", () => {
     ).toBeNull();
   });
 
-  test("a non-ADMIN user has no timetable navigation or administrative route controls", async ({
+  test("a TEACHER has read-only timetable navigation without administrative controls", async ({
     page,
   }) => {
     const mutations: string[] = [];
@@ -619,10 +627,10 @@ test.describe.serial("DEMY-140 lifecycle and authorization", () => {
     await login(page, fixture.teacher);
     await expect(
       page.getByRole("link", { name: "Horario semanal" }),
-    ).toHaveCount(0);
+    ).toBeVisible();
     await page.goto("/timetables");
     await expect(
-      page.getByRole("heading", { name: "Acceso denegado" }),
+      page.getByRole("heading", { name: "Mi horario" }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Añadir bloque" }),
