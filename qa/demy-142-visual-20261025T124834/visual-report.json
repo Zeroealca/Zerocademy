@@ -1,0 +1,22 @@
+{
+  "baseURL": "http://127.0.0.1:3002",
+  "screenshots": [
+    "D:\\Programacion\\Zerocademy\\qa\\demy-142-visual-20261025T124834\\teacher-weekly-desktop.png",
+    "D:\\Programacion\\Zerocademy\\qa\\demy-142-visual-20261025T124834\\teacher-today-desktop.png",
+    "D:\\Programacion\\Zerocademy\\qa\\demy-142-visual-20261025T124834\\teacher-weekly-mobile.png",
+    "D:\\Programacion\\Zerocademy\\qa\\demy-142-visual-20261025T124834\\teacher-today-mobile.png",
+    "D:\\Programacion\\Zerocademy\\qa\\demy-142-visual-20261025T124834\\teacher-today-empty-mobile.png"
+  ],
+  "checks": {
+    "adminControls": 0,
+    "gridDimensions": {
+      "scrollWidth": 865,
+      "clientWidth": 314
+    },
+    "pageDimensions": {
+      "scrollWidth": 390,
+      "clientWidth": 390
+    },
+    "emptyStateVisible": true
+  }
+}
