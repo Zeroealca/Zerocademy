@@ -3,7 +3,12 @@ import type { UserRole } from "@/stores/use-auth-store";
 const PLATFORM_CALENDAR_ROLES: UserRole[] = ["SUPER_ADMIN"];
 const INSTITUTION_OPS_ROLES: UserRole[] = ["ADMIN"];
 const INSTITUTION_VIEW_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
-const PERIOD_CONTEXT_ROLES: UserRole[] = ["ADMIN", "TEACHER", "STUDENT", "REPRESENTATIVE"];
+const PERIOD_CONTEXT_ROLES: UserRole[] = [
+  "ADMIN",
+  "TEACHER",
+  "STUDENT",
+  "REPRESENTATIVE",
+];
 const INSTITUTION_OPS_VIEW_ROLES: UserRole[] = ["ADMIN", "TEACHER"];
 const USER_ADMIN_ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN"];
 
@@ -84,6 +89,10 @@ export function canManageScheduleStructures(
   return hasRoleStrict(role, INSTITUTION_OPS_ROLES);
 }
 
+export function canViewOwnTimetable(role: UserRole | undefined): boolean {
+  return hasRoleStrict(role, ["TEACHER"]);
+}
+
 export function canViewInstitutions(role: UserRole | undefined): boolean {
   return hasRole(role, INSTITUTION_VIEW_ROLES);
 }
@@ -152,7 +161,13 @@ export function canViewOwnEnrollmentHistory(
 
 /** Grades module — students (own data), teachers, admins (monitoring). */
 export function canViewGrades(role: UserRole | undefined): boolean {
-  return hasRoleStrict(role, ["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN", "REPRESENTATIVE"]);
+  return hasRoleStrict(role, [
+    "STUDENT",
+    "TEACHER",
+    "ADMIN",
+    "SUPER_ADMIN",
+    "REPRESENTATIVE",
+  ]);
 }
 
 export function canViewOwnGrades(role: UserRole | undefined): boolean {
@@ -194,7 +209,9 @@ export function canViewAcademicExecution(role: UserRole | undefined): boolean {
   return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER"]);
 }
 
-export function canManageAcademicExecution(role: UserRole | undefined): boolean {
+export function canManageAcademicExecution(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, ["TEACHER"]);
 }
 
@@ -258,10 +275,18 @@ export function canViewOwnReportCard(role: UserRole | undefined): boolean {
 }
 
 export function canViewReportCards(role: UserRole | undefined): boolean {
-  return hasRoleStrict(role, ["SUPER_ADMIN", "ADMIN", "TEACHER", "STUDENT", "REPRESENTATIVE"]);
+  return hasRoleStrict(role, [
+    "SUPER_ADMIN",
+    "ADMIN",
+    "TEACHER",
+    "STUDENT",
+    "REPRESENTATIVE",
+  ]);
 }
 
-export function canViewRepresentativePortal(role: UserRole | undefined): boolean {
+export function canViewRepresentativePortal(
+  role: UserRole | undefined,
+): boolean {
   return hasRoleStrict(role, ["REPRESENTATIVE"]);
 }
 

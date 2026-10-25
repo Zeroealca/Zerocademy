@@ -42,6 +42,7 @@ import {
   canViewRepresentativePortal,
   canViewAcademicPlanning,
   canManageScheduleStructures,
+  canViewOwnTimetable,
 } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 
@@ -159,8 +160,16 @@ const academicEvaluationNavItem = {
   label: "Evaluación académica",
   icon: Scale,
 };
-const academicPlanningNavItem = { href: "/academic-plans", label: "Planificación académica", icon: ClipboardList };
-const timetablesNavItem = { href: "/timetables", label: "Horario semanal", icon: CalendarDays };
+const academicPlanningNavItem = {
+  href: "/academic-plans",
+  label: "Planificación académica",
+  icon: ClipboardList,
+};
+const timetablesNavItem = {
+  href: "/timetables",
+  label: "Horario semanal",
+  icon: CalendarDays,
+};
 
 interface DashboardSidebarProps {
   isMobileMenuOpen: boolean;
@@ -205,8 +214,13 @@ export function DashboardSidebar({
   if (canViewAcademicEvaluation(currentUser?.role)) {
     navItems.push(academicEvaluationNavItem);
   }
-  if (canViewAcademicPlanning(currentUser?.role)) navItems.push(academicPlanningNavItem);
-  if (canManageScheduleStructures(currentUser?.role)) navItems.push(timetablesNavItem);
+  if (canViewAcademicPlanning(currentUser?.role))
+    navItems.push(academicPlanningNavItem);
+  if (
+    canManageScheduleStructures(currentUser?.role) ||
+    canViewOwnTimetable(currentUser?.role)
+  )
+    navItems.push(timetablesNavItem);
 
   if (canViewStudents(currentUser?.role)) {
     navItems.push(studentsNavItem);

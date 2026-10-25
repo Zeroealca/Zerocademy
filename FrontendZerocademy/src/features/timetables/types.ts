@@ -80,6 +80,31 @@ export interface TimetableListResponse {
   data: Timetable[];
 }
 
+export interface TeacherTimetableSlot {
+  id: string;
+  teacherAssignmentId: string;
+  weekday: Weekday;
+  scheduleBlockId: string;
+  scheduleBlockPosition: number;
+  scheduleBlockStartTime: string;
+  scheduleBlockEndTime: string;
+  courseId: string;
+  courseName: string;
+  subjectName: string;
+}
+
+export interface TeacherTimetable {
+  id: string;
+  institutionId: string;
+  academicPeriodId: string;
+  academicPeriodName: string;
+  slots: TeacherTimetableSlot[];
+}
+
+export interface TeacherTimetableListResponse {
+  data: TeacherTimetable[];
+}
+
 export type TimetableConflictCode =
   | "TEACHER_CONFLICT"
   | "COURSE_CONFLICT"

@@ -5,6 +5,8 @@ import {
   createTimetable,
   discardTimetable,
   fetchTeachingLoads,
+  fetchMyTimetable,
+  fetchMyTodayTimetable,
   fetchTimetable,
   fetchTimetableValidation,
   fetchTimetables,
@@ -32,6 +34,22 @@ export function useTimetable(timetableId?: string) {
     queryKey: timetablesKeys.detail(timetableId ?? ""),
     queryFn: () => fetchTimetable(timetableId!),
     enabled: Boolean(timetableId),
+  });
+}
+
+export function useMyTimetable(academicPeriodId?: string) {
+  return useQuery({
+    queryKey: timetablesKeys.mine(academicPeriodId ?? ""),
+    queryFn: () => fetchMyTimetable(academicPeriodId),
+    enabled: Boolean(academicPeriodId),
+  });
+}
+
+export function useMyTodayTimetable(academicPeriodId?: string) {
+  return useQuery({
+    queryKey: timetablesKeys.mineToday(academicPeriodId ?? ""),
+    queryFn: () => fetchMyTodayTimetable(academicPeriodId),
+    enabled: Boolean(academicPeriodId),
   });
 }
 

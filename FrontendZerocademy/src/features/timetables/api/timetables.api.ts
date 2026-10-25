@@ -11,6 +11,7 @@ import type {
   TimetableListResponse,
   TimetableSlotInput,
   TimetableValidation,
+  TeacherTimetableListResponse,
   Weekday,
 } from "@/features/timetables/types";
 
@@ -94,6 +95,19 @@ export const fetchTimetable = (timetableId: string) =>
 
 export const fetchTimetableValidation = (timetableId: string) =>
   apiClient<TimetableValidation>(`/v1/timetables/${timetableId}/validation`);
+
+const teacherTimetablePath = (suffix = "", academicPeriodId?: string) =>
+  `/v1/timetables/me${suffix}${academicPeriodId ? `?academicPeriodId=${encodeURIComponent(academicPeriodId)}` : ""}`;
+
+export const fetchMyTimetable = (academicPeriodId?: string) =>
+  apiClient<TeacherTimetableListResponse>(
+    teacherTimetablePath("", academicPeriodId),
+  );
+
+export const fetchMyTodayTimetable = (academicPeriodId?: string) =>
+  apiClient<TeacherTimetableListResponse>(
+    teacherTimetablePath("/today", academicPeriodId),
+  );
 
 export const generateTimetable = (
   institutionId: string,
