@@ -1429,3 +1429,104 @@ unpublish-confirmation, and draft-restored screenshots in
 `qa/demy-140-increment-1/demy-141-mobile-20261023T220000`; visual review
 confirmed a contained responsive dialog and visible actions. The lifecycle
 test also verifies initial Cancel focus and focus restoration to Publish.
+
+### DEMY-142 — teacher weekly timetable and Today
+
+Teachers have read-only timetable endpoints tied exclusively to the authenticated
+`TeacherProfile`; neither endpoint accepts a teacher identifier. Both queries return
+only `PUBLISHED` timetable aggregates and only slots whose denormalized `teacherId`
+matches the JWT profile. They apply the existing membership capability enforcement for
+`timetables.read`, so a teacher without access to an institution cannot receive its
+schedule.
+
+| Method | Path                                              | Behavior                                                      |
+| ------ | ------------------------------------------------- | ------------------------------------------------------------- |
+| GET    | `/v1/timetables/me?academicPeriodId=<uuid>`       | Own published weekly slots, ordered by weekday/block          |
+| GET    | `/v1/timetables/me/today?academicPeriodId=<uuid>` | Own published slots for the current weekday, ordered by block |
+
+The optional period filter is validated as a UUID and is used by the teacher's
+selected academic context. Empty arrays are intentional: they cover no published
+timetable, no personal assignments, weekends, and non-instructional days. Neither
+endpoint writes `ClassSession` records or exposes ADMIN mutation controls.
+
+The frontend reuses `/timetables` for DOCENTE users, with accessible **Semana** and
+**Hoy** tabs, keyboard-operable grid navigation, current-day text labeling, and
+loading/error/empty announcements. The weekly grid uses published slots rather than
+hard-coded class hours; Today is an ordered list of time, subject, and course.
+Classroom data is not displayed because the current timetable schema has no classroom
+relation.
+
+The current institution model has no persisted timezone field. Until an
+institution-level timezone is introduced in an authorized schema change, server and
+client Today calculations use `America/Guayaquil`, which is the timezone applicable
+to the existing Costa, Sierra, and Amazonía institution regions. Galápagos or
+multi-timezone institutions require that follow-up before their local Today view can
+be guaranteed.
+
+#### Final technical verification (2026-10-25)
+
+DEMY-142 is technically verified. The teacher surface is limited to the
+authenticated `TeacherProfile`: the weekly and Today endpoints query only
+published slots owned by that profile, preserve academic-period filtering, and
+apply the existing `timetables.read` membership capability. The UI provides
+read-only **Semana** and **Hoy** tabs, chronological Today entries, accessible
+empty/loading/error states, contained weekly-grid scrolling, and no
+administrative timetable controls for teachers. Teacher attempts to read or
+mutate administration routes remain rejected by the backend.
+
+The test-only `TeacherTimetableClock` is dependency-injected; ordinary requests
+therefore use the server clock. The per-request
+`x-zerocademy-e2e-now` override is accepted only with the E2E flag enabled,
+the isolated `postgres` / `zerocademy_e2e` database identity, and a
+non-production process. It has no global state. A real authenticated request
+to a temporary `NODE_ENV=production` backend returned HTTP `400` when the
+header was supplied, even with `E2E_TEST_CLOCK_ENABLED=true`.
+
+Source-bound acceptance is preserved in
+`qa/demy-140-increment-1/current-head-645ff003d4b9-20261025T130026-0500/`.
+At Git `645ff003d4b9d2291a29d57b1efc4075424b0322`, its source fingerprint
+was `391f7b565c04551077bf83c77b9128a18e7873179d08f3d83483b8ed2d1fd62f`
+both before and after execution. The runner preflight verified configured host
+`postgres`, configured database `zerocademy_e2e`, and live
+`current_database() = zerocademy_e2e` before mutable fixtures. It completed
+Pass 1 **26/26**, Pass 2 **26/26**, and Pass 3 **26/26** — **78/78** total,
+zero failures, zero skips, and exit code `0`; no fixture-owned local JSON
+files remained afterward.
+
+The inventory covers teacher weekly visibility and draft hiding; cross-teacher
+and cross-institution isolation; academic-period filtering; deterministic
+Today ordering and empty-day behavior; teacher mutation authorization; mobile
+weekly and Today layouts; and keyboard tab activation, alongside the existing
+ADMIN lifecycle, responsive, weekly-grid, and schedule-structure regressions.
+
+Visual review used real authenticated local sessions and the fixture-owned
+published timetable. The inspected desktop and mobile screenshots are under
+`qa/demy-142-visual-20261025T124834/`:
+`teacher-weekly-desktop.png`, `teacher-today-desktop.png`,
+`teacher-weekly-mobile.png`, `teacher-today-mobile.png`, and
+`teacher-today-empty-mobile.png`. The mobile grid had intentional contained
+horizontal scrolling (`865px` content inside a `314px` region) while the page
+remained `390px` wide, and the teacher UI rendered zero administrative
+controls. Long fixture-generated subject/course labels wrap but remain legible;
+ordinary production labels are not expected to have fixture UUID length.
+
+Fresh local Linux production images built successfully:
+frontend `sha256:453bb79365d32743efb6f6995186a5eb873e29d3a3302a950b1a8bfc0db57193`
+and backend `sha256:0a4a790a778fb7c3564452bbb8f41c037a5ade89c142894df7810b9f3ce81778`.
+A temporary frontend container returned HTTP `200` for `/timetables`; the
+temporary backend was stopped after the production clock-override check. No
+deployment, migration, reset, seed, or production-database access occurred.
+
+Targeted frontend and backend timetable ESLint checks passed, the focused
+`TeacherTimetablesService` suite passed **5/5**, and the frontend TypeScript
+check passed. The full backend `tsc --noEmit` check still reports three
+pre-existing, unrelated test typing errors in
+`academic-evaluation/evaluation-terms.service.spec.ts` and
+`representatives/representatives.service.spec.ts`; the final backend production
+build nevertheless passed. Prettier and `git diff --check` both passed after
+this documentation update.
+
+The known limitation remains: without an institution-level timezone field,
+Today calculations use `America/Guayaquil`; a separate schema/product change
+is required to guarantee correct local Today behavior for Galápagos or
+multi-timezone institutions.
