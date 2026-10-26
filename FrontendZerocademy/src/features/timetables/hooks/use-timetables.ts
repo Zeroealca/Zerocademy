@@ -7,6 +7,11 @@ import {
   fetchTeachingLoads,
   fetchMyTimetable,
   fetchMyTodayTimetable,
+  fetchRepresentativeStudents,
+  fetchRepresentativeTimetable,
+  fetchRepresentativeTodayTimetable,
+  fetchStudentTimetable,
+  fetchStudentTodayTimetable,
   fetchTimetable,
   fetchTimetableValidation,
   fetchTimetables,
@@ -50,6 +55,57 @@ export function useMyTodayTimetable(academicPeriodId?: string) {
     queryKey: timetablesKeys.mineToday(academicPeriodId ?? ""),
     queryFn: () => fetchMyTodayTimetable(academicPeriodId),
     enabled: Boolean(academicPeriodId),
+  });
+}
+
+export function useStudentTimetable(academicPeriodId?: string) {
+  return useQuery({
+    queryKey: timetablesKeys.student(academicPeriodId ?? ""),
+    queryFn: () => fetchStudentTimetable(academicPeriodId),
+  });
+}
+
+export function useStudentTodayTimetable(academicPeriodId?: string) {
+  return useQuery({
+    queryKey: timetablesKeys.studentToday(academicPeriodId ?? ""),
+    queryFn: () => fetchStudentTodayTimetable(academicPeriodId),
+  });
+}
+
+export function useRepresentativeStudents(enabled = true) {
+  return useQuery({
+    queryKey: timetablesKeys.representativeStudents(),
+    queryFn: fetchRepresentativeStudents,
+    enabled,
+  });
+}
+
+export function useRepresentativeTimetable(
+  studentId?: string,
+  academicPeriodId?: string,
+) {
+  return useQuery({
+    queryKey: timetablesKeys.representative(
+      studentId ?? "",
+      academicPeriodId ?? "",
+    ),
+    queryFn: () => fetchRepresentativeTimetable(studentId!, academicPeriodId),
+    enabled: Boolean(studentId),
+  });
+}
+
+export function useRepresentativeTodayTimetable(
+  studentId?: string,
+  academicPeriodId?: string,
+) {
+  return useQuery({
+    queryKey: timetablesKeys.representativeToday(
+      studentId ?? "",
+      academicPeriodId ?? "",
+    ),
+    queryFn: () =>
+      fetchRepresentativeTodayTimetable(studentId!, academicPeriodId),
+    enabled: Boolean(studentId),
   });
 }
 

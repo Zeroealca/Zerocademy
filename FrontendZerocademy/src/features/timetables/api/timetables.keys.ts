@@ -29,4 +29,22 @@ export const timetablesKeys = {
     [...timetablesKeys.all, "mine", academicPeriodId] as const,
   mineToday: (academicPeriodId: string) =>
     [...timetablesKeys.mine(academicPeriodId), "today"] as const,
+  student: (academicPeriodId: string) =>
+    [...timetablesKeys.all, "student", academicPeriodId] as const,
+  studentToday: (academicPeriodId: string) =>
+    [...timetablesKeys.student(academicPeriodId), "today"] as const,
+  representativeStudents: () =>
+    [...timetablesKeys.all, "representative", "students"] as const,
+  representative: (studentId: string, academicPeriodId: string) =>
+    [
+      ...timetablesKeys.all,
+      "representative",
+      studentId,
+      academicPeriodId,
+    ] as const,
+  representativeToday: (studentId: string, academicPeriodId: string) =>
+    [
+      ...timetablesKeys.representative(studentId, academicPeriodId),
+      "today",
+    ] as const,
 };

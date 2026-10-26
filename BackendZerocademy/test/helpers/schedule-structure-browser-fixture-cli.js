@@ -33,10 +33,13 @@ async function main() {
     if (database !== "zerocademy_e2e") throw new Error("Fixture requires the zerocademy_e2e database.");
     if (process.argv[2] === "cleanup") {
       const fixture = JSON.parse(await readFile(outputPath, "utf8"));
+      const fixtureUserEmails = fixture.fixtureUsers ?? [fixture.admin.email, fixture.teacher.email, fixture.secondTeacher?.email, fixture.foreignTeacher?.email].filter(Boolean);
+      await prisma.representativeStudent.deleteMany({ where: { OR: [{ representativeUser: { email: { in: fixtureUserEmails } } }, { student: { user: { email: { in: fixtureUserEmails } } } }] } });
       await prisma.institution.deleteMany({ where: { id: fixture.institutionId } });
+      if (fixture.institutionBId) await prisma.institution.deleteMany({ where: { id: fixture.institutionBId } });
       if (fixture.foreignInstitutionId) await prisma.institution.deleteMany({ where: { id: fixture.foreignInstitutionId } });
       await prisma.academicPeriod.deleteMany({ where: { id: { in: [fixture.plannedAcademicPeriodId, fixture.closedAcademicPeriodId, fixture.archivedAcademicPeriodId] } } });
-      await prisma.user.deleteMany({ where: { email: { in: [fixture.admin.email, fixture.teacher.email, fixture.secondTeacher?.email, fixture.foreignTeacher?.email].filter(Boolean) } } });
+      await prisma.user.deleteMany({ where: { email: { in: fixtureUserEmails } } });
       await cleanupOrphanedFixturePeriods(prisma);
       await rm(outputPath, { force: true });
       return;
@@ -72,7 +75,43 @@ async function main() {
       const course = await tx.course.create({ data: { name: `10.º E2E ${suffix}`, section: suffix, institutionId: institution.id, academicPeriodId: active.id, gradeLevelId: gradeLevel.id } });
       const assignment = await tx.teacherAssignment.create({ data: { institutionId: institution.id, teacherId: teacherProfile.id, subjectId: subject.id, courseId: course.id, academicPeriodId: active.id } });
       await tx.teachingLoad.create({ data: { teacherAssignmentId: assignment.id, weeklyPeriods: 1 } });
-      const timetable = await tx.timetable.create({ data: { institutionId: institution.id, academicPeriodId: active.id, slots: { create: { teacherAssignmentId: assignment.id, scheduleBlockId: activeStructure.scheduleBlocks[0].id, dayOfWeek: Weekday.MON, teacherId: teacherProfile.id, courseId: course.id } } } });
+      const timetable = await tx.timetable.create({ data: { institutionId: institution.id, academicPeriodId: active.id, ...(process.env.STUDENT_TIMETABLE_FIXTURE ? { status: "PUBLISHED", publishedAt: new Date(), publishedByUserId: admin.id } : {}), slots: { create: { teacherAssignmentId: assignment.id, scheduleBlockId: activeStructure.scheduleBlocks[0].id, dayOfWeek: Weekday.MON, teacherId: teacherProfile.id, courseId: course.id } } } });
+      if (process.env.STUDENT_TIMETABLE_FIXTURE) {
+        const studentAUser = await tx.user.create({ data: { email: `student-a-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "Student", lastName: "A", role: Role.STUDENT } });
+        const representativeUser = await tx.user.create({ data: { email: `rep-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "Browser", lastName: "Representative", role: Role.REPRESENTATIVE } });
+        const inactiveRepresentativeUser = await tx.user.create({ data: { email: `irep-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "Inactive", lastName: "Representative", role: Role.REPRESENTATIVE } });
+        const unlinkedRepresentativeUser = await tx.user.create({ data: { email: `urep-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "Unlinked", lastName: "Representative", role: Role.REPRESENTATIVE } });
+        const unenrolledUser = await tx.user.create({ data: { email: `unroll-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "No", lastName: "Enrollment", role: Role.STUDENT } });
+        const noTimetableUser = await tx.user.create({ data: { email: `nosched-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "No", lastName: "Schedule", role: Role.STUDENT } });
+        const [studentA] = await Promise.all([
+          tx.studentProfile.create({ data: { userId: studentAUser.id, institutionId: institution.id } }),
+          tx.representativeProfile.create({ data: { userId: representativeUser.id, institutionId: institution.id } }),
+          tx.representativeProfile.create({ data: { userId: inactiveRepresentativeUser.id, institutionId: institution.id } }),
+          tx.representativeProfile.create({ data: { userId: unlinkedRepresentativeUser.id, institutionId: institution.id } }),
+          tx.studentProfile.create({ data: { userId: unenrolledUser.id, institutionId: institution.id } }),
+          tx.studentProfile.create({ data: { userId: noTimetableUser.id, institutionId: institution.id } }),
+        ]);
+        await tx.enrollment.create({ data: { studentId: studentA.id, courseId: course.id, academicPeriodId: active.id, enrollmentDate: new Date("2026-04-01") } });
+        await tx.representativeStudent.create({ data: { representativeUserId: representativeUser.id, studentId: studentA.id, relationshipType: "MOTHER" } });
+        await tx.representativeStudent.create({ data: { representativeUserId: inactiveRepresentativeUser.id, studentId: studentA.id, relationshipType: "OTHER", isActive: false } });
+        const institutionB = await tx.institution.create({ data: { name: `Student B fixture ${suffix}`, code: `STUDENT-B-FIXTURE-${suffix}`, regime: active.regime, activeAcademicPeriodId: active.id } });
+        const studentBUser = await tx.user.create({ data: { email: `student-b-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "Student", lastName: "B", role: Role.STUDENT } });
+        const teacherBUser = await tx.user.create({ data: { email: `teacher-b-${accountSuffix.slice(0, 8)}@example.test`, passwordHash, firstName: "Institution B", lastName: "Teacher", role: Role.TEACHER } });
+        await tx.institutionMembership.create({ data: { institutionId: institutionB.id, userId: teacherBUser.id, role: "TEACHER" } });
+        const studentB = await tx.studentProfile.create({ data: { userId: studentBUser.id, institutionId: institutionB.id } });
+        const teacherB = await tx.teacherProfile.create({ data: { userId: teacherBUser.id, institutionId: institutionB.id } });
+        const structureB = await tx.periodScheduleStructure.create({ data: { institutionId: institutionB.id, academicPeriodId: active.id, enabledWeekdays: [Weekday.MON], scheduleBlocks: { create: { position: 1, name: `Institution B ${suffix}`, startTime: new Date("1970-01-01T08:00:00.000Z"), endTime: new Date("1970-01-01T08:40:00.000Z"), kind: ScheduleBlockKind.TEACHING } } }, include: { scheduleBlocks: true } });
+        const subjectB = await tx.subject.create({ data: { name: `Institution B Science ${suffix}`, code: `STUDENT-B-SCI-${suffix}`, institutionId: institutionB.id } });
+        const courseB = await tx.course.create({ data: { name: `Institution B Course ${suffix}`, section: `student-b-${suffix}`, institutionId: institutionB.id, academicPeriodId: active.id, gradeLevelId: gradeLevel.id } });
+        const assignmentB = await tx.teacherAssignment.create({ data: { institutionId: institutionB.id, teacherId: teacherB.id, subjectId: subjectB.id, courseId: courseB.id, academicPeriodId: active.id } });
+        await tx.teachingLoad.create({ data: { teacherAssignmentId: assignmentB.id, weeklyPeriods: 1 } });
+        await tx.enrollment.create({ data: { studentId: studentB.id, courseId: courseB.id, academicPeriodId: active.id, enrollmentDate: new Date("2026-04-01") } });
+        const timetableB = await tx.timetable.create({ data: { institutionId: institutionB.id, academicPeriodId: active.id, status: "PUBLISHED", publishedAt: new Date(), publishedByUserId: admin.id, slots: { create: { teacherAssignmentId: assignmentB.id, scheduleBlockId: structureB.scheduleBlocks[0].id, dayOfWeek: Weekday.MON, teacherId: teacherB.id, courseId: courseB.id } } } });
+        const emptyCourse = await tx.course.create({ data: { name: `Sin horario ${suffix}`, section: `empty-${suffix}`, institutionId: institution.id, academicPeriodId: active.id, gradeLevelId: gradeLevel.id } });
+        const noTimetableProfile = await tx.studentProfile.findUniqueOrThrow({ where: { userId: noTimetableUser.id } });
+        await tx.enrollment.create({ data: { studentId: noTimetableProfile.id, courseId: emptyCourse.id, academicPeriodId: active.id, enrollmentDate: new Date("2026-04-01") } });
+        return { institutionId: institution.id, institutionBId: institutionB.id, activeAcademicPeriodId: active.id, plannedAcademicPeriodId: planned.id, closedAcademicPeriodId: closed.id, archivedAcademicPeriodId: archived.id, timetableId: timetable.id, institutionATimetableId: timetable.id, institutionBTimetableId: timetableB.id, admin: { email: admin.email, password }, teacher: { email: teacher.email, password }, studentA: { email: studentAUser.email, password, id: studentA.id }, studentB: { email: studentBUser.email, password, id: studentB.id }, representativeA: { email: representativeUser.email, password, studentIds: [studentA.id] }, inactiveRepresentative: { email: inactiveRepresentativeUser.email, password }, unlinkedRepresentative: { email: unlinkedRepresentativeUser.email, password }, unenrolledStudent: { email: unenrolledUser.email, password }, noTimetableStudent: { email: noTimetableUser.email, password }, fixtureUsers: [admin.email, teacher.email, studentAUser.email, studentBUser.email, representativeUser.email, inactiveRepresentativeUser.email, unlinkedRepresentativeUser.email, unenrolledUser.email, noTimetableUser.email, teacherBUser.email] };
+      }
       if (!process.env.TEACHER_TIMETABLE_FIXTURE) return { institutionId: institution.id, activeAcademicPeriodId: active.id, plannedAcademicPeriodId: planned.id, closedAcademicPeriodId: closed.id, archivedAcademicPeriodId: archived.id, timetableId: timetable.id, admin: { email: admin.email, password }, teacher: { email: teacher.email, password } };
       const [middleBlock, lateBlock] = await Promise.all([
         tx.scheduleBlock.create({ data: { periodScheduleStructureId: activeStructure.id, position: 4, name: `Segundo ${suffix}`, startTime: new Date("1970-01-01T09:00:00.000Z"), endTime: new Date("1970-01-01T09:40:00.000Z"), kind: ScheduleBlockKind.TEACHING } }),

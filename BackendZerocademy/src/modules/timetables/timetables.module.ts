@@ -8,10 +8,16 @@ import { TimetableAdminService } from './timetable-admin.service';
 import { TeacherTimetablesController } from './teacher-timetables.controller';
 import { TeacherTimetablesService } from './teacher-timetables.service';
 import { TeacherTimetableClock } from './teacher-timetable-clock.service';
+import { StudentTimetablesController } from './student-timetables.controller';
+import { StudentTimetablesService } from './student-timetables.service';
 
 @Module({
   // Register the static /timetables/me routes before /timetables/:timetableId.
-  controllers: [TeacherTimetablesController, TimetablesController],
+  controllers: [
+    TeacherTimetablesController,
+    StudentTimetablesController,
+    TimetablesController,
+  ],
   providers: [
     TimetablesService,
     ScheduleStructuresService,
@@ -20,6 +26,7 @@ import { TeacherTimetableClock } from './teacher-timetable-clock.service';
     TimetableAdminService,
     TeacherTimetablesService,
     TeacherTimetableClock,
+    StudentTimetablesService,
   ],
 })
 export class TimetablesModule {}

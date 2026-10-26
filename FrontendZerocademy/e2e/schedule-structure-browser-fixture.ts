@@ -18,6 +18,17 @@ export type BrowserFixture = {
   foreignTimetableId?: string;
   secondaryAcademicPeriodId?: string;
   secondaryTimetableId?: string;
+  studentA?: { email: string; password: string; id: string };
+  studentB?: { email: string; password: string; id: string };
+  representativeA?: { email: string; password: string; studentIds: string[] };
+  institutionBId?: string;
+  institutionATimetableId?: string;
+  institutionBTimetableId?: string;
+  fixtureUsers?: string[];
+  inactiveRepresentative?: { email: string; password: string };
+  unlinkedRepresentative?: { email: string; password: string };
+  unenrolledStudent?: { email: string; password: string };
+  noTimetableStudent?: { email: string; password: string };
 };
 
 const repositoryRoot = path.resolve(__dirname, "../..");
@@ -31,6 +42,7 @@ function runFixture(
   pathInContainer: string,
   action?: "cleanup",
   teacherTimetableFixture = false,
+  studentTimetableFixture = false,
 ): void {
   const args = [
     "compose",
@@ -39,6 +51,7 @@ function runFixture(
     "-e",
     `SCHEDULE_BROWSER_FIXTURE_PATH=${pathInContainer}`,
     ...(teacherTimetableFixture ? ["-e", "TEACHER_TIMETABLE_FIXTURE=1"] : []),
+    ...(studentTimetableFixture ? ["-e", "STUDENT_TIMETABLE_FIXTURE=1"] : []),
     "backend",
     "node",
     "BackendZerocademy/test/helpers/schedule-structure-browser-fixture-cli.js",
@@ -79,6 +92,13 @@ export function prepareTeacherTimetableFixture(): Required<BrowserFixture> {
   cleanupInterruptedFixtures();
   if (existsSync(hostPath)) runFixture(containerPath, "cleanup", true);
   runFixture(containerPath, undefined, true);
+  return JSON.parse(readFileSync(hostPath, "utf8")) as Required<BrowserFixture>;
+}
+
+export function prepareStudentTimetableFixture(): Required<BrowserFixture> {
+  cleanupInterruptedFixtures();
+  if (existsSync(hostPath)) runFixture(containerPath, "cleanup", false, true);
+  runFixture(containerPath, undefined, false, true);
   return JSON.parse(readFileSync(hostPath, "utf8")) as Required<BrowserFixture>;
 }
 

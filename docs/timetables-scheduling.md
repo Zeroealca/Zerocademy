@@ -1530,3 +1530,49 @@ The known limitation remains: without an institution-level timezone field,
 Today calculations use `America/Guayaquil`; a separate schema/product change
 is required to guarantee correct local Today behavior for Galápagos or
 multi-timezone institutions.
+
+### DEMY-143 — student and representative read-only timetable
+
+Students and representatives use the same published timetable aggregate; no
+student-specific schedule is persisted. An active `Enrollment` is the
+authoritative student-to-course-and-period relationship. The read model first
+resolves active enrollments and then returns slots only when the timetable,
+academic period, institution, and slot course all match that enrollment.
+Therefore a draft, an unpublished aggregate, another course, another period,
+or another institution is never included in the response.
+
+| Actor | Method | Path | Scope |
+| --- | --- | --- | --- |
+| STUDENT | GET | `/v1/timetables/student/me?academicPeriodId=<uuid>` | Authenticated student's active enrollments only |
+| STUDENT | GET | `/v1/timetables/student/me/today?academicPeriodId=<uuid>` | Same scope, current Ecuador weekday only |
+| REPRESENTATIVE | GET | `/v1/timetables/representative?studentId=<uuid>&academicPeriodId=<uuid>` | Selected student with an active authenticated relationship |
+| REPRESENTATIVE | GET | `/v1/timetables/representative/today?studentId=<uuid>&academicPeriodId=<uuid>` | Same scope, current Ecuador weekday only |
+
+Representative selection is supported by the existing
+`GET /v1/representatives/me/students` endpoint. Every timetable request
+independently verifies `RepresentativeStudent.representativeUserId`,
+`studentId`, and `isActive`; hiding a student in the browser is not an
+authorization mechanism. Unrelated or inactive relationship requests return
+`404` to avoid resource enumeration. Empty `data` arrays deliberately cover
+no active enrollment, no published timetable, no class for an enrolled course,
+and non-instructional days.
+
+`InstitutionMembership` currently supports only ADMIN and TEACHER roles, so
+STUDENT and REPRESENTATIVE cannot be evaluated through the membership-backed
+`timetables.read` capability enforcer used by the teacher surface. DEMY-143
+uses strict role guards plus authoritative enrollment, relationship, and
+resource filters instead. Extending capability enforcement to these roles
+requires a separate authorization-model change; no membership or schema change
+was made in this delivery.
+
+The `/timetables` dashboard route now presents read-only **Semana** and
+**Hoy** views to STUDENT and REPRESENTATIVE roles. Representatives receive an
+accessible linked-student selector (preselected when only one relationship is
+available); slots show course, subject, and the assigned teacher when present.
+The grid has a keyboard-focusable scrolling region for mobile widths. No
+publication, generation, structure, or mutation controls are exposed.
+
+Today reuses the injected timetable clock and preserves the existing test-only
+`x-zerocademy-e2e-now` safety restrictions: it is rejected in production and
+outside the isolated `postgres` / `zerocademy_e2e` E2E configuration. Until
+institution timezones exist, date resolution remains `America/Guayaquil`.

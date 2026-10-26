@@ -93,6 +93,28 @@ export interface TeacherTimetableSlot {
   subjectName: string;
 }
 
+export interface StudentTimetableSlot extends TeacherTimetableSlot {
+  teacherName?: string;
+}
+
+export interface StudentTimetable extends Omit<TeacherTimetable, "slots"> {
+  slots: StudentTimetableSlot[];
+}
+
+export interface StudentTimetableListResponse {
+  data: StudentTimetable[];
+}
+
+export interface RepresentativeStudent {
+  id: string;
+  studentId: string;
+  fullName: string;
+  academicPeriodId?: string;
+  academicPeriodName?: string;
+  courseName?: string;
+  section?: string;
+}
+
 export interface TeacherTimetable {
   id: string;
   institutionId: string;

@@ -131,4 +131,20 @@ describe('TeacherTimetablesService', () => {
     await service.today(teacher, 'period-a');
     expect(clock.now).toHaveBeenCalledTimes(1);
   });
+
+  it('returns no classes on a non-instructional day', async () => {
+    await expect(
+      service.today(teacher, 'period-a', new Date('2026-10-18T12:00:00-05:00')),
+    ).resolves.toEqual({
+      data: [
+        {
+          id: 'timetable-a',
+          institutionId: 'institution-a',
+          academicPeriodId: 'period-a',
+          academicPeriodName: '2026-2027',
+          slots: [],
+        },
+      ],
+    });
+  });
 });

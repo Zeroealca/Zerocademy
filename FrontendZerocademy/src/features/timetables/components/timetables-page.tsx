@@ -45,6 +45,7 @@ import { ApiError } from "@/lib/api-error";
 import { canManageScheduleStructures } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/use-auth-store";
 import { TeacherTimetablePage } from "@/features/timetables/components/teacher-timetable-page";
+import { StudentTimetablePage } from "@/features/timetables/components/student-timetable-page";
 
 const weekdays: Array<{ value: Weekday; label: string }> = [
   { value: "MON", label: "Lunes" },
@@ -68,6 +69,8 @@ const emptyBlock: ScheduleBlockInput = {
 export function TimetablesPage() {
   const role = useAuthStore((state) => state.user?.role);
   if (role === "TEACHER") return <TeacherTimetablePage />;
+  if (role === "STUDENT") return <StudentTimetablePage />;
+  if (role === "REPRESENTATIVE") return <StudentTimetablePage representative />;
 
   return <AdminTimetablesPage />;
 }

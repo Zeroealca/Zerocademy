@@ -12,6 +12,8 @@ import type {
   TimetableSlotInput,
   TimetableValidation,
   TeacherTimetableListResponse,
+  StudentTimetableListResponse,
+  RepresentativeStudent,
   Weekday,
 } from "@/features/timetables/types";
 
@@ -107,6 +109,44 @@ export const fetchMyTimetable = (academicPeriodId?: string) =>
 export const fetchMyTodayTimetable = (academicPeriodId?: string) =>
   apiClient<TeacherTimetableListResponse>(
     teacherTimetablePath("/today", academicPeriodId),
+  );
+
+const queryString = (values: Record<string, string | undefined>) => {
+  const params = new URLSearchParams();
+  Object.entries(values).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  const result = params.toString();
+  return result ? `?${result}` : "";
+};
+
+export const fetchStudentTimetable = (academicPeriodId?: string) =>
+  apiClient<StudentTimetableListResponse>(
+    `/v1/timetables/student/me${queryString({ academicPeriodId })}`,
+  );
+
+export const fetchStudentTodayTimetable = (academicPeriodId?: string) =>
+  apiClient<StudentTimetableListResponse>(
+    `/v1/timetables/student/me/today${queryString({ academicPeriodId })}`,
+  );
+
+export const fetchRepresentativeStudents = () =>
+  apiClient<RepresentativeStudent[]>("/v1/representatives/me/students");
+
+export const fetchRepresentativeTimetable = (
+  studentId: string,
+  academicPeriodId?: string,
+) =>
+  apiClient<StudentTimetableListResponse>(
+    `/v1/timetables/representative${queryString({ studentId, academicPeriodId })}`,
+  );
+
+export const fetchRepresentativeTodayTimetable = (
+  studentId: string,
+  academicPeriodId?: string,
+) =>
+  apiClient<StudentTimetableListResponse>(
+    `/v1/timetables/representative/today${queryString({ studentId, academicPeriodId })}`,
   );
 
 export const generateTimetable = (

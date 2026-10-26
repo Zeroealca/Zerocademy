@@ -218,7 +218,8 @@ export function DashboardSidebar({
     navItems.push(academicPlanningNavItem);
   if (
     canManageScheduleStructures(currentUser?.role) ||
-    canViewOwnTimetable(currentUser?.role)
+    canViewOwnTimetable(currentUser?.role) ||
+    currentUser?.role === "REPRESENTATIVE"
   )
     navItems.push(timetablesNavItem);
 
