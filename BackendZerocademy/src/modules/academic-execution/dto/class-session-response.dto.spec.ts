@@ -1,12 +1,31 @@
 import { ClassSessionStatus } from '@prisma/client';
 import { ClassSessionResponseDto } from './class-session-response.dto';
 
+const origin = {
+  timetableSlotId: null,
+  timetableOccurrenceKey: null,
+  originTeacherAssignmentId: null,
+  originInstitutionId: null,
+  originInstitutionName: null,
+  originAcademicPeriodId: null,
+  originAcademicPeriodName: null,
+  originCourseId: null,
+  originCourseName: null,
+  originSubjectId: null,
+  originSubjectName: null,
+  originWeekday: null,
+  originScheduleBlockId: null,
+  originBlockStartTime: null,
+  originBlockEndTime: null,
+};
+
 describe('ClassSessionResponseDto', () => {
   it('serializes execution calendar dates without leaking timestamps', () => {
     const response = ClassSessionResponseDto.from({
       id: 'session-a',
       teacherAssignmentId: 'assignment-a',
       lessonPlanId: null,
+      ...origin,
       status: ClassSessionStatus.COMPLETED,
       scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
       occurredOn: new Date('2026-06-16T00:00:00.000Z'),
@@ -18,6 +37,7 @@ describe('ClassSessionResponseDto', () => {
       id: 'session-a',
       teacherAssignmentId: 'assignment-a',
       lessonPlanId: null,
+      ...origin,
       status: ClassSessionStatus.COMPLETED,
       scheduledDate: '2026-06-15',
       occurredOn: '2026-06-16',
@@ -31,6 +51,7 @@ describe('ClassSessionResponseDto', () => {
       id: 'session-a',
       teacherAssignmentId: 'assignment-a',
       lessonPlanId: null,
+      ...origin,
       status: ClassSessionStatus.SCHEDULED,
       scheduledDate: null,
       occurredOn: null,

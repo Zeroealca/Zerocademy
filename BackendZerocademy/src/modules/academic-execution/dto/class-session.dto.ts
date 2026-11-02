@@ -25,3 +25,13 @@ export class CreateClassSessionDto {
 }
 
 export class UpdateClassSessionDto extends PartialType(CreateClassSessionDto) {}
+
+export class OpenClassSessionFromTimetableSlotDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsUUID('4')
+  timetableSlotId!: string;
+
+  @ApiPropertyOptional({ format: 'date' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  scheduledDate!: string;
+}

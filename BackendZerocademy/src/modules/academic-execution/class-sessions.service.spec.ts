@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ClassSessionStatus, Role } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permission-enforcer.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { ClassSessionsFoundationService } from './class-sessions-foundation.service';
@@ -832,5 +833,66 @@ describe('ClassSessionsFoundationService read contract', () => {
       expect(permissionEnforcer.requireMembershipPermission).toHaveBeenCalled();
       expect(prisma.classSession.create).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('ClassSessionsFoundationService missing write permission', () => {
+  it('denies an owning teacher through the real membership enforcer before persisting', async () => {
+    const assignment = {
+      id: 'assignment-restricted',
+      teacherId: 'teacher-restricted',
+      institutionId: 'inst-restricted',
+      academicPeriod: {
+        id: 'period-restricted',
+        status: 'ACTIVE',
+        startDate: new Date('2026-01-01'),
+        endDate: new Date('2026-12-31'),
+      },
+    };
+    const prisma = {
+      teacherAssignment: { findFirst: jest.fn().mockResolvedValue(assignment) },
+      institutionMembership: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'membership-restricted',
+          permissionProfile: { key: 'TEACHER_BASELINE' },
+        }),
+      },
+      lessonPlan: { findFirst: jest.fn() },
+      classSession: { create: jest.fn() },
+    };
+    const logger = { log: jest.fn(), warn: jest.fn() };
+    const effectivePermissions = {
+      can: jest.fn().mockReturnValue(true),
+      canForMembership: jest.fn().mockResolvedValue(false),
+    };
+    const permissionEnforcer = new MembershipPermissionEnforcer(
+      prisma as unknown as PrismaService,
+      effectivePermissions as never,
+      logger as unknown as AppLoggerService,
+    );
+    const service = new ClassSessionsFoundationService(
+      prisma as unknown as PrismaService,
+      logger as unknown as AppLoggerService,
+      permissionEnforcer,
+    );
+    const actor: AuthenticatedUser = {
+      ...teacherA,
+      id: 'user-restricted',
+      profileId: assignment.teacherId,
+      institutionId: assignment.institutionId,
+    };
+
+    await expect(
+      service.create(actor, {
+        teacherAssignmentId: assignment.id,
+        scheduledDate: '2026-06-15',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    expect(effectivePermissions.canForMembership).toHaveBeenCalledWith(
+      'membership-restricted',
+      'class_sessions.create',
+    );
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
   });
 });

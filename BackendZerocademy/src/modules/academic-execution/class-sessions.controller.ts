@@ -25,9 +25,13 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { ClassSessionsFoundationService } from './class-sessions-foundation.service';
 import {
   CreateClassSessionDto,
+  OpenClassSessionFromTimetableSlotDto,
   UpdateClassSessionDto,
 } from './dto/class-session.dto';
-import { ClassSessionResponseDto } from './dto/class-session-response.dto';
+import {
+  ClassSessionResponseDto,
+  OpenClassSessionFromTimetableSlotResponseDto,
+} from './dto/class-session-response.dto';
 
 @ApiTags('class-sessions')
 @ApiBearerAuth('access-token')
@@ -79,6 +83,28 @@ export class ClassSessionsController {
         teacherAssignmentId: assignmentId,
       }),
     );
+  }
+
+  @Post('from-timetable-slot')
+  @ApiOperation({
+    summary:
+      'Open the teacher-owned class session for a published timetable slot',
+  })
+  @ApiRequireRolesStrict(Role.TEACHER)
+  @ApiCreatedResponse({ type: OpenClassSessionFromTimetableSlotResponseDto })
+  async openFromTimetableSlot(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param('teacherAssignmentId', ParseUUIDPipe) assignmentId: string,
+    @Body() dto: OpenClassSessionFromTimetableSlotDto,
+  ): Promise<OpenClassSessionFromTimetableSlotResponseDto> {
+    const result = await this.sessions.openFromTimetableSlot(actor, {
+      ...dto,
+      teacherAssignmentId: assignmentId,
+    });
+    return {
+      classSession: ClassSessionResponseDto.from(result.classSession),
+      created: result.created,
+    };
   }
   @Patch(':classSessionId')
   @ApiOperation({

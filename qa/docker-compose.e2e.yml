@@ -8,6 +8,7 @@ services:
       DATABASE_URL: postgresql://zerocademy:zerocademy_secret@postgres:5432/zerocademy_e2e?schema=public
       DATABASE_URL_UNPOOLED: postgresql://zerocademy:zerocademy_secret@postgres:5432/zerocademy_e2e?schema=public
       POSTGRES_DB: zerocademy_e2e
+      E2E_TEST_CLOCK_ENABLED: "true"
       RUN_PRISMA_SEED: "false"
       NODE_PATH: /app/BackendZerocademy/node_modules:/app/node_modules
 

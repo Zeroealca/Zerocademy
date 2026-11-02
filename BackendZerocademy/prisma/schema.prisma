@@ -829,6 +829,7 @@ model TimetableSlot {
   scheduleBlock       ScheduleBlock     @relation(fields: [scheduleBlockId], references: [id], onDelete: Restrict)
   teacher             TeacherProfile    @relation(fields: [teacherId], references: [id], onDelete: Restrict)
   course              Course            @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  classSessions       ClassSession[]
 
   @@unique([timetableId, dayOfWeek, scheduleBlockId, teacherId])
   @@unique([timetableId, dayOfWeek, scheduleBlockId, courseId])
@@ -922,21 +923,40 @@ model LessonPlan {
 
 /// An actual teaching occurrence. Academic context is derived from its TeacherAssignment.
 model ClassSession {
-  id                  String                         @id @default(uuid())
-  teacherAssignmentId String
-  lessonPlanId        String?
-  status              ClassSessionStatus             @default(SCHEDULED)
-  scheduledDate       DateTime?                      @db.Date
-  occurredOn          DateTime?                      @db.Date
-  createdAt           DateTime                       @default(now())
-  updatedAt           DateTime                       @updatedAt
-  teacherAssignment   TeacherAssignment              @relation(fields: [teacherAssignmentId], references: [id], onDelete: Restrict)
-  lessonPlan          LessonPlan?                    @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
-  attendanceRecords   ClassSessionAttendanceRecord[]
+  id                        String                         @id @default(uuid())
+  teacherAssignmentId       String
+  lessonPlanId              String?
+  timetableSlotId           String?
+  /// Immutable identity for a timetable-originated occurrence. Manual sessions keep this null.
+  timetableOccurrenceKey    String?                        @unique
+  originTeacherAssignmentId String?
+  originInstitutionId       String?
+  originInstitutionName     String?                        @db.VarChar(200)
+  originAcademicPeriodId    String?
+  originAcademicPeriodName  String?                        @db.VarChar(200)
+  originCourseId            String?
+  originCourseName          String?                        @db.VarChar(200)
+  originSubjectId           String?
+  originSubjectName         String?                        @db.VarChar(200)
+  originWeekday             Weekday?
+  originScheduleBlockId     String?
+  originBlockStartTime      DateTime?                      @db.Time(0)
+  originBlockEndTime        DateTime?                      @db.Time(0)
+  status                    ClassSessionStatus             @default(SCHEDULED)
+  scheduledDate             DateTime?                      @db.Date
+  occurredOn                DateTime?                      @db.Date
+  createdAt                 DateTime                       @default(now())
+  updatedAt                 DateTime                       @updatedAt
+  teacherAssignment         TeacherAssignment              @relation(fields: [teacherAssignmentId], references: [id], onDelete: Restrict)
+  lessonPlan                LessonPlan?                    @relation(fields: [lessonPlanId], references: [id], onDelete: SetNull)
+  timetableSlot             TimetableSlot?                 @relation(fields: [timetableSlotId], references: [id], onDelete: SetNull)
+  attendanceRecords         ClassSessionAttendanceRecord[]
 
   @@index([teacherAssignmentId, scheduledDate])
   @@index([teacherAssignmentId, occurredOn])
   @@index([lessonPlanId])
+  @@index([timetableSlotId])
+  @@index([originInstitutionId, originAcademicPeriodId])
   @@map("class_sessions")
 }
 

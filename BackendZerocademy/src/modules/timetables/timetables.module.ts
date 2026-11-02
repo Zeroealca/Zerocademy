@@ -10,6 +10,7 @@ import { TeacherTimetablesService } from './teacher-timetables.service';
 import { TeacherTimetableClock } from './teacher-timetable-clock.service';
 import { StudentTimetablesController } from './student-timetables.controller';
 import { StudentTimetablesService } from './student-timetables.service';
+import { TimetableSlotOriginService } from './timetable-slot-origin.service';
 
 @Module({
   // Register the static /timetables/me routes before /timetables/:timetableId.
@@ -27,6 +28,8 @@ import { StudentTimetablesService } from './student-timetables.service';
     TeacherTimetablesService,
     TeacherTimetableClock,
     StudentTimetablesService,
+    TimetableSlotOriginService,
   ],
+  exports: [TimetableSlotOriginService],
 })
 export class TimetablesModule {}

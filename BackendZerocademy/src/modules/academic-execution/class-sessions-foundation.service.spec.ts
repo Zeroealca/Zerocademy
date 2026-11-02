@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Jest asymmetric matcher values are intentionally untyped. */
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ClassSessionStatus, Role } from '@prisma/client';
+import { ClassSessionStatus, Role, Weekday } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
@@ -18,7 +19,7 @@ const teacher: AuthenticatedUser = {
 type PrismaMock = {
   teacherAssignment: { findFirst: jest.Mock };
   lessonPlan: { findFirst: jest.Mock };
-  classSession: { create: jest.Mock };
+  classSession: { create: jest.Mock; findUnique: jest.Mock };
 };
 
 function assignmentContext(periodStatus = 'ACTIVE', id = 'assignment-a') {
@@ -27,6 +28,7 @@ function assignmentContext(periodStatus = 'ACTIVE', id = 'assignment-a') {
     teacherId: 'teacher-profile-a',
     institutionId: 'institution-a',
     academicPeriod: {
+      id: 'period-a',
       status: periodStatus,
       startDate: new Date('2026-05-01T00:00:00.000Z'),
       endDate: new Date('2027-02-28T00:00:00.000Z'),
@@ -48,6 +50,7 @@ describe('ClassSessionsFoundationService', () => {
         findFirst: jest.fn().mockResolvedValue({ id: 'lesson-a' }),
       },
       classSession: {
+        findUnique: jest.fn().mockResolvedValue(null),
         create: jest
           .fn()
           .mockImplementation(({ data }) =>
@@ -62,6 +65,24 @@ describe('ClassSessionsFoundationService', () => {
       {
         requireForInstitutionMembership: jest.fn().mockResolvedValue({
           decision: 'ALLOWED',
+        }),
+      } as never,
+      {
+        resolvePublishedForAssignment: jest.fn().mockResolvedValue({
+          id: 'slot-a',
+          teacherAssignmentId: 'assignment-a',
+          weekday: Weekday.MON,
+          institutionId: 'institution-a',
+          institutionName: 'Institution A',
+          academicPeriodId: 'period-a',
+          academicPeriodName: '2026-2027',
+          courseId: 'course-a',
+          courseName: 'Course A',
+          subjectId: 'subject-a',
+          subjectName: 'Subject A',
+          scheduleBlockId: 'block-a',
+          startTime: new Date('1970-01-01T08:00:00.000Z'),
+          endTime: new Date('1970-01-01T09:00:00.000Z'),
         }),
       } as never,
     );
@@ -88,7 +109,7 @@ describe('ClassSessionsFoundationService', () => {
         teacherId: true,
         institutionId: true,
         academicPeriod: {
-          select: { status: true, startDate: true, endDate: true },
+          select: { id: true, status: true, startDate: true, endDate: true },
         },
       },
     });
@@ -205,6 +226,91 @@ describe('ClassSessionsFoundationService', () => {
       service.create(teacher, {
         teacherAssignmentId: 'assignment-a',
         scheduledDate: '2027-03-01',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
+  });
+
+  it('creates one scheduled session with an immutable timetable occurrence snapshot', async () => {
+    await expect(
+      service.openFromTimetableSlot(teacher, {
+        teacherAssignmentId: 'assignment-a',
+        timetableSlotId: 'slot-a',
+        scheduledDate: '2026-06-15',
+      }),
+    ).resolves.toMatchObject({ created: true });
+
+    expect(prisma.classSession.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        teacherAssignmentId: 'assignment-a',
+        timetableSlotId: 'slot-a',
+        timetableOccurrenceKey: 'timetable-slot:slot-a:2026-06-15',
+        originCourseId: 'course-a',
+        originCourseName: 'Course A',
+        originInstitutionName: 'Institution A',
+        originAcademicPeriodName: '2026-2027',
+        originSubjectId: 'subject-a',
+        originSubjectName: 'Subject A',
+        originWeekday: Weekday.MON,
+        status: ClassSessionStatus.SCHEDULED,
+        scheduledDate: new Date('2026-06-15T00:00:00.000Z'),
+      }),
+    });
+  });
+
+  it('reopens an existing completed or cancelled occurrence without mutation', async () => {
+    prisma.classSession.findUnique.mockResolvedValue({
+      id: 'session-existing',
+      status: ClassSessionStatus.CANCELLED,
+      timetableOccurrenceKey: 'timetable-slot:slot-a:2026-06-15',
+    });
+
+    await expect(
+      service.openFromTimetableSlot(teacher, {
+        teacherAssignmentId: 'assignment-a',
+        timetableSlotId: 'slot-a',
+        scheduledDate: '2026-06-15',
+      }),
+    ).resolves.toEqual({
+      classSession: expect.objectContaining({
+        id: 'session-existing',
+        status: ClassSessionStatus.CANCELLED,
+      }),
+      created: false,
+    });
+    expect(prisma.classSession.create).not.toHaveBeenCalled();
+  });
+
+  it('returns the winner session when the occurrence unique constraint reports a concurrent create', async () => {
+    prisma.classSession.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'session-winner',
+        status: ClassSessionStatus.SCHEDULED,
+      });
+    prisma.classSession.create.mockRejectedValueOnce({
+      code: 'P2002',
+      meta: { target: ['timetableOccurrenceKey'] },
+    });
+
+    await expect(
+      service.openFromTimetableSlot(teacher, {
+        teacherAssignmentId: 'assignment-a',
+        timetableSlotId: 'slot-a',
+        scheduledDate: '2026-06-15',
+      }),
+    ).resolves.toEqual({
+      classSession: expect.objectContaining({ id: 'session-winner' }),
+      created: false,
+    });
+  });
+
+  it('rejects a calendar date that does not match the published slot weekday', async () => {
+    await expect(
+      service.openFromTimetableSlot(teacher, {
+        teacherAssignmentId: 'assignment-a',
+        timetableSlotId: 'slot-a',
+        scheduledDate: '2026-06-16',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.classSession.create).not.toHaveBeenCalled();

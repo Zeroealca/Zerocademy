@@ -34,6 +34,11 @@ async function main() {
     if (process.argv[2] === "cleanup") {
       const fixture = JSON.parse(await readFile(outputPath, "utf8"));
       const fixtureUserEmails = fixture.fixtureUsers ?? [fixture.admin.email, fixture.teacher.email, fixture.secondTeacher?.email, fixture.foreignTeacher?.email].filter(Boolean);
+      // Class sessions intentionally survive a timetable slot deletion, so
+      // they must be removed explicitly before the fixture-owned assignments
+      // and users. This remains scoped to the teacher profiles owned by this
+      // fixture and never touches shared sessions.
+      await prisma.classSession.deleteMany({ where: { teacherAssignment: { teacher: { user: { email: { in: fixtureUserEmails } } } } } });
       await prisma.representativeStudent.deleteMany({ where: { OR: [{ representativeUser: { email: { in: fixtureUserEmails } } }, { student: { user: { email: { in: fixtureUserEmails } } } }] } });
       await prisma.institution.deleteMany({ where: { id: fixture.institutionId } });
       if (fixture.institutionBId) await prisma.institution.deleteMany({ where: { id: fixture.institutionBId } });

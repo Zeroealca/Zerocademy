@@ -8,7 +8,9 @@ import {
   AcademicPeriodStatus,
   ClassSession,
   ClassSessionStatus,
+  Prisma,
   Role,
+  Weekday,
 } from '@prisma/client';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { assertActorCanAccessInstitution } from '../../common/rbac/academic-scope.util';
@@ -16,6 +18,10 @@ import { MembershipPermissionEnforcer } from '../../common/rbac/membership-permi
 import { PERMISSIONS } from '../../common/rbac/permission-catalog';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import {
+  TimetableSlotOriginService,
+  type PublishedTimetableSlotOrigin,
+} from '../timetables/timetable-slot-origin.service';
 
 export type CreateClassSessionFoundationInput = {
   teacherAssignmentId: string;
@@ -30,10 +36,22 @@ type AssignmentExecutionContext = {
   teacherId: string;
   institutionId: string | null;
   academicPeriod: {
+    id: string;
     status: AcademicPeriodStatus;
     startDate: Date;
     endDate: Date;
   };
+};
+
+export type OpenClassSessionFromTimetableSlotInput = {
+  teacherAssignmentId: string;
+  timetableSlotId: string;
+  scheduledDate: string;
+};
+
+export type OpenClassSessionFromTimetableSlotResult = {
+  classSession: ClassSession;
+  created: boolean;
 };
 
 /**
@@ -47,6 +65,7 @@ export class ClassSessionsFoundationService {
     private readonly prisma: PrismaService,
     private readonly logger: AppLoggerService,
     private readonly permissionEnforcer: MembershipPermissionEnforcer,
+    private readonly timetableSlotOrigins?: TimetableSlotOriginService,
   ) {}
 
   async create(
@@ -146,6 +165,94 @@ export class ClassSessionsFoundationService {
     return session;
   }
 
+  /**
+   * Opens one immutable timetable occurrence. The database-backed occurrence
+   * key survives an origin slot deletion, while manual sessions remain
+   * deliberately outside this identity scheme.
+   */
+  async openFromTimetableSlot(
+    actor: AuthenticatedUser,
+    input: OpenClassSessionFromTimetableSlotInput,
+  ): Promise<OpenClassSessionFromTimetableSlotResult> {
+    const assignment = await this.findAssignment(
+      actor,
+      input.teacherAssignmentId,
+      true,
+    );
+    await this.requireWritePermission(
+      actor,
+      assignment,
+      PERMISSIONS.CLASS_SESSIONS.CREATE,
+    );
+    this.assertWritableAcademicPeriod(assignment);
+    const scheduledDate = this.calendarDate(
+      input.scheduledDate,
+      'scheduledDate',
+    );
+    if (!scheduledDate) {
+      throw new BadRequestException('scheduledDate is required');
+    }
+    this.assertDatesWithinPeriod(
+      assignment.academicPeriod,
+      scheduledDate,
+      null,
+    );
+
+    if (!this.timetableSlotOrigins) {
+      throw new BadRequestException('Timetable slot origins are unavailable');
+    }
+    const origin =
+      await this.timetableSlotOrigins.resolvePublishedForAssignment(
+        input.timetableSlotId,
+        assignment.id,
+      );
+    this.assertOriginContext(assignment, origin, scheduledDate);
+    const timetableOccurrenceKey = this.occurrenceKey(origin.id, scheduledDate);
+
+    const existing = await this.prisma.classSession.findUnique({
+      where: { timetableOccurrenceKey },
+    });
+    if (existing) return { classSession: existing, created: false };
+
+    try {
+      const classSession = await this.prisma.classSession.create({
+        data: {
+          teacherAssignmentId: assignment.id,
+          timetableSlotId: origin.id,
+          timetableOccurrenceKey,
+          originTeacherAssignmentId: assignment.id,
+          originInstitutionId: origin.institutionId,
+          originInstitutionName: origin.institutionName,
+          originAcademicPeriodId: origin.academicPeriodId,
+          originAcademicPeriodName: origin.academicPeriodName,
+          originCourseId: origin.courseId,
+          originCourseName: origin.courseName,
+          originSubjectId: origin.subjectId,
+          originSubjectName: origin.subjectName,
+          originWeekday: origin.weekday,
+          originScheduleBlockId: origin.scheduleBlockId,
+          originBlockStartTime: origin.startTime,
+          originBlockEndTime: origin.endTime,
+          status: ClassSessionStatus.SCHEDULED,
+          scheduledDate,
+        },
+      });
+      this.log(
+        'CLASS_SESSION_CREATED_FROM_TIMETABLE_SLOT',
+        actor.id,
+        classSession,
+      );
+      return { classSession, created: true };
+    } catch (error) {
+      if (!this.isOccurrenceKeyConflict(error)) throw error;
+      const classSession = await this.prisma.classSession.findUnique({
+        where: { timetableOccurrenceKey },
+      });
+      if (!classSession) throw error;
+      return { classSession, created: false };
+    }
+  }
+
   private async persistCreate(
     actor: AuthenticatedUser,
     assignment: AssignmentExecutionContext,
@@ -195,7 +302,7 @@ export class ClassSessionsFoundationService {
         teacherId: true,
         institutionId: true,
         academicPeriod: {
-          select: { status: true, startDate: true, endDate: true },
+          select: { id: true, status: true, startDate: true, endDate: true },
         },
       },
     });
@@ -322,6 +429,52 @@ export class ClassSessionsFoundationService {
         );
       }
     }
+  }
+
+  private assertOriginContext(
+    assignment: AssignmentExecutionContext,
+    origin: PublishedTimetableSlotOrigin,
+    scheduledDate: Date,
+  ): void {
+    if (
+      origin.teacherAssignmentId !== assignment.id ||
+      origin.institutionId !== assignment.institutionId ||
+      origin.academicPeriodId !== assignment.academicPeriod.id
+    ) {
+      throw new NotFoundException('Published timetable slot not found');
+    }
+    const weekday = this.weekdayForCalendarDate(scheduledDate);
+    if (!weekday || origin.weekday !== weekday) {
+      throw new BadRequestException(
+        'Scheduled calendar date does not match the timetable slot weekday',
+      );
+    }
+  }
+
+  private occurrenceKey(timetableSlotId: string, scheduledDate: Date): string {
+    return `timetable-slot:${timetableSlotId}:${scheduledDate.toISOString().slice(0, 10)}`;
+  }
+
+  private weekdayForCalendarDate(value: Date): Weekday | undefined {
+    const weekdays: Partial<Record<number, Weekday>> = {
+      1: Weekday.MON,
+      2: Weekday.TUE,
+      3: Weekday.WED,
+      4: Weekday.THU,
+      5: Weekday.FRI,
+    };
+    return weekdays[value.getUTCDay()];
+  }
+
+  private isOccurrenceKeyConflict(error: unknown): boolean {
+    const candidate = error as { code?: unknown; meta?: { target?: unknown } };
+    return (
+      (error instanceof Prisma.PrismaClientKnownRequestError ||
+        typeof error === 'object') &&
+      candidate.code === 'P2002' &&
+      Array.isArray(candidate.meta?.target) &&
+      candidate.meta.target.includes('timetableOccurrenceKey')
+    );
   }
 
   private calendarDate(value: string | undefined, field: string): Date | null {
