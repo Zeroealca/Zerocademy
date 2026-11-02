@@ -5,6 +5,8 @@ import type {
   UpdateClassSessionInput,
   ClassSessionAttendanceRoster,
   ReplaceClassSessionAttendanceInput,
+  OpenClassSessionFromTimetableSlotInput,
+  OpenClassSessionFromTimetableSlotResult,
 } from "@/features/academic-execution/types";
 
 const classSessionsPath = (teacherAssignmentId: string) =>
@@ -41,6 +43,15 @@ export const updateClassSession = (
       method: "PATCH",
       body: payload,
     },
+  );
+
+export const openClassSessionFromTimetableSlot = (
+  teacherAssignmentId: string,
+  payload: OpenClassSessionFromTimetableSlotInput,
+) =>
+  apiClient<OpenClassSessionFromTimetableSlotResult>(
+    `${classSessionsPath(teacherAssignmentId)}/from-timetable-slot`,
+    { method: "POST", body: payload },
   );
 
 export const fetchClassSessionAttendance = (

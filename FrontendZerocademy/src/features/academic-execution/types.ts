@@ -4,6 +4,21 @@ export interface ClassSession {
   id: string;
   teacherAssignmentId: string;
   lessonPlanId: string | null;
+  timetableSlotId: string | null;
+  timetableOccurrenceKey: string | null;
+  originTeacherAssignmentId: string | null;
+  originInstitutionId: string | null;
+  originInstitutionName: string | null;
+  originAcademicPeriodId: string | null;
+  originAcademicPeriodName: string | null;
+  originCourseId: string | null;
+  originCourseName: string | null;
+  originSubjectId: string | null;
+  originSubjectName: string | null;
+  originWeekday: "MON" | "TUE" | "WED" | "THU" | "FRI" | null;
+  originScheduleBlockId: string | null;
+  originBlockStartTime: string | null;
+  originBlockEndTime: string | null;
   status: ClassSessionStatus;
   scheduledDate: string | null;
   occurredOn: string | null;
@@ -19,6 +34,16 @@ export interface CreateClassSessionInput {
 }
 
 export type UpdateClassSessionInput = Partial<CreateClassSessionInput>;
+
+export interface OpenClassSessionFromTimetableSlotInput {
+  timetableSlotId: string;
+  scheduledDate: string;
+}
+
+export interface OpenClassSessionFromTimetableSlotResult {
+  classSession: ClassSession;
+  created: boolean;
+}
 
 export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 export interface ClassSessionAttendanceRoster {

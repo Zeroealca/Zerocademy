@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +16,14 @@ import {
   useMyTimetable,
   useMyTodayTimetable,
 } from "@/features/timetables/hooks/use-timetables";
+import { useOpenClassSessionFromTimetableSlot } from "@/features/academic-execution/hooks/use-class-sessions";
 import type {
   TeacherTimetable,
   TeacherTimetableSlot,
   Weekday,
 } from "@/features/timetables/types";
 import { ApiError } from "@/lib/api-error";
+import { useAuthStore } from "@/stores/use-auth-store";
 
 const weekdayLabels: Record<Weekday, string> = {
   MON: "Lunes",
@@ -183,8 +186,14 @@ function Weekly({ timetable }: { timetable: TeacherTimetable[] }) {
 }
 
 function Today({ timetable }: { timetable: TeacherTimetable[] }) {
+  const role = useAuthStore((state) => state.user?.role);
   const slots = timetable
-    .flatMap((item) => item.slots)
+    .flatMap((item) =>
+      item.slots.map((slot) => ({
+        ...slot,
+        academicPeriodId: item.academicPeriodId,
+      })),
+    )
     .sort((a, b) => a.scheduleBlockPosition - b.scheduleBlockPosition);
   if (!slots.length)
     return (
@@ -220,12 +229,61 @@ function Today({ timetable }: { timetable: TeacherTimetable[] }) {
                 <p className="text-sm text-muted-foreground">
                   {slot.courseName}
                 </p>
+                {role === "TEACHER" ? <OpenSessionButton slot={slot} /> : null}
               </li>
             ))}
           </ol>
         </CardContent>
       </Card>
     </section>
+  );
+}
+
+function OpenSessionButton({
+  slot,
+}: {
+  slot: TeacherTimetableSlot & { academicPeriodId: string };
+}) {
+  const router = useRouter();
+  const open = useOpenClassSessionFromTimetableSlot();
+  const [error, setError] = useState<string | null>(null);
+  const openSession = async () => {
+    setError(null);
+    try {
+      const result = await open.mutateAsync({
+        teacherAssignmentId: slot.teacherAssignmentId,
+        payload: {
+          timetableSlotId: slot.id,
+          scheduledDate: todayInGuayaquil(),
+        },
+      });
+      router.push(
+        `/class-sessions/${slot.teacherAssignmentId}/${result.classSession.id}`,
+      );
+    } catch (reason) {
+      setError(
+        reason instanceof ApiError
+          ? reason.message
+          : "No se pudo abrir la sesión de clase.",
+      );
+    }
+  };
+  return (
+    <div className="mt-3 space-y-2">
+      <Button
+        disabled={open.isPending}
+        onClick={() => void openSession()}
+        size="sm"
+        variant="outline"
+      >
+        {open.isPending ? "Abriendo sesión…" : "Abrir sesión"}
+      </Button>
+      {error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -254,6 +312,21 @@ function currentWeekday(): Weekday | undefined {
       Weekday
     >
   )[short];
+}
+
+function todayInGuayaquil(): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Guayaquil",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const value = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+  return `${value.year}-${value.month}-${value.day}`;
 }
 function Loading({ label }: { label: string }) {
   return (

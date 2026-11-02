@@ -8,12 +8,14 @@ import {
   updateClassSession,
   fetchClassSessionAttendance,
   replaceClassSessionAttendance,
+  openClassSessionFromTimetableSlot,
 } from "@/features/academic-execution/api/class-sessions.api";
 import { classSessionsKeys } from "@/features/academic-execution/api/class-sessions.keys";
 import type {
   CreateClassSessionInput,
   UpdateClassSessionInput,
   ReplaceClassSessionAttendanceInput,
+  OpenClassSessionFromTimetableSlotInput,
 } from "@/features/academic-execution/types";
 
 export function useClassSessions(teacherAssignmentId: string) {
@@ -119,5 +121,17 @@ export function useUpdateClassSession() {
       });
       return invalidateClassSessions(teacherAssignmentId);
     },
+  });
+}
+
+export function useOpenClassSessionFromTimetableSlot() {
+  return useMutation({
+    mutationFn: ({
+      teacherAssignmentId,
+      payload,
+    }: {
+      teacherAssignmentId: string;
+      payload: OpenClassSessionFromTimetableSlotInput;
+    }) => openClassSessionFromTimetableSlot(teacherAssignmentId, payload),
   });
 }
