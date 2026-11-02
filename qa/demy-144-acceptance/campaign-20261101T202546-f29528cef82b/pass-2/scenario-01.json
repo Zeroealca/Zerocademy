@@ -1,0 +1,697 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\ealci\\AppData\\Local\\Author Software\\nvm\\installs\\v22.12.0\\node.exe",
+      "D:\\Programacion\\Zerocademy\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "e2e/timetables-lifecycle-authorization.spec.ts",
+      "--project=desktop",
+      "--reporter=json",
+      "--output=D:\\Programacion\\Zerocademy\\qa\\demy-144-acceptance\\campaign-20261101T202546-f29528cef82b\\pass-2\\output-01"
+    ],
+    "configFile": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\playwright.config.ts",
+    "rootDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-01",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-01",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "tablet",
+        "name": "tablet",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-01",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-01",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "narrow-mobile",
+        "name": "narrow-mobile",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\Programacion\\Zerocademy\\qa\\demy-144-acceptance\\campaign-20261101T202546-f29528cef82b\\pass-2\\output-01",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "desktop",
+        "testDir": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e",
+        "snapshotDir": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:3002",
+          "trace": "retain-on-failure",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "timetables-lifecycle-authorization.spec.ts",
+      "file": "timetables-lifecycle-authorization.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "DEMY-140 lifecycle and authorization",
+          "file": "timetables-lifecycle-authorization.spec.ts",
+          "line": 61,
+          "column": 15,
+          "specs": [
+            {
+              "title": "Institution B ADMIN mutates an ACTIVE structure through the UI and cleans up",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4295,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:31:42.798Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-b6d2398bb953c3ad4981",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "ADMIN moves a draft slot, persists it, and recovers from a stale version",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4707,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:31:47.986Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-000fc189f716d7f0ab6f",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 111,
+              "column": 7
+            },
+            {
+              "title": "ADMIN generates, saves, validates, and discards a timetable draft",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3864,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:31:52.721Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-948a0051efcda5b2d3cf",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "ADMIN publishes a valid draft, sees read-only controls, and safely unpublishes it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6021,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:31:56.607Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-cc69415806b15a3d1a9c",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 237,
+              "column": 7
+            },
+            {
+              "title": "shows the real backend overlap error, preserves the form, and keeps persisted blocks unchanged",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2519,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:32:02.644Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-8efe3afd4a2f2e9da09f",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 401,
+              "column": 7
+            },
+            {
+              "title": "recovers after a simulated network failure without reporting a false success",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2110,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:32:05.181Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-cf1c328b2b229a26ab87",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 445,
+              "column": 7
+            },
+            {
+              "title": "shows a safe message and recovers after a simulated unexpected server failure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2249,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:32:07.304Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-3e66d6055ccd5acfa624",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 473,
+              "column": 7
+            },
+            {
+              "title": "PLANNED remains mutable while CLOSED and ARCHIVED are readable without mutations",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3105,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:32:09.575Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-c6e67f868288513f20dc",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 511,
+              "column": 7
+            },
+            {
+              "title": "a TEACHER has read-only timetable navigation without administrative controls",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1845,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:32:12.700Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-442b64f998002732b8c3",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 616,
+              "column": 7
+            },
+            {
+              "title": "Institution B ADMIN sees only B context and cannot read Institution A's structure",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                        "line": 61,
+                        "column": 15
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1940,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:32:14.578Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e\\timetables-lifecycle-authorization.spec.ts",
+                            "line": 61,
+                            "column": 15
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbd3a683cc5c3cf5b0d5-898031198223900396a8",
+              "file": "timetables-lifecycle-authorization.spec.ts",
+              "line": 641,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T01:31:42.050Z",
+    "duration": 38194.224,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

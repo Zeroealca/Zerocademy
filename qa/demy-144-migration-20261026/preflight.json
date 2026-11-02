@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-10-26T00:00:00-05:00",
+  "migration": "20261026123000_class_session_timetable_origin",
+  "gitHead": "dabe9c23bf348423f05fcdcf14e46d4de03bff88",
+  "effectiveDatabase": { "host": "postgres", "database": "zerocademy_e2e", "e2eClockEnabled": true },
+  "liveIdentity": { "database": "zerocademy_e2e", "serverAddress": "172.20.0.4/32", "serverPort": 5432 },
+  "prismaStatus": { "localMigrationCount": 35, "pendingMigrations": ["20261026123000_class_session_timetable_origin"], "activeIncompleteMigrations": 0 },
+  "compatibility": { "classSessionRows": 0, "targetColumnsPresentBefore": false, "duplicateNonNullOccurrenceKeys": 0 },
+  "sqlAudit": { "additive": true, "destructiveStatements": 0, "manualSessionsRemainCompatible": true, "nullableOccurrenceKey": true, "nullableSetNullForeignKey": true },
+  "migrationSqlSha256": "86A8D0CC4F95C3FB64EC4F3AE58F4ACBB832C799090146E3F1E371016E88FE05"
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "target": "e2e/timetables-lifecycle-authorization.spec.ts",
+    "project": "desktop",
+    "count": 10,
+    "listing": "Listing tests:\n  [desktop] › timetables-lifecycle-authorization.spec.ts:69:7 › DEMY-140 lifecycle and authorization › Institution B ADMIN mutates an ACTIVE structure through the UI and cleans up\n  [desktop] › timetables-lifecycle-authorization.spec.ts:111:7 › DEMY-140 lifecycle and authorization › ADMIN moves a draft slot, persists it, and recovers from a stale version\n  [desktop] › timetables-lifecycle-authorization.spec.ts:184:7 › DEMY-140 lifecycle and authorization › ADMIN generates, saves, validates, and discards a timetable draft\n  [desktop] › timetables-lifecycle-authorization.spec.ts:237:7 › DEMY-140 lifecycle and authorization › ADMIN publishes a valid draft, sees read-only controls, and safely unpublishes it\n  [desktop] › timetables-lifecycle-authorization.spec.ts:401:7 › DEMY-140 lifecycle and authorization › shows the real backend overlap error, preserves the form, and keeps persisted blocks unchanged\n  [desktop] › timetables-lifecycle-authorization.spec.ts:445:7 › DEMY-140 lifecycle and authorization › recovers after a simulated network failure without reporting a false success\n  [desktop] › timetables-lifecycle-authorization.spec.ts:473:7 › DEMY-140 lifecycle and authorization › shows a safe message and recovers after a simulated unexpected server failure\n  [desktop] › timetables-lifecycle-authorization.spec.ts:511:7 › DEMY-140 lifecycle and authorization › PLANNED remains mutable while CLOSED and ARCHIVED are readable without mutations\n  [desktop] › timetables-lifecycle-authorization.spec.ts:616:7 › DEMY-140 lifecycle and authorization › a TEACHER has read-only timetable navigation without administrative controls\n  [desktop] › timetables-lifecycle-authorization.spec.ts:641:7 › DEMY-140 lifecycle and authorization › Institution B ADMIN sees only B context and cannot read Institution A's structure\nTotal: 10 tests in 1 file"
+  },
+  {
+    "target": "e2e/timetables-responsive.spec.ts",
+    "project": "mobile",
+    "count": 1,
+    "listing": "Listing tests:\n  [mobile] › timetables-responsive.spec.ts:18:7 › DEMY-140 responsive timetable workspace › keeps the selector, read-only history, form controls, and actions usable at this viewport\nTotal: 1 test in 1 file"
+  },
+  {
+    "target": "e2e/timetables-weekly-grid.spec.ts",
+    "project": "desktop",
+    "count": 1,
+    "listing": "Listing tests:\n  [desktop] › timetables-weekly-grid.spec.ts:18:7 › DEMY-140 weekly timetable grid › renders a real timetable as a read-only accessible weekly grid\nTotal: 1 test in 1 file"
+  },
+  {
+    "target": "e2e/timetables.spec.ts",
+    "project": "desktop",
+    "count": 4,
+    "listing": "Listing tests:\n  [desktop] › timetables.spec.ts:57:7 › DEMY-140 schedule structure › an institutional admin can open the schedule structure workspace\n  [desktop] › timetables.spec.ts:65:7 › DEMY-140 schedule structure › persists weekday and block mutations through the real API\n  [desktop] › timetables.spec.ts:116:7 › DEMY-140 schedule structure › edits, reorders, cancels, and confirms deletion of a test-owned block\n  [desktop] › timetables.spec.ts:189:7 › DEMY-140 schedule structure › prevents an invalid client-side time range without creating a block\nTotal: 4 tests in 1 file"
+  },
+  {
+    "target": "e2e/teacher-timetables.spec.ts",
+    "project": "desktop",
+    "count": 10,
+    "listing": "Listing tests:\n  [desktop] › teacher-timetables.spec.ts:79:7 › DEMY-142 teacher timetables › shows only the teacher's published weekly timetable and remains read-only\n  [desktop] › teacher-timetables.spec.ts:133:7 › DEMY-142 teacher timetables › hides drafts and exposes accessible Today empty state on non-instructional days\n  [desktop] › teacher-timetables.spec.ts:234:7 › DEMY-142 teacher timetable acceptance scenarios › isolates published schedules between two authenticated teachers\n  [desktop] › teacher-timetables.spec.ts:271:7 › DEMY-142 teacher timetable acceptance scenarios › does not expose a foreign institution timetable to a teacher\n  [desktop] › teacher-timetables.spec.ts:303:7 › DEMY-142 teacher timetable acceptance scenarios › filters the authenticated teacher timetable by academic period\n  [desktop] › teacher-timetables.spec.ts:348:7 › DEMY-142 teacher timetable acceptance scenarios › orders Today classes chronologically with a Playwright-controlled browser clock\n  [desktop] › teacher-timetables.spec.ts:374:7 › DEMY-142 teacher timetable acceptance scenarios › rejects every teacher timetable mutation and renders no administrative controls\n  [desktop] › teacher-timetables.spec.ts:409:7 › DEMY-142 teacher timetable acceptance scenarios › keeps the weekly timetable usable in a mobile Chromium viewport with contained grid scrolling\n  [desktop] › teacher-timetables.spec.ts:438:7 › DEMY-142 teacher timetable acceptance scenarios › shows mobile Today navigation and class information\n  [desktop] › teacher-timetables.spec.ts:475:7 › DEMY-142 teacher timetable acceptance scenarios › supports keyboard focus and Enter or Space tab activation\nTotal: 10 tests in 1 file"
+  },
+  {
+    "target": "e2e/student-representative-timetables.spec.ts",
+    "project": "desktop",
+    "count": 6,
+    "listing": "Listing tests:\n  [desktop] › student-representative-timetables.spec.ts:63:7 › DEMY-143 student and representative timetables › HTTP: returns only enrolled published student slots\n  [desktop] › student-representative-timetables.spec.ts:97:7 › DEMY-143 student and representative timetables › HTTP: isolates published timetables between institutions\n  [desktop] › student-representative-timetables.spec.ts:137:7 › DEMY-143 student and representative timetables › HTTP: representative is limited to active linked students\n  [desktop] › student-representative-timetables.spec.ts:158:7 › DEMY-143 student and representative timetables › HTTP: empty and inactive identities cannot broaden timetable access\n  [desktop] › student-representative-timetables.spec.ts:191:7 › DEMY-143 student and representative timetables › browser: student and representative views are read-only\n  [desktop] › student-representative-timetables.spec.ts:214:7 › DEMY-143 student and representative timetables › browser: mobile views keep timetable grids contained and show empty states\nTotal: 6 tests in 1 file"
+  },
+  {
+    "target": "e2e/student-representative-timetables.spec.ts",
+    "project": "mobile",
+    "count": 6,
+    "listing": "Listing tests:\n  [mobile] › student-representative-timetables.spec.ts:63:7 › DEMY-143 student and representative timetables › HTTP: returns only enrolled published student slots\n  [mobile] › student-representative-timetables.spec.ts:97:7 › DEMY-143 student and representative timetables › HTTP: isolates published timetables between institutions\n  [mobile] › student-representative-timetables.spec.ts:137:7 › DEMY-143 student and representative timetables › HTTP: representative is limited to active linked students\n  [mobile] › student-representative-timetables.spec.ts:158:7 › DEMY-143 student and representative timetables › HTTP: empty and inactive identities cannot broaden timetable access\n  [mobile] › student-representative-timetables.spec.ts:191:7 › DEMY-143 student and representative timetables › browser: student and representative views are read-only\n  [mobile] › student-representative-timetables.spec.ts:214:7 › DEMY-143 student and representative timetables › browser: mobile views keep timetable grids contained and show empty states\nTotal: 6 tests in 1 file"
+  },
+  {
+    "target": "e2e/demy-144-class-sessions.spec.ts",
+    "project": "desktop",
+    "count": 4,
+    "listing": "Listing tests:\n  [desktop] › demy-144-class-sessions.spec.ts:103:7 › DEMY-144 class sessions from Teacher Today › opens each published slot once and navigates to its scheduled standalone session\n  [desktop] › demy-144-class-sessions.spec.ts:186:7 › DEMY-144 class sessions from Teacher Today › keeps completed and cancelled occurrences historical in the standalone page\n  [desktop] › demy-144-class-sessions.spec.ts:232:7 › DEMY-144 class sessions from Teacher Today › renders loading and not-found session states\n  [desktop] › demy-144-class-sessions.spec.ts:257:7 › DEMY-144 class session controls remain absent for read-only audiences › does not expose session creation controls to students or representatives\nTotal: 4 tests in 1 file"
+  },
+  {
+    "target": "e2e/demy-144-class-sessions.spec.ts",
+    "project": "mobile",
+    "count": 4,
+    "listing": "Listing tests:\n  [mobile] › demy-144-class-sessions.spec.ts:103:7 › DEMY-144 class sessions from Teacher Today › opens each published slot once and navigates to its scheduled standalone session\n  [mobile] › demy-144-class-sessions.spec.ts:186:7 › DEMY-144 class sessions from Teacher Today › keeps completed and cancelled occurrences historical in the standalone page\n  [mobile] › demy-144-class-sessions.spec.ts:232:7 › DEMY-144 class sessions from Teacher Today › renders loading and not-found session states\n  [mobile] › demy-144-class-sessions.spec.ts:257:7 › DEMY-144 class session controls remain absent for read-only audiences › does not expose session creation controls to students or representatives\nTotal: 4 tests in 1 file"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "migration": "20261026123000_class_session_timetable_origin",
+  "execution": { "workflow": "docker compose exec -T backend npx prisma migrate deploy --schema BackendZerocademy/prisma/schema.prisma", "exitCode": 0, "appliedMigrationCount": 1 },
+  "database": { "host": "postgres", "database": "zerocademy_e2e", "serverAddress": "172.20.0.4/32", "serverPort": 5432, "e2eClockEnabled": true },
+  "migrationRecord": { "finishedAt": "2026-10-26T20:07:04.747Z", "rolledBackAt": null, "appliedSteps": 1 },
+  "schema": {
+    "allSnapshotAndOriginColumnsNullable": true,
+    "foreignKey": "class_sessions_timetableSlotId_fkey",
+    "onDelete": "SET NULL",
+    "uniqueOccurrenceIndex": "class_sessions_timetableOccurrenceKey_key",
+    "supportingIndexes": ["class_sessions_timetableSlotId_idx", "class_sessions_originInstitutionId_originAcademicPeriodId_idx"]
+  },
+  "integrity": { "classSessionRowsBefore": 0, "classSessionRowsAfter": 0, "activeIncompleteMigrations": 0, "pendingMigrationsAfter": [] },
+  "prismaValidate": "passed",
+  "gitHead": "dabe9c23bf348423f05fcdcf14e46d4de03bff88",
+  "sourceFingerprint": "60eebab4e63dacfb7383f74373d3f9bd5ae1b981b85c6891e04831755c0b4448",
+  "migrationSqlSha256": "86A8D0CC4F95C3FB64EC4F3AE58F4ACBB832C799090146E3F1E371016E88FE05"
+}

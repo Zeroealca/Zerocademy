@@ -1,0 +1,8 @@
+{
+  "configuredHost": "postgres",
+  "configuredDatabase": "zerocademy_e2e",
+  "liveDatabase": "zerocademy_e2e",
+  "clock": "true",
+  "migrationApplied": "1",
+  "backendStartup": "[\"npm\",\"run\",\"start:dev\",\"-w\",\"backend-zerocademy\"]|[]"
+}

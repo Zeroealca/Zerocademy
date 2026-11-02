@@ -1,0 +1,23 @@
+{
+  "classification": "ACCEPTED",
+  "totalTestsPerPass": 46.0,
+  "totalExecuted": 138.0,
+  "sourceFingerprint": "9ec92e1ae65360bff1d40151ff8ab90a9f2b2c5078094776774f8da92e0b2144",
+  "cleanup": {
+    "historicalFixtureIds": [
+      "02d9148f-7df9-429e-b046-df561652452f",
+      "1c1b2612-4892-4100-930b-316606ad1463",
+      "1f0e2717-3655-4ba3-969e-b12ed060df96",
+      "6d5ca5ad-b9a3-4e7a-b629-d093404b9c21",
+      "6ff43064-e7a5-4aae-8dd7-8a93078b70a6",
+      "81cea841-6513-44a1-81bd-85450c177803",
+      "88b90251-5b7f-4c01-be36-284f68657790",
+      "e058224d-32b4-40bc-837e-8f6e4765a018",
+      "fe43ff4c-04f4-4485-8cbb-fb6d3bfb864d"
+    ],
+    "temporaryFixtureJsonCount": 0,
+    "campaignOwnedInstitutions": 0,
+    "campaignOwnedClassSessions": 0
+  },
+  "completedAt": "2026-11-01T20:40:58.9173271-05:00"
+}

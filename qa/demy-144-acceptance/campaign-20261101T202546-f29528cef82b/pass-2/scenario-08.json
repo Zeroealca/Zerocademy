@@ -1,0 +1,321 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\ealci\\AppData\\Local\\Author Software\\nvm\\installs\\v22.12.0\\node.exe",
+      "D:\\Programacion\\Zerocademy\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "e2e/demy-144-class-sessions.spec.ts",
+      "--project=desktop",
+      "--reporter=json",
+      "--output=D:\\Programacion\\Zerocademy\\qa\\demy-144-acceptance\\campaign-20261101T202546-f29528cef82b\\pass-2\\output-08"
+    ],
+    "configFile": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\playwright.config.ts",
+    "rootDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-08",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-08",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "tablet",
+        "name": "tablet",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-08",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/Programacion/Zerocademy/qa/demy-144-acceptance/campaign-20261101T202546-f29528cef82b/pass-2/output-08",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "narrow-mobile",
+        "name": "narrow-mobile",
+        "testDir": "D:/Programacion/Zerocademy/FrontendZerocademy/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "D:\\Programacion\\Zerocademy\\qa\\demy-144-acceptance\\campaign-20261101T202546-f29528cef82b\\pass-2\\output-08",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "desktop",
+        "testDir": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e",
+        "snapshotDir": "D:\\Programacion\\Zerocademy\\FrontendZerocademy\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:3002",
+          "trace": "retain-on-failure",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "desktop"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "demy-144-class-sessions.spec.ts",
+      "file": "demy-144-class-sessions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "DEMY-144 class sessions from Teacher Today",
+          "file": "demy-144-class-sessions.spec.ts",
+          "line": 93,
+          "column": 6,
+          "specs": [
+            {
+              "title": "opens each published slot once and navigates to its scheduled standalone session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10848,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:36:04.022Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "24edb06eef07ad100ee4-0eb322071ab93e420213",
+              "file": "demy-144-class-sessions.spec.ts",
+              "line": 103,
+              "column": 7
+            },
+            {
+              "title": "keeps completed and cancelled occurrences historical in the standalone page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5656,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:36:15.056Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "24edb06eef07ad100ee4-7612bf4d4df78d344171",
+              "file": "demy-144-class-sessions.spec.ts",
+              "line": 186,
+              "column": 7
+            },
+            {
+              "title": "renders loading and not-found session states",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4934,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:36:20.729Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "24edb06eef07ad100ee4-7dab25af6380bd6089fd",
+              "file": "demy-144-class-sessions.spec.ts",
+              "line": 232,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "DEMY-144 class session controls remain absent for read-only audiences",
+          "file": "demy-144-class-sessions.spec.ts",
+          "line": 247,
+          "column": 6,
+          "specs": [
+            {
+              "title": "does not expose session creation controls to students or representatives",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2957,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T01:36:25.679Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "24edb06eef07ad100ee4-1427e8049f282e44dae4",
+              "file": "demy-144-class-sessions.spec.ts",
+              "line": 257,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T01:36:02.963Z",
+    "duration": 25888.145,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

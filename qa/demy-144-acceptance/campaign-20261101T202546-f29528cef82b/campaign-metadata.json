@@ -1,0 +1,144 @@
+{
+  "campaignId": "campaign-20261101T202546-f29528cef82b",
+  "gitHead": "f29528cef82b08c53aa3e2a08bc1390d72b2ab23",
+  "workingTreeStatus": [
+    " M BackendZerocademy/prisma/schema.prisma",
+    " M BackendZerocademy/src/modules/academic-execution/academic-execution.module.ts",
+    " M BackendZerocademy/src/modules/academic-execution/class-sessions-foundation.service.spec.ts",
+    " M BackendZerocademy/src/modules/academic-execution/class-sessions-foundation.service.ts",
+    " M BackendZerocademy/src/modules/academic-execution/class-sessions.controller.ts",
+    " M BackendZerocademy/src/modules/academic-execution/class-sessions.service.spec.ts",
+    " M BackendZerocademy/src/modules/academic-execution/dto/class-session-response.dto.spec.ts",
+    " M BackendZerocademy/src/modules/academic-execution/dto/class-session-response.dto.ts",
+    " M BackendZerocademy/src/modules/academic-execution/dto/class-session.dto.ts",
+    " M BackendZerocademy/src/modules/timetables/timetables.module.ts",
+    " M BackendZerocademy/test/helpers/schedule-structure-browser-fixture-cli.js",
+    " M FrontendZerocademy/src/features/academic-execution/api/class-sessions.api.ts",
+    " M FrontendZerocademy/src/features/academic-execution/components/class-session-edit-form.tsx",
+    " M FrontendZerocademy/src/features/academic-execution/hooks/use-class-sessions.ts",
+    " M FrontendZerocademy/src/features/academic-execution/index.ts",
+    " M FrontendZerocademy/src/features/academic-execution/types.ts",
+    " M FrontendZerocademy/src/features/timetables/components/teacher-timetable-page.tsx",
+    " M docs/academic-planning.md",
+    " M docs/timetables-scheduling.md",
+    " M qa/docker-compose.e2e.yml",
+    "?? BackendZerocademy/prisma/migrations/20261026123000_class_session_timetable_origin/",
+    "?? BackendZerocademy/src/modules/timetables/timetable-slot-origin.service.spec.ts",
+    "?? BackendZerocademy/src/modules/timetables/timetable-slot-origin.service.ts",
+    "?? FrontendZerocademy/e2e/demy-144-class-sessions.spec.ts",
+    "?? FrontendZerocademy/qa/",
+    "?? FrontendZerocademy/src/app/(dashboard)/class-sessions/",
+    "?? FrontendZerocademy/src/features/academic-execution/components/class-session-standalone-page.tsx",
+    "?? qa/demy-141-publish-lifecycle-e2e.exitcode",
+    "?? qa/demy-143-cross-institution-desktop.exitcode",
+    "?? qa/demy-143-desktop.exitcode",
+    "?? qa/demy-143-draft-visibility-http.exitcode",
+    "?? qa/demy-143-mobile.exitcode",
+    "?? qa/demy-144-acceptance/",
+    "?? qa/demy-144-focused-e2e/",
+    "?? qa/demy-144-migration-20261026/",
+    "?? test-results/"
+  ],
+  "sourceFingerprint": "9ec92e1ae65360bff1d40151ff8ab90a9f2b2c5078094776774f8da92e0b2144",
+  "inventoryTotal": 46.0,
+  "inventory": [
+    {
+      "target": "e2e/timetables-lifecycle-authorization.spec.ts",
+      "project": "desktop",
+      "count": 10,
+      "listing": "Listing tests:\n  [desktop] › timetables-lifecycle-authorization.spec.ts:69:7 › DEMY-140 lifecycle and authorization › Institution B ADMIN mutates an ACTIVE structure through the UI and cleans up\n  [desktop] › timetables-lifecycle-authorization.spec.ts:111:7 › DEMY-140 lifecycle and authorization › ADMIN moves a draft slot, persists it, and recovers from a stale version\n  [desktop] › timetables-lifecycle-authorization.spec.ts:184:7 › DEMY-140 lifecycle and authorization › ADMIN generates, saves, validates, and discards a timetable draft\n  [desktop] › timetables-lifecycle-authorization.spec.ts:237:7 › DEMY-140 lifecycle and authorization › ADMIN publishes a valid draft, sees read-only controls, and safely unpublishes it\n  [desktop] › timetables-lifecycle-authorization.spec.ts:401:7 › DEMY-140 lifecycle and authorization › shows the real backend overlap error, preserves the form, and keeps persisted blocks unchanged\n  [desktop] › timetables-lifecycle-authorization.spec.ts:445:7 › DEMY-140 lifecycle and authorization › recovers after a simulated network failure without reporting a false success\n  [desktop] › timetables-lifecycle-authorization.spec.ts:473:7 › DEMY-140 lifecycle and authorization › shows a safe message and recovers after a simulated unexpected server failure\n  [desktop] › timetables-lifecycle-authorization.spec.ts:511:7 › DEMY-140 lifecycle and authorization › PLANNED remains mutable while CLOSED and ARCHIVED are readable without mutations\n  [desktop] › timetables-lifecycle-authorization.spec.ts:616:7 › DEMY-140 lifecycle and authorization › a TEACHER has read-only timetable navigation without administrative controls\n  [desktop] › timetables-lifecycle-authorization.spec.ts:641:7 › DEMY-140 lifecycle and authorization › Institution B ADMIN sees only B context and cannot read Institution A's structure\nTotal: 10 tests in 1 file"
+    },
+    {
+      "target": "e2e/timetables-responsive.spec.ts",
+      "project": "mobile",
+      "count": 1,
+      "listing": "Listing tests:\n  [mobile] › timetables-responsive.spec.ts:18:7 › DEMY-140 responsive timetable workspace › keeps the selector, read-only history, form controls, and actions usable at this viewport\nTotal: 1 test in 1 file"
+    },
+    {
+      "target": "e2e/timetables-weekly-grid.spec.ts",
+      "project": "desktop",
+      "count": 1,
+      "listing": "Listing tests:\n  [desktop] › timetables-weekly-grid.spec.ts:18:7 › DEMY-140 weekly timetable grid › renders a real timetable as a read-only accessible weekly grid\nTotal: 1 test in 1 file"
+    },
+    {
+      "target": "e2e/timetables.spec.ts",
+      "project": "desktop",
+      "count": 4,
+      "listing": "Listing tests:\n  [desktop] › timetables.spec.ts:57:7 › DEMY-140 schedule structure › an institutional admin can open the schedule structure workspace\n  [desktop] › timetables.spec.ts:65:7 › DEMY-140 schedule structure › persists weekday and block mutations through the real API\n  [desktop] › timetables.spec.ts:116:7 › DEMY-140 schedule structure › edits, reorders, cancels, and confirms deletion of a test-owned block\n  [desktop] › timetables.spec.ts:189:7 › DEMY-140 schedule structure › prevents an invalid client-side time range without creating a block\nTotal: 4 tests in 1 file"
+    },
+    {
+      "target": "e2e/teacher-timetables.spec.ts",
+      "project": "desktop",
+      "count": 10,
+      "listing": "Listing tests:\n  [desktop] › teacher-timetables.spec.ts:79:7 › DEMY-142 teacher timetables › shows only the teacher's published weekly timetable and remains read-only\n  [desktop] › teacher-timetables.spec.ts:133:7 › DEMY-142 teacher timetables › hides drafts and exposes accessible Today empty state on non-instructional days\n  [desktop] › teacher-timetables.spec.ts:234:7 › DEMY-142 teacher timetable acceptance scenarios › isolates published schedules between two authenticated teachers\n  [desktop] › teacher-timetables.spec.ts:271:7 › DEMY-142 teacher timetable acceptance scenarios › does not expose a foreign institution timetable to a teacher\n  [desktop] › teacher-timetables.spec.ts:303:7 › DEMY-142 teacher timetable acceptance scenarios › filters the authenticated teacher timetable by academic period\n  [desktop] › teacher-timetables.spec.ts:348:7 › DEMY-142 teacher timetable acceptance scenarios › orders Today classes chronologically with a Playwright-controlled browser clock\n  [desktop] › teacher-timetables.spec.ts:374:7 › DEMY-142 teacher timetable acceptance scenarios › rejects every teacher timetable mutation and renders no administrative controls\n  [desktop] › teacher-timetables.spec.ts:409:7 › DEMY-142 teacher timetable acceptance scenarios › keeps the weekly timetable usable in a mobile Chromium viewport with contained grid scrolling\n  [desktop] › teacher-timetables.spec.ts:438:7 › DEMY-142 teacher timetable acceptance scenarios › shows mobile Today navigation and class information\n  [desktop] › teacher-timetables.spec.ts:475:7 › DEMY-142 teacher timetable acceptance scenarios › supports keyboard focus and Enter or Space tab activation\nTotal: 10 tests in 1 file"
+    },
+    {
+      "target": "e2e/student-representative-timetables.spec.ts",
+      "project": "desktop",
+      "count": 6,
+      "listing": "Listing tests:\n  [desktop] › student-representative-timetables.spec.ts:63:7 › DEMY-143 student and representative timetables › HTTP: returns only enrolled published student slots\n  [desktop] › student-representative-timetables.spec.ts:97:7 › DEMY-143 student and representative timetables › HTTP: isolates published timetables between institutions\n  [desktop] › student-representative-timetables.spec.ts:137:7 › DEMY-143 student and representative timetables › HTTP: representative is limited to active linked students\n  [desktop] › student-representative-timetables.spec.ts:158:7 › DEMY-143 student and representative timetables › HTTP: empty and inactive identities cannot broaden timetable access\n  [desktop] › student-representative-timetables.spec.ts:191:7 › DEMY-143 student and representative timetables › browser: student and representative views are read-only\n  [desktop] › student-representative-timetables.spec.ts:214:7 › DEMY-143 student and representative timetables › browser: mobile views keep timetable grids contained and show empty states\nTotal: 6 tests in 1 file"
+    },
+    {
+      "target": "e2e/student-representative-timetables.spec.ts",
+      "project": "mobile",
+      "count": 6,
+      "listing": "Listing tests:\n  [mobile] › student-representative-timetables.spec.ts:63:7 › DEMY-143 student and representative timetables › HTTP: returns only enrolled published student slots\n  [mobile] › student-representative-timetables.spec.ts:97:7 › DEMY-143 student and representative timetables › HTTP: isolates published timetables between institutions\n  [mobile] › student-representative-timetables.spec.ts:137:7 › DEMY-143 student and representative timetables › HTTP: representative is limited to active linked students\n  [mobile] › student-representative-timetables.spec.ts:158:7 › DEMY-143 student and representative timetables › HTTP: empty and inactive identities cannot broaden timetable access\n  [mobile] › student-representative-timetables.spec.ts:191:7 › DEMY-143 student and representative timetables › browser: student and representative views are read-only\n  [mobile] › student-representative-timetables.spec.ts:214:7 › DEMY-143 student and representative timetables › browser: mobile views keep timetable grids contained and show empty states\nTotal: 6 tests in 1 file"
+    },
+    {
+      "target": "e2e/demy-144-class-sessions.spec.ts",
+      "project": "desktop",
+      "count": 4,
+      "listing": "Listing tests:\n  [desktop] › demy-144-class-sessions.spec.ts:103:7 › DEMY-144 class sessions from Teacher Today › opens each published slot once and navigates to its scheduled standalone session\n  [desktop] › demy-144-class-sessions.spec.ts:186:7 › DEMY-144 class sessions from Teacher Today › keeps completed and cancelled occurrences historical in the standalone page\n  [desktop] › demy-144-class-sessions.spec.ts:232:7 › DEMY-144 class sessions from Teacher Today › renders loading and not-found session states\n  [desktop] › demy-144-class-sessions.spec.ts:257:7 › DEMY-144 class session controls remain absent for read-only audiences › does not expose session creation controls to students or representatives\nTotal: 4 tests in 1 file"
+    },
+    {
+      "target": "e2e/demy-144-class-sessions.spec.ts",
+      "project": "mobile",
+      "count": 4,
+      "listing": "Listing tests:\n  [mobile] › demy-144-class-sessions.spec.ts:103:7 › DEMY-144 class sessions from Teacher Today › opens each published slot once and navigates to its scheduled standalone session\n  [mobile] › demy-144-class-sessions.spec.ts:186:7 › DEMY-144 class sessions from Teacher Today › keeps completed and cancelled occurrences historical in the standalone page\n  [mobile] › demy-144-class-sessions.spec.ts:232:7 › DEMY-144 class sessions from Teacher Today › renders loading and not-found session states\n  [mobile] › demy-144-class-sessions.spec.ts:257:7 › DEMY-144 class session controls remain absent for read-only audiences › does not expose session creation controls to students or representatives\nTotal: 4 tests in 1 file"
+    }
+  ],
+  "historicalFixtures": [
+    {
+      "id": "02d9148f-7df9-429e-b046-df561652452f",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791944083300-259692480a5db"
+    },
+    {
+      "id": "1c1b2612-4892-4100-930b-316606ad1463",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791944163114-14acac1fc21e9"
+    },
+    {
+      "id": "1f0e2717-3655-4ba3-969e-b12ed060df96",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-7429a9cd-8a86-470d-92cf-783a2265e680"
+    },
+    {
+      "id": "6d5ca5ad-b9a3-4e7a-b629-d093404b9c21",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791944083183-18e0377415d0c"
+    },
+    {
+      "id": "6ff43064-e7a5-4aae-8dd7-8a93078b70a6",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791944083183-b85bb0e04acd6"
+    },
+    {
+      "id": "81cea841-6513-44a1-81bd-85450c177803",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791944229799-5ce2e9c85119"
+    },
+    {
+      "id": "88b90251-5b7f-4c01-be36-284f68657790",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791943122342-eb9cc853b762e"
+    },
+    {
+      "id": "e058224d-32b4-40bc-837e-8f6e4765a018",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791943374503-28f804f1f8a8e"
+    },
+    {
+      "id": "fe43ff4c-04f4-4485-8cbb-fb6d3bfb864d",
+      "code": "BROWSER-FIXTURE-schedule-browser-e2e-1791944272598-1bb12051b9e1b"
+    }
+  ],
+  "playwrightVersion": "Version 1.64.0",
+  "browserProjects": [
+    "desktop: Desktop Chrome / Chromium",
+    "mobile: Pixel 5 / Chromium"
+  ],
+  "startedAt": "2026-11-01T20:25:49.1999868-05:00"
+}
